@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 476.3 214.2">
+  <defs>
+    <style>
+      .cls-1 {
+        letter-spacing: 0em;
+      }
+
+      .cls-2 {
+        letter-spacing: .02em;
+      }
+
+      .cls-3 {
+        fill: #fff;
+        font-family: Roboto-Light, Roboto;
+        font-size: 32px;
+        font-weight: 300;
+      }
+    </style>
+  </defs>
+  <image width="2005" height="840" transform="scale(.24)" xlink:href="../VTG Logos/VTG Logo/VTG Logos/VTG Logo White.png"/>
+  <text class="cls-3" transform="translate(317.39 195.84)"><tspan x="0" y="0">Staff </tspan><tspan class="cls-1" x="75.34" y="0">P</tspan><tspan x="94.84" y="0">o</tspan><tspan class="cls-2" x="112.77" y="0">r</tspan><tspan x="124.31" y="0">tal</tspan></text>
+</svg>
