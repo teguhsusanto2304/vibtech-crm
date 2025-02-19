@@ -24,6 +24,11 @@ class User extends Authenticatable
         'department',
         'position',
         'branch_office',
+        'path_image',
+        'user_number',
+        'joined_at',
+        'dob',
+        'phone_number',
     ];
 
     /**

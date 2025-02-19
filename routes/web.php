@@ -35,6 +35,13 @@ Route::middleware('auth')->group(function () {
     )->name('v1.dashboard');
     Route::get('/v1/users', [UserController::class, 'index']
     )->name('v1.users');
+    Route::get('/v1/users/create', [UserController::class, 'create']
+    )->name('v1.users.create');
+    Route::post('/v1/users/store', [UserController::class, 'store']
+    )->name('v1.users.store');
+    Route::get('/users/{emp_id}/edit', [UserController::class, 'edit'])->name('v1.users.edit');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('v1.users.update');
+
     Route::get('/v1/users/data', [UserController::class, 'getUsers'])->name('v1.users.data');
     Route::get('/v1/job-assignment-form', [JobAssignmentController::class, 'index'])->name('v1.job-assignment-form');
     Route::get('/v1/job-assignment-form/create', [JobAssignmentController::class, 'create'])->name('v1.job-assignment-form.create');

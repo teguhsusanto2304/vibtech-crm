@@ -18,6 +18,12 @@
     </nav>
 
     <h3>{{ $title }}</h3>
+    @if (session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
 
 
        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
@@ -36,8 +42,10 @@
             <option value="System Projects">System Projects</option>
 
             </select>
-            <button class="btn btn-primary">Add User</button>
+            <a href="{{ route('v1.users.create')}}" class="btn btn-primary">Add User</a>
             <!-- Department Filter Box -->
+
+
 
         </div>
         <div class="card-body">
