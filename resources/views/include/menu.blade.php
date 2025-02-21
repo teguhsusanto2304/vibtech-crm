@@ -140,9 +140,7 @@
                 </li>
             </ul>
         </li>
-
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'marketing'):
+        @if(auth()->user()->can('view-mass-emailer') || auth()->user()->can('view-client-database') || auth()->user()->can('view-social-media-scheduler') || auth()->user()->can('view-event-generation'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -173,34 +171,44 @@
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Marketing Tools</div>
             </a>
+
             <ul class="menu-sub">
+                @can('view-mass-emailer')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Mass Emailer</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-client-database')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Client Database</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-social-media-scheduler')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Social Media Scheduler</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-event-generation')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Event Generation</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
 
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'admin'):
+        @if(auth()->user()->can('view-shipping-status') ||
+        auth()->user()->can('view-account-receivable') ||
+        auth()->user()->can('view-human-resource') ||
+        auth()->user()->can('view-procurement'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -226,33 +234,42 @@
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Admin Tools</div>
             </a>
             <ul class="menu-sub">
+                @can('view-shipping-status')
                 <li class="no-bullet">
                     <a href="{{ route('shipping-status')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Shipping/Delivery Status</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-account-receivable')
                 <li class="no-bullet">
                     <a href="{{ route('account-receivable-list')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Account Receivable</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-human-resource')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Human Resource</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-procurement')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Procurement</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
 
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'sales'):
+        @if(auth()->user()->can('view-create-sales-quotation') ||
+        auth()->user()->can('view-download-purchase-order') ||
+        auth()->user()->can('view-order-status') ||
+        auth()->user()->can('view-invoices'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -269,35 +286,42 @@
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Sales Tools</div>
             </a>
+            @can('view-create-sales-quotation')
             <ul class="menu-sub">
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Create Sales Quotation</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-download-purchase-order')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Download Purchase Order</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-order-status')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Order Status</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-invoices')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Invoices & Payment Status</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
 
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'operations'):
-
+        @if(auth()->user()->can('view-receive-job-order') ||
+        auth()->user()->can('view-internal-job-planing-form') ||
+        auth()->user()->can('view-social-media-scheduler') )
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -315,28 +339,37 @@
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Operations Tools</div>
             </a>
             <ul class="menu-sub">
+                @can('view-receive-job-order')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Receive Job Order</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-internal-job-planing-form')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Internal Job Planing Form</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-schedule-job')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Schedule Job</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
 
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'project'):
+        @if(auth()->user()->can('view-create-sales-quotation-system-project') ||
+        auth()->user()->can('view-receive-job-order-system-project') ||
+        auth()->user()->can('view-internal-job-planing-form-system-project')||
+        auth()->user()->can('view-schedule-job-system-project') ||
+        auth()->user()->can('view-invoicing-status') ||
+        auth()->user()->can('view-payment-status'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -362,44 +395,58 @@
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">System Project Tools</div>
             </a>
             <ul class="menu-sub">
+                @can('view-create-sales-quotation-system-project')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Create Sales Quotation</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-receive-job-order-system-project')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Receive Job Order</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-internal-job-planing-form-system-project')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Internal Job Planing Form</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-schedule-job-system-project')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Schedule Job</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-invoicing-status')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Invoicing Status</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-payment-status')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Payment Status</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
 
-        @if (Session::has('role')):
-        @if (Session::get('role') === 'it'):
-
+        @if(auth()->user()->can('view-create-sales-quotation-it') ||
+        auth()->user()->can('view-receive-job-order-it') ||
+        auth()->user()->can('view-internal-job-planing-form-it')||
+        auth()->user()->can('view-schedule-job-it') ||
+        auth()->user()->can('view-invoicing-status-it') ||
+        auth()->user()->can('view-payment-status-it'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -420,40 +467,52 @@
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">IT Tools</div>
             </a>
             <ul class="menu-sub">
+                @can('view-create-sales-quotation-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Create Sales Quotation</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-receive-job-order-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Receive Job Order</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-internal-job-planing-form-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Internal Job Planing Form</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-schedule-job-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Schedule Job</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-invoicing-status-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Invoicing Status</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-payment-status-it')
                 <li class="no-bullet">
                     <a href="index.html" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Payment Status</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
         @endif
-        @endif
+
 
         <li class="menu-item">
             <a href="{{ route('inbox')}}" class="menu-link">
@@ -476,8 +535,7 @@
                 <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Inbox</div>
             </a>
         </li>
-
-        @if(!$user->department)
+        @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">
@@ -502,6 +560,7 @@
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Master Data</div>
             </a>
+            @can('view-user')
             <ul class="menu-sub">
                 <li class="no-bullet">
                     <a href="{{ route('v1.users')}}" class="menu-link">
@@ -509,9 +568,27 @@
                     </a>
                 </li>
             </ul>
+            @endcan
+            @can('view-role')
+            <ul class="menu-sub">
+                <li class="no-bullet">
+                    <a href="{{ route('v1.roles')}}" class="menu-link">
+                        <div class="text-truncate" data-i18n="Analytics">User Role</div>
+                    </a>
+                </li>
+            </ul>
+            @endcan
+            @can('view-permission')
+            <ul class="menu-sub">
+                <li class="no-bullet">
+                    <a href="{{ route('v1.permissions')}}" class="menu-link">
+                        <div class="text-truncate" data-i18n="Analytics">Permission</div>
+                    </a>
+                </li>
+            </ul>
+            @endcan
         </li>
         @endif
-
 
     </ul>
 </aside>

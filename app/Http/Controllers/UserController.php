@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use app\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -17,8 +20,8 @@ class UserController extends Controller
 
     public function create()
     {
-        $user = auth()->user();
-        return view('user.form', compact('user'))->with('title', 'Create a New User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Creat a New User']);
+        $roles = Role::all();
+        return view('user.form',compact('roles'))->with('title', 'Create a New User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Creat a New User']);
     }
 
     public function store(Request $request)
@@ -34,6 +37,7 @@ class UserController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'email' => 'required|email|unique:users,email|max:255',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
+            'role_id' => 'required'
         ]);
 
         $validatedData['password'] = 'password';
@@ -52,6 +56,9 @@ class UserController extends Controller
             // Create a new user
             $user = User::create($validatedData);
 
+            $user->assignRole($request->input('role_id'));
+            Artisan::call('permission:cache-reset');
+
             // Return response
             return redirect()->route('v1.users')->with('success', 'User created successfully.');
         } catch (\Exception $e) {
@@ -61,9 +68,9 @@ class UserController extends Controller
 
     public function edit($emp_id)
     {
-        $user = auth()->user();
+        $roles = Role::all();
         $emp = User::findOrFail($emp_id);
-        return view('user.edit', compact('user','emp'))->with('title', 'Edit a User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Edit a User']);
+        return view('user.edit', compact('roles','emp'))->with('title', 'Edit a User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Edit a User']);
     }
 
     public function update(Request $request, $id)
@@ -72,15 +79,14 @@ class UserController extends Controller
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'user_number' => 'required|string|unique:users,user_number,' . $id . '|max:50',
             'department' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
             'joined_at' => 'nullable|date',
             'dob' => 'nullable|date',
             'phone_number' => 'nullable|string|max:20',
-            'email' => 'required|email|unique:users,email,' . $id . '|max:255',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
+            'role_id' => 'required'
         ]);
 
         // Handle Image Upload
@@ -97,6 +103,9 @@ class UserController extends Controller
         }
 
         $user->update($validatedData);
+
+        $user->assignRole($request->input('role_id'));
+            Artisan::call('permission:cache-reset');
 
         return redirect()->route('v1.users')->with('success', 'User updated successfully.');
     }

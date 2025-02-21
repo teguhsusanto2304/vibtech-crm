@@ -43,12 +43,9 @@
             <div class="card">
                 <div class="card-body">
                     <form class="row g-3"
-                        action="{{ isset($user) ? route('v1.users.update', $user->id) : route('v1.users.store') }}"
+                        action="{{  route('v1.users.store') }}"
                         method="post" enctype="multipart/form-data">
                         @csrf
-                        @if(isset($user))
-                            @method('PUT') {{-- Laravel requires PUT for updates --}}
-                        @endif
 
                         <div class="col-md-8">
                             <label for="staffName" class="form-label">Staff Name</label>
@@ -82,7 +79,9 @@
 
                         <div class="col-md-6">
                             <label for="position" class="form-label">Position</label>
-                            <select class="form-control" name="position">
+                            <input type="text" class="form-control" name="position"
+                                value="{{ old('position') }}" placeholder="Enter position">
+                            <select class="form-control invisible" name="position1">
                                 <option value="">Choose a Position</option>
                                 <option value="Marketing & Events" {{ old('position', $user->position ?? '') == 'Marketing & Events' ? 'selected' : '' }}>Marketing & Events</option>
                                 <option value="Human Resources" {{ old('position', $user->position ?? '') == 'Human Resources' ? 'selected' : '' }}>Human Resources</option>
@@ -124,9 +123,23 @@
                                     width="100">
                             @endif
                         </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Role</label>
+                            <select class="form-control" name="role_id">
+                                <option value="">Choose a Role</option>
+
+                                @foreach ($roles as $role)
+                                    <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+
+                        </div>
 
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary">{{ isset($user) ? 'Update' : 'Submit' }}</button>
+                            <button type="submit" class="btn btn-primary">Submit</button>
                             <a href="{{ route('v1.users')}}" class="btn btn-warning">Cancel</a>
                         </div>
                     </form>

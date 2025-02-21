@@ -75,8 +75,8 @@ id="layout-navbar" >
                 </div>
               </div>
               <div class="flex-grow-1">
-                <h6 class="mb-0">{{ $user->name }}</h6>
-                <small class="text-muted">{{ $user->position }}</small>
+                <h6 class="mb-0">{{ auth()->user()->name }}</h6>
+                <small class="text-muted">{{ auth()->user()->position }}</small>
               </div>
             </div>
           </a>

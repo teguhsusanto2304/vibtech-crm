@@ -37,7 +37,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">Create New</h5>
                                 <p class="card-text">Create a New Job Assignment</p>
-                                <a href="{{ route('v1.job-assignment-form.create')}}" class="btn btn_primary">Go Create New</a>
+                                <a href="{{ route('v1.job-assignment-form.create')}}" class="btn btn_primary" disabled>Go Create New</a>
                             </div>
                         </div>
                     </div>

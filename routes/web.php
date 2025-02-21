@@ -17,6 +17,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\JobAssignmentController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 
 
 Route::get('/', function () {
@@ -51,6 +53,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/v1/job-assignment-form/view/{id}/{respond}', [JobAssignmentController::class, 'view'])->name('v1.job-assignment-form.view');
     Route::get('/v1/job-assignment-form/job-list', [JobAssignmentController::class, 'getJobsAssignments'])->name('v1.job-assignment-form.job-list');
     Route::get('/v1/job-assignment-form/job-list-user', [JobAssignmentController::class, 'getJobsAssignmentsByUser'])->name('v1.job-assignment-form.job-list-user');
+    Route::get('/v1/roles', [RoleController::class, 'index'])->name('v1.roles');
+    Route::get('/v1/roles/data', [RoleController::class, 'getRoles'])->name('v1.roles.data');
+    Route::get('/v1/roles/create', [RoleController::class, 'create'])->name('v1.roles.create');
+    Route::post('/v1/roles/store', [RoleController::class, 'store'])->name('v1.roles.store');
+    Route::get('/v1/roles/{id}/show', [RoleController::class, 'show'])->name('v1.roles.show');
+    Route::post('/v1/roles/assign_permissions',[RoleController::class, 'assignPermissions'])->name('v1.roles.assign_permissions');
+
+    Route::get('/v1/permissions', [PermissionController::class, 'index'])->name('v1.permissions');
+    Route::get('/v1/permissions/data', [PermissionController::class, 'getPermissions'])->name('v1.permissions.data');
+    Route::get('/v1/permissions/create', [PermissionController::class, 'create'])->name('v1.permissions.create');
+    Route::post('/v1/permissions/store', [PermissionController::class, 'store'])->name('v1.permissions.store');
+
+
 });
 
 Route::post('/dologin', function (Request $request)

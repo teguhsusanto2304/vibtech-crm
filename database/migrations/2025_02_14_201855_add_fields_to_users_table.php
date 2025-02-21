@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('user_number',20)->nullable();
             $table->date('joined_at')->nullable();
             $table->date('dob')->nullable();
+            $table->string('phone_number',15)->nullable();
             //
         });
     }

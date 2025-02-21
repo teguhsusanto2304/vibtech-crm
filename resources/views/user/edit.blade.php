@@ -43,11 +43,11 @@
             <div class="card">
                 <div class="card-body">
                     <form class="row g-3"
-      action="{{ isset($user) ? route('v1.users.update', $emp->id) : route('v1.users.store') }}"
+      action="{{ route('v1.users.update', $emp->id) }}"
       method="post"
       enctype="multipart/form-data">
     @csrf
-    @if(isset($user))
+    @if(isset($emp))
         @method('PUT') {{-- Laravel requires PUT for updates --}}
     @endif
 
@@ -58,7 +58,7 @@
 
     <div class="col-md-4">
         <label for="staffID" class="form-label">Staff ID</label>
-        <input type="text" class="form-control" name="user_number" value="{{ $emp->user_number ?? '' }}" placeholder="Enter staff ID">
+        <input type="text" class="form-control" value="{{ $emp->user_number ?? '' }}" placeholder="Enter staff ID" readonly>
     </div>
 
     <div class="col-md-6">
@@ -106,7 +106,7 @@
 
     <div class="col-md-6">
         <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" name="email" value="{{ $emp->email ?? '' }}" placeholder="Enter email">
+        <input type="email" class="form-control" value="{{ $emp->email ?? '' }}" placeholder="Enter email" readonly>
     </div>
 
     <div class="col-md-6">
@@ -115,6 +115,21 @@
         @if(isset($emp->path_image))
             <img src="{{ asset($emp->path_image) }}" alt="Profile Image" class="img-thumbnail mt-2" width="100">
         @endif
+    </div>
+
+    <div class="col-md-6">
+        <label for="email" class="form-label">Role {{ $emp->roles->first()->id }}</label>
+        <select class="form-control" name="role_id">
+            <option value="">Choose a Role</option>
+
+            @foreach ($roles as $role)
+                <option value="{{ $role->name }}" @if($emp->roles->first()->id == $role->id) selected @endif>{{ $role->name }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-6">
+
     </div>
 
 
