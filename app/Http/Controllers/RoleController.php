@@ -87,7 +87,8 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $role = Role::findOrFail($id);
+        return view('role.edit',compact('role'))->with('title', 'Edit Role')->with('breadcrumb', ['Home', 'Master Data', 'User Role Management', 'Edit Role']);
     }
 
     /**
@@ -95,7 +96,18 @@ class RoleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255'
+        ]);
+
+        $role = Role::findOrFail($id);
+
+        // Update role name
+        $role->update([
+            'name' => $request->name,
+        ]);
+
+        return redirect()->route('v1.roles')->with('success', 'Role updated successfully.');
     }
 
     /**
@@ -113,7 +125,7 @@ class RoleController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('v1.users.edit',['emp_id'=>$row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+                    $btn = '<a href="'.route('v1.roles.edit',['id'=>$row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
                     $btn .= ' <a href="'.route('v1.roles.show',['id'=>$row->id]).'" class="edit btn btn-info btn-sm">Permission</a>';
                     return $btn;
                 })

@@ -58,6 +58,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/v1/roles/create', [RoleController::class, 'create'])->name('v1.roles.create');
     Route::post('/v1/roles/store', [RoleController::class, 'store'])->name('v1.roles.store');
     Route::get('/v1/roles/{id}/show', [RoleController::class, 'show'])->name('v1.roles.show');
+    Route::get('/v1/roles/{id}/edit', [RoleController::class, 'edit'])->name('v1.roles.edit');
+    Route::put('/v1/roles/{id}', [RoleController::class, 'update'])->name('v1.roles.update');
     Route::post('/v1/roles/assign_permissions',[RoleController::class, 'assignPermissions'])->name('v1.roles.assign_permissions');
 
     Route::get('/v1/permissions', [PermissionController::class, 'index'])->name('v1.permissions');
