@@ -245,13 +245,13 @@ $count = 0;
         @else
         <form action="{{ route('v1.job-assignment-form.respond') }}" method="post">
             @csrf
-        @if($assignment_status===0)
+        @if($assignment_status===0 && $job->job_status===0)
         <div class="col-12 mt-4 text-center">
             <h3> Response this Job</h3>
             <input type="hidden" name="id" value="{{ $person_id }}">
             <input type="hidden" name="job_id" value="{{ $job->id }}">
-            <button type="submit" class="btn btn-success">Accept</button>
-            <button type="submit" class="btn btn-danger">Decline</button>
+            <button type="submit" name="response" value="accept" class="btn btn-success">Accept</button>
+            <button type="submit" name="response" value="decline" class="btn btn-danger">Decline</button>
         </div>
         @endif
         </form>

@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     (s.value = e);
             },
             eventClick: function (e) {
-                alert(initialDate);
+
                 (e = e),
                     (E = e.event).url &&
                         (e.jsEvent.preventDefault(),
@@ -158,11 +158,9 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             datesSet: function () {
                 I();
-                highlightCurrentDate();
             },
             viewDidMount: function () {
                 I();
-                highlightCurrentDate();
             },
         });
         function F() {
@@ -314,63 +312,4 @@ document.addEventListener("DOMContentLoaded", function () {
                     n.classList.remove("show");
             });
     }
-
-    function highlightCurrentDate() {
-        const today = new Date();
-        const todayFormatted = today.toISOString().slice(0, 10); // Format as YYYY-MM-DD
-
-        const dayCells = document.querySelectorAll('.fc-daygrid-day'); // Select all day cells
-
-        dayCells.forEach(cell => {
-            const cellDate = cell.getAttribute('data-date'); // Get the date of the cell
-
-            if (cellDate === todayFormatted) {
-                cell.style.backgroundColor = 'lightgray'; // Set background color
-                cell.style.cursor = 'pointer'; // Make it look clickable
-
-                // Add a click event listener to show the alert
-                cell.addEventListener('click', function() {
-                    alert("Today's date: " + todayFormatted);
-                });
-            } else {
-                cell.style.backgroundColor = ''; // Reset background color for other days
-                cell.style.cursor = 'pointer'; // Reset cursor
-                // Remove any previous click listeners to avoid multiple alerts
-                //cell.removeEventListener('click', arguments.callee);
-
-                cell.addEventListener('click', function() {
-                    alert("date: " + cellDate);
-                    document.getElementById("eventAt").textContent = cellDate;
-                    fetchEvents(cellDate);
-                });
-            }
-        });
-    }
 });
-
-function fetchEvents(eventAt) {
-    fetch(`/v1/dashboard/eventsbydate/${eventAt}`) // Replace with your actual API URL
-            .then(response => response.json()) // Convert response to JSON
-            .then(data => {
-                let eventListDiv = document.getElementById("eventList");
-                eventListDiv.innerHTML = ""; // Clear existing content
-
-                if (data.length === 0) {
-                    eventListDiv.innerHTML = "<p>No events found.</p>";
-                    return;
-                }
-
-                let eventHtml = "<ul>";
-                data.forEach(event => {
-                    eventHtml += `<li>${event.title}
-                        <a href="#" onclick="showEventModal(${event.id}, '${event.title}')">More</a>
-                    </li>`;
-                });
-                eventHtml += "</ul>";
-
-                eventListDiv.innerHTML = eventHtml;
-            })
-            .catch(error => console.error("Error fetching events:", error));
-}
-
-

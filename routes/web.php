@@ -35,6 +35,11 @@ Route::post('/v1/login', [LoginController::class, 'login'])->name('v1.login');
 Route::middleware('auth')->group(function () {
     Route::get('/v1/dashboard', [DashboardController::class, 'index']
     )->name('v1.dashboard');
+    Route::get('/v1/dashboard/events', [DashboardController::class, 'getEvents']
+    )->name('v1.dashboard.events');
+    Route::get('/v1/dashboard/eventsbydate/{eventAt}', [DashboardController::class, 'getEventsByDate']
+    )->name('v1.dashboard.eventsbydate');
+
     Route::get('/v1/users', [UserController::class, 'index']
     )->name('v1.users');
     Route::get('/v1/users/create', [UserController::class, 'create']

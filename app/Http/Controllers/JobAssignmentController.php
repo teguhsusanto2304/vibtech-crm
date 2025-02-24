@@ -44,8 +44,13 @@ class JobAssignmentController extends Controller
 
     public function respond(Request $request)
     {
+        $response = $request->input('response');
         $person = JobAssignmentPersonnel::where('id', $request->input('id'))->first();
-        $person->assignment_status = 1;
+        if ($response === 'accept') {
+            $person->assignment_status = 1;
+        } else if($response === 'decline'){
+            $person->assignment_status = 2;
+        }
         $person->save();
 
         $count = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->count();
@@ -74,6 +79,7 @@ class JobAssignmentController extends Controller
 
         $totalPersonnel = $personnel->count();
         $acceptedCount = 0;
+        $declinedCount = 0;
 
         foreach ($personnel as $row) {
             if ($row->assignment_status == 2) {
@@ -85,17 +91,23 @@ class JobAssignmentController extends Controller
             if ($row->assignment_status == 1) {
                 $acceptedCount++;
             }
+            if ($row->assignment_status == 2) {
+                $declinedCount++;
+            }
         }
 
         // If all persons accepted, set job assignment to accepted
-        if ($acceptedCount == $totalPersonnel && $totalPersonnel > 0) {
-            JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 1]);
+        //if ($acceptedCount == $totalPersonnel && $totalPersonnel > 0) {
+            //JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 1]);
             //return response()->json(['message' => 'Job Assignment Accepted']);
-        }
+        //}
+        if($declinedCount>0):
+            JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 2]);
+        endif;
 
-        // Otherwise, set job assignment to pending
-        JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 0]);
-        //return response()->json(['message' => 'Job Assignment Pending']);
+        if($acceptedCount===$count):
+            JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 1]);
+        endif;
 
 
 
