@@ -330,7 +330,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // Add a click event listener to show the alert
                 cell.addEventListener('click', function() {
-                    alert("Today's date: " + todayFormatted);
+                    //alert("Today's date: " + todayFormatted);
+                    document.getElementById("eventAt").textContent = cellDate;
+                    fetchEvents(cellDate);
                 });
             } else {
                 cell.style.backgroundColor = ''; // Reset background color for other days
@@ -339,7 +341,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 //cell.removeEventListener('click', arguments.callee);
 
                 cell.addEventListener('click', function() {
-                    alert("date: " + cellDate);
+                    //alert("date: " + cellDate);
                     document.getElementById("eventAt").textContent = cellDate;
                     fetchEvents(cellDate);
                 });
