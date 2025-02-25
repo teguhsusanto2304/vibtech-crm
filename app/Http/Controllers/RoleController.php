@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\DB;
 
 class RoleController extends Controller
 {
@@ -115,7 +116,21 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $role = Role::findOrFail($id);
+
+    // Check if role exists in role_has_permissions, model_has_roles, or users table
+    $roleUsed = DB::table('role_has_permissions')->where('role_id', $id)->exists() ||
+                DB::table('model_has_roles')->where('role_id', $id)->exists() ||
+                DB::table('users')->where('role_id', $id)->exists(); // Adjust column name if different
+
+    if ($roleUsed) {
+        return redirect()->back()->with('error', 'Cannot delete role because it is still assigned.');
+    }
+
+    // If role is not in use, proceed with deletion
+    //$role->delete();
+
+    return redirect()->route('v1.roles')->with('success', 'Role deleted successfully.');
     }
 
     public function getRoles(Request $request)

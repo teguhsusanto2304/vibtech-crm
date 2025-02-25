@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 */
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\RoleController;
@@ -65,12 +66,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/v1/roles/{id}/show', [RoleController::class, 'show'])->name('v1.roles.show');
     Route::get('/v1/roles/{id}/edit', [RoleController::class, 'edit'])->name('v1.roles.edit');
     Route::put('/v1/roles/{id}', [RoleController::class, 'update'])->name('v1.roles.update');
+    Route::put('/v1/roles/{id}/delete', [RoleController::class, 'destroy'])->name('v1.roles.destroy');
     Route::post('/v1/roles/assign_permissions',[RoleController::class, 'assignPermissions'])->name('v1.roles.assign_permissions');
 
     Route::get('/v1/permissions', [PermissionController::class, 'index'])->name('v1.permissions');
     Route::get('/v1/permissions/data', [PermissionController::class, 'getPermissions'])->name('v1.permissions.data');
     Route::get('/v1/permissions/create', [PermissionController::class, 'create'])->name('v1.permissions.create');
     Route::post('/v1/permissions/store', [PermissionController::class, 'store'])->name('v1.permissions.store');
+
+    Route::get('/v1/departments', [DepartmentController::class, 'index'])->name('v1.departments');
+    Route::get('/v1/departments/data', [DepartmentController::class, 'getDepartments'])->name('v1.departments.data');
+    Route::get('/v1/departments/create', [DepartmentController::class, 'create'])->name('v1.departments.create');
+    Route::post('/v1/departments/store', [DepartmentController::class, 'store'])->name('v1.departments.store');
+
 
 
 });

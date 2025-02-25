@@ -68,7 +68,7 @@
                 }
 
                 .form-check-input:checked {
-                    background-color: #fff;
+                    background-color: #ffffff34;
                     /* Checked radio button color */
                 }
 
@@ -100,12 +100,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="inputPassword4" class="form-label">Type of Job</label>
-                            <select name="job_type_id" class="form-select">
-                                <option selected>Choose...</option>
-                                @foreach ($job_type as $row)
-                                    <option value="{{ $row->id }}">{{ $row->name }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" class="form-control form-control-input" name="job_type"  >
                         </div>
                         <div class="col-6">
                             <label for="inputAddress" class="form-label">Business Name</label>
@@ -164,14 +159,12 @@
                             </script>
                         </div>
                         <div class="col-md-6">
-                            <label for="inputZip" class="form-label">Vehicle</label>
-                            <select name="vehicle_id" class="form-select">
-                                <option selected>Choose...</option>
-                                @foreach ($vehicles as $row)
-                                    <option value="{{ $row->id }}">
-                                        {{ $row->name }}</option>
-                                @endforeach
-                            </select>
+                            <label for="inputZip" class="form-label">Vehicle Require</label>
+                            <br>
+                            <input class="form-check-input" type="checkbox" value="1" name="is_vehicle_require" />
+                            <label class="form-label" for="defaultCheck1">
+                                Yes
+                            </label>
 
                         </div>
                         <div class="col-12">

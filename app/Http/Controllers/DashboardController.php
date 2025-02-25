@@ -14,14 +14,16 @@ class DashboardController extends Controller
 
     public function getEvents()
     {
-        $data = JobAssignment::all();
+        $data = JobAssignment::where('job_status', 1)
+        ->whereDate('start_at', '>=', Carbon::today()) // Replace 'job_date' with the actual date column name
+        ->get();
         $arr = [];
         foreach ($data as $row):
             $calendarType = "Business";
             $arr[] = [
                 'id' => $row->id,
                 'url' => '',
-                'title' => $row->business_name,
+                'title' => $row->scope_of_work,
                 'start' => $row->start_at,
                 'end' => $row->end_at,
                 'allDay' => '!1',
@@ -40,7 +42,8 @@ class DashboardController extends Controller
         if ($filterDate) {
             $filterDate = Carbon::parse($filterDate); // Parse the date using Carbon
 
-            $results = JobAssignment::where(function ($query) use ($filterDate) {
+            $results = JobAssignment::where('job_status', 1)
+            ->where(function ($query) use ($filterDate) {
                 $query->where('start_at', '<=', $filterDate) // start_at is before or on the filter date
                     ->where('end_at', '>=', $filterDate); // end_at is after or on the filter date
             })
@@ -61,7 +64,7 @@ class DashboardController extends Controller
             foreach ($results as $row):
                 $arr[] = [
                     'id' => $row->id,
-                    'title' => $row->business_name
+                    'title' => $row->scope_of_work
                 ];
             endforeach;
 

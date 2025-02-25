@@ -25,7 +25,6 @@ class PermissionController extends Controller
 
     public function create()
     {
-
         return view('permission.form')->with('title', 'Create a New Permission')->with('breadcrumb', ['Home', 'Master Data', 'Permission', 'Creat a New Permission']);
     }
 

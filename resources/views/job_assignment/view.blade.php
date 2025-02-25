@@ -145,13 +145,13 @@
                     <div class="col-6 text-end" >
                         <div class="row px-4">
                             <h3 class="h3">Type of Job</h3>
-                            <p>{{ $job->jobType->name }}</p>
+                            <p>{{ $job->job_type }}</p>
                         </div>
                     </div>
                     <div class="col-6 text-start mr-10" >
                         <div class="row px-4">
                             <h3 class="h3">Vehicle Required</h3>
-                            <p>{{ $job->vehicle->name }}</p>
+                            <p>{{ ($job->is_vehicle_require===1? 'Yes':'No') }}</p>
                         </div>
                     </div>
                     <div class="col-6 text-end" >

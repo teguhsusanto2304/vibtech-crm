@@ -62,7 +62,14 @@
         </li>
 
         <li
-            class="menu-item {{ request()->routeIs('v1.job-assignment-form', 'leave-application', 'vehicle-booking', 'referral-program', 'submit-claim') ? 'active open' : '' }}">
+            class="menu-item {{ request()->routeIs(
+            'v1.job-assignment-form',
+            'v1.job-assignment-form.create',
+            'v1.job-assignment-form.list',
+            'leave-application',
+            'vehicle-booking',
+            'referral-program',
+            'submit-claim') ? 'active open' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link  menu-toggle">
                 <i class="menu-icon">
                     <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35.15 33.23">
@@ -87,7 +94,7 @@
             <ul class="menu-sub">
                 <li class="no-bullet">
                     <a href="{{ route('v1.job-assignment-form') }}"
-                        class="menu-link {{ request()->routeIs('v1.job-assignment-form') ? 'active' : '' }}">
+                        class="menu-link {{ request()->routeIs('v1.job-assignment-form','v1.job-assignment-form.create','v1.job-assignment-form.list')  ? 'active' : '' }}">
                         <div class="text-truncate" data-i18n="Analytics">Job Requisition Form</div>
                     </a>
                 </li>
@@ -647,6 +654,15 @@
                         <li class="no-bullet">
                             <a href="{{ route('v1.permissions')}}" class="menu-link">
                                 <div class="text-truncate" data-i18n="Analytics">Permission</div>
+                            </a>
+                        </li>
+                    </ul>
+                @endcan
+                @can('view-department')
+                    <ul class="menu-sub">
+                        <li class="no-bullet">
+                            <a href="{{ route('v1.departments')}}" class="menu-link">
+                                <div class="text-truncate" data-i18n="Analytics">Department</div>
                             </a>
                         </li>
                     </ul>

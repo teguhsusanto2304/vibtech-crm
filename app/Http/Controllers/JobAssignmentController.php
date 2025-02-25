@@ -20,12 +20,10 @@ class JobAssignmentController extends Controller
     }
     public function create()
     {
-        $user = auth()->user();
-        $job_type = JobType::all();
         $job_no = $this->generate_autonumber('JA' . date('ym'));
         $users = User::whereNotIn('id', [auth()->id()])->get()->groupBy('department');
         $vehicles = Vehicle::all();
-        return view('job_assignment.form', compact('user', 'job_type', 'job_no', 'users', 'vehicles'))
+        return view('job_assignment.form', compact('job_no', 'users', 'vehicles'))
             ->with('title', 'Job Requisition Form')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Create']);
     }
@@ -118,7 +116,7 @@ class JobAssignmentController extends Controller
     {
         $validated = $request->validate([
             'job_record_id' => 'required|string',
-            'job_type_id' => 'required|exists:job_types,id',
+            'job_type' => 'required',
             'business_name' => 'required|string|max:255',
             'business_address' => 'required|string|max:255',
             'scope_of_work' => 'required|string',
@@ -126,19 +124,18 @@ class JobAssignmentController extends Controller
             'end_at' => 'required|date|after_or_equal:start_at',
             'prsonnel_ids' => 'array', // Ensure it's an array
             'prsonnel_ids.*' => 'exists:users,id', // Ensure personnel exist in users table
-            'vehicle_id' => 'nullable|exists:vehicles,id'
         ]);
 
         // Create Job Assignment Form
         $jobAssignment = JobAssignment::create([
             'job_record_id' => $validated['job_record_id'],
-            'job_type_id' => $validated['job_type_id'],
+            'job_type' => $validated['job_type'],
             'business_name' => $validated['business_name'],
             'business_address' => $validated['business_address'],
             'scope_of_work' => $validated['scope_of_work'],
             'start_at' => $validated['start_at'],
             'end_at' => $validated['end_at'],
-            'vehicle_id' => $request->vehicle_id ?? null,
+            'is_vehicle_require' => $validated['is_vehicle_require'] ?? 0,
             'user_id' => Auth()->user()->id
         ]);
 
@@ -199,9 +196,8 @@ class JobAssignmentController extends Controller
                 'job_assignments.start_at',
                 'job_assignments.end_at',
                 'job_assignments.job_status',
-                'job_types.name as job_type_name' // Select job type name
+                'job_assignments.job_type as job_type_name' // Select job type name
             )
-                ->join('job_types', 'job_assignments.job_type_id', '=', 'job_types.id')
                 ->where('job_assignments.user_id', auth()->user()->id);
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -239,9 +235,8 @@ class JobAssignmentController extends Controller
                 'job_assignments.start_at',
                 'job_assignments.end_at',
                 'job_assignments.job_status',
-                'job_types.name as job_type_name' // Select job type name
+                'job_assignments.job_type as job_type_name' // Select job type name
             )
-                ->join('job_types', 'job_assignments.job_type_id', '=', 'job_types.id')
                 ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
                 ->where('job_assignment_personnels.user_id', auth()->user()->id);
             return DataTables::of($data)

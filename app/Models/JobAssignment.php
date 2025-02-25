@@ -12,12 +12,14 @@ class JobAssignment extends Model
     protected $fillable = [
         'job_record_id',
         'job_type_id',
+        'job_type',
         'business_name',
         'business_address',
         'scope_of_work',
         'start_at',
         'end_at',
         'vehicle_id',
+        'is_vehicle_require',
         'user_id'
     ];
 
