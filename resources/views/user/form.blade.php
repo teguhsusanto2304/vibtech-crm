@@ -61,14 +61,19 @@
 
                         <div class="col-md-6">
                             <label for="department" class="form-label">Department</label>
-                            <select class="form-control" name="department">
+                            <div class="input-group mb-3">
+                            <select class="form-control" name="department_id">
                                 <option value="">Choose a Department</option>
-                                <option value="Marketing" {{ old('department', $user->department ?? '') == 'Marketing' ? 'selected' : '' }}>Marketing</option>
-                                <option value="Sales" {{ old('department', $user->department ?? '') == 'Sales' ? 'selected' : '' }}>Sales</option>
-                                <option value="Operations" {{ old('department', $user->department ?? '') == 'Operations' ? 'selected' : '' }}>Operations</option>
-                                <option value="IT Network" {{ old('department', $user->department ?? '') == 'IT Network' ? 'selected' : '' }}>IT Network</option>
-                                <option value="System Projects" {{ old('department', $user->department ?? '') == 'System Projects' ? 'selected' : '' }}>System Projects</option>
+                                @foreach ($departments as $department)
+                                    <option value="{{ $department->id }}" {{ old('department', $user->department_id ?? '') == $department->id ? 'selected' : '' }}>
+                                        {{ $department->name }}  {{-- Display the department name --}}
+                                    </option>
+                                @endforeach
                             </select>
+                            <a class="btn btn-outline-secondary  btn-sm" type="button" id="button-addon1" href="{{ route('v1.departments.create') }}">
+                                <i class="icon-base bx bx-plus icon-md me-4"></i>
+                            </a>
+                            </div>
                         </div>
 
                         <div class="col-md-6">
@@ -77,7 +82,7 @@
                                 value="{{ old('location', $user->location ?? '') }}" placeholder="Enter location">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="position" class="form-label">Position</label>
                             <input type="text" class="form-control" name="position"
                                 value="{{ old('position') }}" placeholder="Enter position">
@@ -91,7 +96,18 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label for="position" class="form-label">Position Level</label>
+                            <select class="form-control" name="position_level_id">
+                                <option value="">Choose a Position Level</option>
+                                @foreach ($position_levels as $position_level)
+                                    <option value="{{ $position_level->id }}" {{ old('department', $user->position_level_id ?? '') == $position_level->id ? 'selected' : '' }}>
+                                        {{ $position_level->name }}  {{-- Display the department name --}}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
                             <label for="joined_at" class="form-label">Date Joined</label>
                             <input type="date" class="form-control" name="joined_at"
                                 value="{{ old('joined_at', $user->joined_at ?? '') }}">
@@ -125,6 +141,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="email" class="form-label">Role</label>
+                            <div class="input-group mb-3">
                             <select class="form-control" name="role_id">
                                 <option value="">Choose a Role</option>
 
@@ -132,6 +149,10 @@
                                     <option value="{{ $role->name }}">{{ $role->name }}</option>
                                 @endforeach
                             </select>
+                            <a class="btn btn-outline-secondary  btn-sm" type="button" id="button-addon1" href="{{ route('v1.roles.create') }}">
+                                <i class="icon-base bx bx-plus icon-md me-4"></i>
+                            </a>
+                            </div>
                         </div>
 
                         <div class="col-md-6">

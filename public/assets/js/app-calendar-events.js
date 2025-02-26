@@ -109,3 +109,17 @@ window.eventsx = [
         extendedProps: { calendar: "Business" },
     },
 ];
+
+async function loadEvents() {
+    try {
+        let response = await fetch(eventsUrl);
+        let data = await response.json();
+        window.events = data;
+        console.log('Events Data:', window.events);
+    } catch (error) {
+        console.error('Error fetching events:', error);
+    }
+}
+
+// Call the function
+loadEvents();

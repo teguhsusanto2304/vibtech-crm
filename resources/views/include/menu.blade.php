@@ -375,7 +375,7 @@
         @if(
             auth()->user()->can('view-receive-job-order') ||
             auth()->user()->can('view-internal-job-planing-form') ||
-            auth()->user()->can('view-social-media-scheduler')
+            auth()->user()->can('view-schedule-job')
         )
                     <li class="menu-item">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -605,7 +605,14 @@
             </a>
         </li>
         @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
-            <li class="menu-item">
+            <li class="menu-item {{ request()->routeIs(
+            'v1.users',
+            'v1.users.create',
+            'v1.users.edit',
+            'v1.roles',
+            'v1.roles.create',
+            'v1.roles.edit',
+            'v1.permissions') ? 'active open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                     <i class="menu-icon">
                         <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 288">
@@ -634,7 +641,9 @@
                 @can('view-user')
                     <ul class="menu-sub">
                         <li class="no-bullet">
-                            <a href="{{ route('v1.users')}}" class="menu-link">
+                            <a href="{{ route('v1.users')}}" class="menu-link {{ request()->routeIs(
+            'v1.users',
+            'v1.users.create','v1.users.edit') ? ' active' : '' }}">
                                 <div class="text-truncate" data-i18n="Analytics">User Management</div>
                             </a>
                         </li>
@@ -663,6 +672,24 @@
                         <li class="no-bullet">
                             <a href="{{ route('v1.departments')}}" class="menu-link">
                                 <div class="text-truncate" data-i18n="Analytics">Department</div>
+                            </a>
+                        </li>
+                    </ul>
+                @endcan
+                @can('view-department')
+                    <ul class="menu-sub">
+                        <li class="no-bullet">
+                            <a href="{{ route('v1.position-levels')}}" class="menu-link">
+                                <div class="text-truncate" data-i18n="Analytics">Position Level</div>
+                            </a>
+                        </li>
+                    </ul>
+                @endcan
+                @can('view-department')
+                    <ul class="menu-sub">
+                        <li class="no-bullet">
+                            <a href="{{ route('v1.position-levels')}}" class="menu-link">
+                                <div class="text-truncate" data-i18n="Analytics">Vehicle</div>
                             </a>
                         </li>
                     </ul>

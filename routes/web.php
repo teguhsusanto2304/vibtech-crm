@@ -20,7 +20,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
-
+use App\Http\Controllers\PositionLevelController;
 
 Route::get('/', function () {
     return view('login');
@@ -59,6 +59,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/v1/job-assignment-form/view/{id}/{respond}', [JobAssignmentController::class, 'view'])->name('v1.job-assignment-form.view');
     Route::get('/v1/job-assignment-form/job-list', [JobAssignmentController::class, 'getJobsAssignments'])->name('v1.job-assignment-form.job-list');
     Route::get('/v1/job-assignment-form/job-list-user', [JobAssignmentController::class, 'getJobsAssignmentsByUser'])->name('v1.job-assignment-form.job-list-user');
+    Route::get('/v1/job-assignment-form/invited-staff/{user_id}/{job_id}', [JobAssignmentController::class, 'invitedStaff'])->name('v1.job-assignment-form.job.invited-staff');
+
     Route::get('/v1/roles', [RoleController::class, 'index'])->name('v1.roles');
     Route::get('/v1/roles/data', [RoleController::class, 'getRoles'])->name('v1.roles.data');
     Route::get('/v1/roles/create', [RoleController::class, 'create'])->name('v1.roles.create');
@@ -78,6 +80,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/v1/departments/data', [DepartmentController::class, 'getDepartments'])->name('v1.departments.data');
     Route::get('/v1/departments/create', [DepartmentController::class, 'create'])->name('v1.departments.create');
     Route::post('/v1/departments/store', [DepartmentController::class, 'store'])->name('v1.departments.store');
+
+    Route::get('/v1/position-levels', [PositionLevelController::class, 'index'])->name('v1.position-levels');
+    Route::get('/v1/position-levels/data', [PositionLevelController::class, 'getPositionLevels'])->name('v1.position-levels.data');
+    Route::get('/v1/position-levels/create', [PositionLevelController::class, 'create'])->name('v1.position-levels.create');
+    Route::post('/v1/position-levels/store', [PositionLevelController::class, 'store'])->name('v1.position-levels.store');
 
 
 

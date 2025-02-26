@@ -180,46 +180,31 @@
                         </div>
                     </div>
                     <script src="../assets/vendor/libs/fullcalendar/fullcalendar.js"></script>
-                    <script src="../assets/js/app-calendar-events.js"></script>
                     <script>
-                        async function updateEvents() {
-                            try {
-                                let response = await fetch('{{ route('v1.dashboard.events')}}'); // Replace with your API endpoint
-                                let newEvents = await response.json(); // Convert response to JSON
-
-                                if (Array.isArray(newEvents)) {
-                                    window.events = [...window.events, ...newEvents]; // Merge events
-                                    console.log("Updated window.events:", window.events);
-                                } else {
-                                    console.error("Invalid data format received:", newEvents);
-                                }
-                            } catch (error) {
-                                console.error("Error fetching events:", error);
-                            }
-                        }
-
-                        // Call function to fetch and update events
-                        updateEvents();
+                        let eventsUrl = @json(route('v1.dashboard.events'));
                     </script>
+                    <script src="../assets/js/app-calendar-events.js"></script>
+
                     <!-- Bootstrap Modal -->
-                    <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true">
                         <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title" id="exampleModalLabel">Event</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                                </button>
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Event</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <p><strong>ID:</strong> <span id="eventId"></span></p>
+                                    <p><strong>Title:</strong> <span id="eventTitle"></span></p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
                             </div>
-                            <div class="modal-body">
-                                <p><strong>ID:</strong> <span id="eventId"></span></p>
-                                <p><strong>Title:</strong> <span id="eventTitle"></span></p>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                          </div>
                         </div>
-                      </div>
+                    </div>
                     <script src="../assets/js/app-calendar.js"></script>
                     <!-- /Calendar & Modal -->
                     <!-- Calendar Sidebar -->
@@ -277,17 +262,17 @@
                                     }
                                 </style>
                                 <div class="panel-content" style="display: flex;
-      flex-direction: column; ">
+          flex-direction: column; ">
 
                                     <h4>Activities</h4>
                                     <div id="eventList" class="activity-item"></div>
                                     <script>
                                         function showEventModal(id, title) {
-    document.getElementById("eventId").innerText = id;
-    document.getElementById("eventTitle").innerText = title;
-    new bootstrap.Modal(document.getElementById('eventModal')).show();
-}
-                                        </script>
+                                            document.getElementById("eventId").innerText = id;
+                                            document.getElementById("eventTitle").innerText = title;
+                                            new bootstrap.Modal(document.getElementById('eventModal')).show();
+                                        }
+                                    </script>
 
 
                                 </div>

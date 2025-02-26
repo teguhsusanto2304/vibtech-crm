@@ -30,6 +30,8 @@ class User extends Authenticatable
         'joined_at',
         'dob',
         'phone_number',
+        'position_level_id',
+        'department_id'
     ];
 
     /**
@@ -55,5 +57,10 @@ class User extends Authenticatable
     public function assignedJobs()
     {
         return $this->belongsToMany(JobAssignment::class, 'job_assignment_personnels', 'user_id', 'job_assignment_id');
+    }
+
+    public function jobAssignmentPersonnel()
+    {
+        return $this->hasMany(JobAssignmentPersonnel::class, 'user_id', 'id'); // Adjust foreign key names if needed
     }
 }

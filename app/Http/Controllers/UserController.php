@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
+use App\Models\PositionLevel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use app\Models\User;
@@ -21,7 +23,9 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-        return view('user.form',compact('roles'))->with('title', 'Create a New User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Creat a New User']);
+        $departments = Department::all();
+        $position_levels = PositionLevel::all();
+        return view('user.form',compact('roles','departments','position_levels'))->with('title', 'Create a New User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Creat a New User']);
     }
 
     public function store(Request $request)
@@ -29,7 +33,7 @@ class UserController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'user_number' => 'required|string|unique:users,user_number|max:50',
-            'department' => 'nullable|string|max:255',
+            'department_id' => 'required',
             'location' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
             'joined_at' => 'nullable|date',
@@ -37,7 +41,8 @@ class UserController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'email' => 'required|email|unique:users,email|max:255',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
-            'role_id' => 'required'
+            'role_id' => 'required',
+            'position_level_id' => 'required'
         ]);
 
         $validatedData['password'] = 'password';

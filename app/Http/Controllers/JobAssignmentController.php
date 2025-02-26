@@ -13,6 +13,14 @@ use Yajra\DataTables\DataTables;
 
 class JobAssignmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:view-job-requisition', ['only' => ['index','show']]);
+        $this->middleware('permission:create-job-requisition', ['only' => ['create','store']]);
+        $this->middleware('permission:edit-job-requisition', ['only' => ['edit','update']]);
+        $this->middleware('permission:delete-job-requisition', ['only' => ['destroy']]);
+    }
     public function index()
     {
         $user = auth()->user();
@@ -48,31 +56,13 @@ class JobAssignmentController extends Controller
             $person->assignment_status = 1;
         } else if($response === 'decline'){
             $person->assignment_status = 2;
+            $person->reason = $request->input('reason');
+            $person->purpose_at = $request->input('purpose_at');
         }
         $person->save();
 
         $count = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->count();
 
-        /**$status = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))
-        ->where('assignment_status', '!=', 0)
-        ->where('assignment_status', '!=', 2)
-        ->count();
-        if($status>0 && $count ==$status){
-            $job = JobAssignment::find($request->input('job_id'));
-            $job->job_status=1;
-            $job->save();
-        } else {
-            $status = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))
-            ->where('assignment_status', '!=', 2)
-            ->count();
-            if($status>0 ){
-                $job = JobAssignment::find($request->input('job_id'));
-                $job->job_status=2;
-                $job->save();
-            }
-
-
-        }**/
         $personnel = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->get();
 
         $totalPersonnel = $personnel->count();
@@ -83,7 +73,6 @@ class JobAssignmentController extends Controller
             if ($row->assignment_status == 2) {
                 // If any person rejected, set job assignment to rejected
                 JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 2]);
-                //return response()->json(['message' => 'Job Assignment Rejected']);
             }
 
             if ($row->assignment_status == 1) {
@@ -94,11 +83,6 @@ class JobAssignmentController extends Controller
             }
         }
 
-        // If all persons accepted, set job assignment to accepted
-        //if ($acceptedCount == $totalPersonnel && $totalPersonnel > 0) {
-            //JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 1]);
-            //return response()->json(['message' => 'Job Assignment Accepted']);
-        //}
         if($declinedCount>0):
             JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 2]);
         endif;
@@ -109,7 +93,7 @@ class JobAssignmentController extends Controller
 
 
 
-        return redirect()->route('v1.job-assignment-form.view', ['id' => $request->input('job_id'), 'respond' => 'yes'])->with('success', 'Job Requisition Form Created Successfully');
+        return redirect()->route('v1.job-assignment-form.view', ['id' => $request->input('job_id'), 'respond' => 'yes'])->with('success', 'Job Requisition Form has been respond Successfully');
     }
 
     public function store(Request $request)
@@ -150,10 +134,15 @@ class JobAssignmentController extends Controller
 
     public function view($id, $respond)
     {
-        $user = auth()->user();
         $job = JobAssignment::find($id);
+        $staff = User::whereNot('id',auth()->user()->id)
+        ->where('position_level_id',3)
+        ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
+            $query->where('job_assignment_id', $id);
+        })
+        ->get();
         $personnels = JobAssignmentPersonnel::where('job_assignment_id', $id)->get();
-        return view('job_assignment.view', compact('user', 'job', 'personnels', 'respond'))
+        return view('job_assignment.view', compact( 'job', 'personnels', 'respond','staff'))
             ->with('title', 'Job Requisition Form Detail')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Detail']);
     }
@@ -267,6 +256,18 @@ class JobAssignmentController extends Controller
                 ->rawColumns(['status', 'date_range', 'action'])
                 ->make(true);
         }
+    }
+
+    public function invitedStaff($user_id,$job_id)
+    {
+        $jobAssignment = JobAssignment::findOrFail($job_id);
+        $data = [
+            'user_id'=>$user_id,
+            'job_assignment_id'=>$jobAssignment->id,
+            'assignment_status'=>1
+        ];
+        JobAssignmentPersonnel::create($data);
+        return redirect()->route('v1.job-assignment-form.view',['id'=>$job_id,'respond'=>'yes'])->with('success', 'Personnel has been involved Successfully');
     }
 
 }

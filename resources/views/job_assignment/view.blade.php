@@ -207,6 +207,12 @@ $count = 0;
                         </div>
                     </div>
                     <div class="col-6 text-start mr-10" >
+                        @if(session('success'))
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        @endif
                         <div class="row px-4">
                             <h3 class="h3">Personnel Involved</h3>
                             @php $assignment_status = 9; @endphp
@@ -221,18 +227,82 @@ $count = 0;
                             <div class="row">
                                     <div class="col-6 mb-4">
                                     <span class="status-label">{{ $person->user->name }}</span>
+                                    @if($person->assignment_status===2)
+                                        <p><small style="color: #eec658"><i>{{ $person->reason }}</i> and purposed alternatif date at </small><small style="color: #efa780"><strong>{{ $person->purpose_at }}</strong></small></p>
+                                    @endif
                                     </div>
+                                    <style>
+                                        .same-height-element {
+                                            padding: 0.375rem 0.75rem; /* Adjust padding as needed */
+                                            line-height: 1.5; /* Adjust line height as needed */
+                                            display: inline-flex; /* Use inline-flex for alignment */
+                                            align-items: center; /* Vertically align items */
+                                        }
+
+                                        .btn-sm {
+                                            padding: 0.25rem 0.5rem; /* Adjust padding for small button */
+                                        }
+
+                                        /* Optional: Adjust icon size if needed */
+                                        .icon-base {
+                                            font-size: 1rem; /* Adjust icon size as needed */
+                                        }
+                                    </style>
                                     <div class="col-6 mb-4">
                                         @if($person->assignment_status==0)
-                                            <span class="badge bg-info">Awaiting Response</span>
+                                        <div class="btn-group align-items-center" role="group" aria-label="Basic mixed styles example">
+                                            <span class="badge bg-info same-height-element">Awaiting Response</span>
+                                            @if($person->user->id === auth()->user()->id)
+                                                <button class="btn btn-primary btn-sm same-height-element" data-bs-toggle="modal" data-bs-target="#staffModal"><i class="icon-base bx bx-plus"></i></button>
+                                            @endif
+                                        </div>
+
                                         @elseif($person->assignment_status==1)
-                                        <span class="badge bg-success">Accepted Job</span>
+                                        <div class="btn-group align-items-center" role="group" aria-label="Basic mixed styles example">
+                                            <span class="badge bg-success same-height-element">Accepted Job</span>
+                                        </div>
                                         @else
-                                        <span class="badge bg-danger">Rejected Job</span>
+                                        <div class="btn-group align-items-center" role="group" aria-label="Basic mixed styles example">
+                                        <span class="badge bg-danger same-height-element">Rejected Job</span>
+                                        </div>
+
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
+                            <div class="modal fade" id="staffModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="myModalLabel">Invite a personal involve</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                            @php $i = 1; @endphp
+                                            @foreach ($staff as $row )
+                                                <div class="col-1">
+                                                    <p style="color: #010101">{{ $i++ }}</p>
+                                                </div>
+                                                <div class="col-5">
+                                                    <p style="color: #010101">{{ $row->name }}</p>
+                                                </div>
+                                                <div class="col-4">
+                                                    <p style="color: #010101">{{ $row->position }}</p>
+                                                </div>
+                                                <div class="col-2">
+                                                    <a class="btn btn-primary btn-sm" href="{{ route('v1.job-assignment-form.job.invited-staff',['user_id'=>$row->id,'job_id'=>$job->id])}}">Invite</a>
+                                                </div>
+                                            @endforeach
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -250,8 +320,44 @@ $count = 0;
             <h3> Response this Job</h3>
             <input type="hidden" name="id" value="{{ $person_id }}">
             <input type="hidden" name="job_id" value="{{ $job->id }}">
-            <button type="submit" name="response" value="accept" class="btn btn-success">Accept</button>
-            <button type="submit" name="response" value="decline" class="btn btn-danger">Decline</button>
+            <div class="row mt-3 mb-4">
+                <div class="col-4"></div>
+                <div class="col-4 ">
+                    <label for="reason" class="form-label" style="color: #010101" id="reason_label">Reason</label>
+                    <textarea class="form-control" style="color: #010101" name="reason" id="reason" rows="3" placeholder="Enter your reason here" style="display: none;"></textarea>
+                </div>
+                <div class="col-4"></div>
+                <div class="col-4"></div>
+                <div class="col-4 ">
+                    <label for="purpose_at" class="form-label" style="color: #010101" id="purpose_at_label">Purpose Alternative Date</label>
+                    <input type="date" class="form-control" style="color: #010101" name="purpose_at" id="purpose_at" >
+                </div>
+                <div class="col-4"></div>
+            </div>
+            <button type="submit" name="response" value="accept" class="btn btn-success" onclick="hideReason()">Accept</button>
+    <button type="submit" name="response" value="decline" class="btn btn-danger" onclick="showReason()">Decline</button>
+            <script>
+                function showReason() {
+                    document.getElementById('reason_label').style.display = 'block';
+                    document.getElementById('purpose_at_label').style.display = 'block';
+                    document.getElementById('purpose_at').style.display = 'block';
+                    document.getElementById('reason').style.display = 'block';
+                    document.getElementById('reason').setAttribute('required', 'required'); // Make it required when declining
+                    document.getElementById('purpose_at').setAttribute('required', 'required');
+                }
+
+                function hideReason() {
+                    document.getElementById('reason').style.display = 'none';
+                    document.getElementById('reason').removeAttribute('required'); // Remove required when accepting
+
+                    document.getElementById('purpose_at').style.display = 'none';
+                    document.getElementById('purpose_at').removeAttribute('required');
+
+                    document.getElementById('reason_label').style.display = 'none';
+                    document.getElementById('purpose_at_label').style.display = 'none';
+                }
+                hideReason();
+            </script>
         </div>
         @endif
         </form>
