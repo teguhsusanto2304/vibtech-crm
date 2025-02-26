@@ -7,12 +7,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            display: flex;
             height: 100vh;
             background-color: #0C3B5D;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .login-container {
-            width: 40%;
             background: #0C3B5D;
             color: white;
             display: flex;
@@ -39,31 +40,48 @@
             font-weight: bold;
         }
         .image-container {
-            width: 60%;
             background: url('../assets/img/banner.png') no-repeat center center;
             background-size: cover;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 992px) {
+            .login-container {
+                width: 100%;
+                padding: 2rem 1rem;
+            }
+            .image-container {
+                display: none; /* Hide the image on small screens */
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <img src="../assets/img/logo.png" alt="Vibtech Genesis" width="150">
-        <p><em>No Problem! Only Solutions</em></p>
+    <div class="container">
+        <div class="row align-items-center vh-100">
+            <!-- Login Section -->
+            <div class="col-lg-5 col-md-6 mx-auto login-container text-center">
+                <img src="{{ asset('assets/img/logo.png') }}" alt="Vibtech Genesis" width="150">
+                <p><em>No Problem! Only Solutions</em></p>
 
-        <form method="POST" action="{{ route('v1.login') }}">
-            @csrf
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible" role="alert">
-                {{ $errors->first() }}
+                <form method="POST" action="{{ route('v1.login') }}">
+                    @csrf
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible" role="alert">
+                            {{ $errors->first() }}
+                        </div>
+                    @endif
+                    <input type="text" name="email" placeholder="Staff ID">
+                    <input type="password" name="password" placeholder="Password">
+                    <button type="submit">Login</button>
+                </form>
+                <p class="mt-3"><a href="#" class="text-white">Reset Password</a></p>
+                <p class="mt-5">www.vibtech-genesis.com</p>
             </div>
-        @endif
-        <input type="text" name="email" placeholder="Staff ID">
-        <input type="password" name="password" placeholder="Password">
-        <button type="submit">Login</button>
-        </form>
-        <p class="mt-3"><a href="#" class="text-white">Reset Password</a></p>
-        <p class="mt-5">www.vibtech-genesis.com</p>
+
+            <!-- Image Section (Hidden on small screens) -->
+            <div class="col-lg-7 col-md-6 image-container d-none d-md-block vh-100"></div>
+        </div>
     </div>
-    <div class="image-container"></div>
 </body>
 </html>

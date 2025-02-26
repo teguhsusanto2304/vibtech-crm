@@ -1,12 +1,12 @@
-@include('include\head')
+@include('include/head')
   <body>
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
-        @include('include\menu')
+        @include('include/menu')
         <!-- Layout container -->
         <div class="layout-page">
-          @include('include\nav')
+          @include('include/nav')
 
           <!-- Content wrapper -->
           <div class="content-wrapper">

@@ -33,6 +33,12 @@ Route::get('/login', function () {
 Route::get('/v1/login', [LoginController::class, 'showLoginForm'])->name('v1.login');
 Route::post('/v1/login', [LoginController::class, 'login'])->name('v1.login');
 
+Route::get('/clear-cache', function() {
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    return "Cache cleared successfully!";
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/v1/dashboard', [DashboardController::class, 'index']
     )->name('v1.dashboard');

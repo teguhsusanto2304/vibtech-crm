@@ -181,7 +181,7 @@
                     </div>
                     <script src="../assets/vendor/libs/fullcalendar/fullcalendar.js"></script>
                     <script>
-                        let eventsUrl = @json(route('v1.dashboard.events'));
+                        let eventsUrl = "{{ route('v1.dashboard.events') }}";
                     </script>
                     <script src="../assets/js/app-calendar-events.js"></script>
 
