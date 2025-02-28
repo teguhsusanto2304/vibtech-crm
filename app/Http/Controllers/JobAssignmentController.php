@@ -10,15 +10,16 @@ use App\Models\JobAssignment;
 use App\Models\JobAssignmentPersonnel;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
+use App\Notifications\UserNotification;
 
 class JobAssignmentController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:view-job-requisition', ['only' => ['index','show']]);
-        $this->middleware('permission:create-job-requisition', ['only' => ['create','store']]);
-        $this->middleware('permission:edit-job-requisition', ['only' => ['edit','update']]);
+        $this->middleware('permission:view-job-requisition', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create-job-requisition', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit-job-requisition', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-job-requisition', ['only' => ['destroy']]);
     }
     public function index()
@@ -38,12 +39,11 @@ class JobAssignmentController extends Controller
 
     public function list(Request $request)
     {
-        $user = auth()->user();
         $job_type = JobType::all();
         $job_no = $this->generate_autonumber('JA' . date('ym'));
         $users = User::whereNotIn('id', [auth()->id()])->get()->groupBy('department');
         $vehicles = Vehicle::all();
-        return view('job_assignment.list', compact('user', 'job_type', 'job_no', 'users', 'vehicles'))
+        return view('job_assignment.list', compact('job_type', 'job_no', 'users', 'vehicles'))
             ->with('title', 'View Job Requisition')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'View Job Requisition']);
     }
@@ -52,12 +52,35 @@ class JobAssignmentController extends Controller
     {
         $response = $request->input('response');
         $person = JobAssignmentPersonnel::where('id', $request->input('id'))->first();
+        $jobAssignment = JobAssignment::find($person->job_assignment_id);
+        $creator = User::find($jobAssignment->user_id);
+        $member = User::find($person->user_id);
         if ($response === 'accept') {
             $person->assignment_status = 1;
-        } else if($response === 'decline'){
+
+            $creator->notify(new UserNotification(
+                $member->name . ' <strong>accepted</strong> invitation at Job ID ' . $jobAssignment->job_record_id,
+                'accept',
+                route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+            ));
+        } else if ($response === 'decline') {
             $person->assignment_status = 2;
             $person->reason = $request->input('reason');
             $person->purpose_at = $request->input('purpose_at');
+
+            $creator->notify(new UserNotification(
+                $member->name . ' <strong>declined</strong> invitation at Job ID ' . $jobAssignment->job_record_id,
+                'decline',
+                route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+            ));
+        } else if ($response === 'confirm') {
+            $person->assignment_status = 1;
+
+            $creator->notify(new UserNotification(
+                auth()->user()->name . ' <strong>confirmed</strong> invitation at Job ID ' . $jobAssignment->job_record_id,
+                'accept',
+                route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+            ));
         }
         $person->save();
 
@@ -83,11 +106,11 @@ class JobAssignmentController extends Controller
             }
         }
 
-        if($declinedCount>0):
+        if ($declinedCount > 0):
             JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 2]);
         endif;
 
-        if($acceptedCount===$count):
+        if ($acceptedCount === $count):
             JobAssignment::where('id', $request->input('job_id'))->update(['job_status' => 1]);
         endif;
 
@@ -126,6 +149,14 @@ class JobAssignmentController extends Controller
         // Attach personnel to job assignment (Many-to-Many Relationship)
         if (!empty($validated['prsonnel_ids'])) {
             $jobAssignment->personnel()->attach($validated['prsonnel_ids']);
+            foreach ($validated['prsonnel_ids'] as $personnelId) {
+                $user = User::find($personnelId);
+                $user->notify(new UserNotification(
+                    'You has been invited at Job ID ' . $jobAssignment->job_record_id,
+                    'success',
+                    route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+                ));
+            }
         }
 
         // Redirect back with success message
@@ -135,14 +166,14 @@ class JobAssignmentController extends Controller
     public function view($id, $respond)
     {
         $job = JobAssignment::find($id);
-        $staff = User::whereNot('id',auth()->user()->id)
-        ->where('position_level_id',3)
-        ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
-            $query->where('job_assignment_id', $id);
-        })
-        ->get();
+        $staff = User::whereNot('id', auth()->user()->id)
+            ->where('position_level_id', 3)
+            ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
+                $query->where('job_assignment_id', $id);
+            })
+            ->get();
         $personnels = JobAssignmentPersonnel::where('job_assignment_id', $id)->get();
-        return view('job_assignment.view', compact( 'job', 'personnels', 'respond','staff'))
+        return view('job_assignment.view', compact('job', 'personnels', 'respond', 'staff'))
             ->with('title', 'Job Requisition Form Detail')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Detail']);
     }
@@ -258,16 +289,29 @@ class JobAssignmentController extends Controller
         }
     }
 
-    public function invitedStaff($user_id,$job_id)
+    public function invitedStaff($user_id, $job_id)
     {
         $jobAssignment = JobAssignment::findOrFail($job_id);
         $data = [
-            'user_id'=>$user_id,
-            'job_assignment_id'=>$jobAssignment->id,
-            'assignment_status'=>1
+            'user_id' => $user_id,
+            'job_assignment_id' => $jobAssignment->id,
+            'assignment_status' => 3
         ];
         JobAssignmentPersonnel::create($data);
-        return redirect()->route('v1.job-assignment-form.view',['id'=>$job_id,'respond'=>'yes'])->with('success', 'Personnel has been involved Successfully');
+
+        $creator = User::find($jobAssignment->user_id);
+        $member = User::find($user_id);
+        $member->notify(new UserNotification(
+            auth()->user()->name . ' <strong>Invited</strong> you at Job ID ' . $jobAssignment->job_record_id,
+            'success',
+            route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+        ));
+        $creator->notify(new UserNotification(
+            auth()->user()->name . ' <strong>Invited</strong> ' . $member->name . ' at Job ID ' . $jobAssignment->job_record_id,
+            'success',
+            route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+        ));
+        return redirect()->route('v1.job-assignment-form.view', ['id' => $job_id, 'respond' => 'yes'])->with('success', 'Personnel has been involved Successfully');
     }
 
 }

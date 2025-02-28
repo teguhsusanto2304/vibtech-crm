@@ -21,6 +21,7 @@ use App\Http\Controllers\JobAssignmentController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionLevelController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return view('login');
@@ -39,7 +40,11 @@ Route::get('/clear-cache', function() {
     return "Cache cleared successfully!";
 });
 
+
 Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
+    Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
+
     Route::get('/v1/dashboard', [DashboardController::class, 'index']
     )->name('v1.dashboard');
     Route::get('/v1/dashboard/events', [DashboardController::class, 'getEvents']

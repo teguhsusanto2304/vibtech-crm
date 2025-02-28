@@ -63,13 +63,14 @@
 
     <div class="col-md-6">
         <label for="department" class="form-label">Department</label>
-        <select class="form-control" name="department">
+        <select class="form-control" name="department_id">
             <option value="">Choose a Department</option>
-            <option value="Marketing" {{ ($emp->department ?? '') == 'Marketing' ? 'selected' : '' }}>Marketing</option>
-            <option value="Sales" {{ ($emp->department ?? '') == 'Sales' ? 'selected' : '' }}>Sales</option>
-            <option value="Operations" {{ ($emp->department ?? '') == 'Operations' ? 'selected' : '' }}>Operations</option>
-            <option value="IT Network" {{ ($emp->department ?? '') == 'IT Network' ? 'selected' : '' }}>IT Network</option>
-            <option value="System Projects" {{ ($emp->department ?? '') == 'System Projects' ? 'selected' : '' }}>System Projects</option>
+            @foreach ($departments as $department)
+                <option value="{{ $department->id }}"
+                    {{ (old('department_id', isset($emp) ? $emp->department_id : '') == $department->id) ? 'selected' : '' }}>
+                    {{ $department->name }}
+                </option>
+            @endforeach
         </select>
     </div>
 
@@ -78,18 +79,23 @@
         <input type="text" class="form-control" name="location" value="{{ $emp->location ?? '' }}" placeholder="Enter location">
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label for="position" class="form-label">Position</label>
-        <select class="form-control" name="position">
-            <option value="">Choose a Position</option>
-            <option value="Marketing & Events" {{ ($emp->position ?? '') == 'Marketing & Events' ? 'selected' : '' }}>Marketing & Events</option>
-            <option value="Human Resources" {{ ($emp->position ?? '') == 'Human Resources' ? 'selected' : '' }}>Human Resources</option>
-            <option value="General Manager" {{ ($emp->position ?? '') == 'General Manager' ? 'selected' : '' }}>General Manager</option>
-            <option value="Sales & Application Engineer" {{ ($emp->position ?? '') == 'Sales & Application Engineer' ? 'selected' : '' }}>Sales & Application Engineer</option>
+        <input type="text" class="form-control" name="position"
+        value="{{ $emp->position ?? '' }}" placeholder="Enter position">
+    </div>
+    <div class="col-md-4">
+        <label for="position" class="form-label">Position Level</label>
+        <select class="form-control" name="position_level_id">
+            <option value="">Choose a Position Level</option>
+            @foreach ($position_levels as $position_level)
+                <option value="{{ $position_level->id }}" {{ (old('department_id', isset($emp) ? $emp->position_level_id : '') == $position_level->id) ? 'selected' : '' }}>
+                    {{ $position_level->name }}  {{-- Display the department name --}}
+                </option>
+            @endforeach
         </select>
     </div>
-
-    <div class="col-md-6">
+    <div class="col-md-4">
         <label for="joined_at" class="form-label">Date Joined</label>
         <input type="date" class="form-control" name="joined_at" value="{{ $emp->joined_at ?? '' }}">
     </div>
@@ -123,7 +129,7 @@
             <option value="">Choose a Role</option>
 
             @foreach ($roles as $role)
-                <option value="{{ $role->name }}" @if($emp->roles->first()->id == $role->id) selected @endif>{{ $role->name }}</option>
+                <option value="{{ $role->id }}" @if($emp->roles->first()->id == $role->id) selected @endif>{{ $role->name }}</option>
             @endforeach
         </select>
     </div>

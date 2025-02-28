@@ -10,14 +10,21 @@ use app\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Validation\Rule;
+
+use App\Notifications\UserNotification;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
-        return view('user.list', compact('user'))->with('title', 'User Management')->with('breadcrumb', ['Home', 'Master Data', 'User Management']);
+
+        $user = User::find(1); // Change to dynamic user
+$user->notify(new UserNotification(
+    'You has been invited',
+    'success',
+    route('v1.job-assignment-form.view', ['id'=>1,'respond'=>'yes'])
+));
+        return view('user.list')->with('title', 'User Management')->with('breadcrumb', ['Home', 'Master Data', 'User Management']);
     }
 
     public function create()
@@ -73,9 +80,11 @@ class UserController extends Controller
 
     public function edit($emp_id)
     {
-        $roles = Role::all();
         $emp = User::findOrFail($emp_id);
-        return view('user.edit', compact('roles','emp'))->with('title', 'Edit a User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Edit a User']);
+        $roles = Role::all();
+        $departments = Department::all();
+        $position_levels = PositionLevel::all();
+        return view('user.edit',compact('emp','roles','departments','position_levels'))->with('title', 'Edit a User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Edit a User']);
     }
 
     public function update(Request $request, $id)
@@ -84,9 +93,10 @@ class UserController extends Controller
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'department' => 'nullable|string|max:255',
+            'department_id' => 'required',
             'location' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
+            'position_level_id' => 'required',
             'joined_at' => 'nullable|date',
             'dob' => 'nullable|date',
             'phone_number' => 'nullable|string|max:20',
@@ -109,8 +119,15 @@ class UserController extends Controller
 
         $user->update($validatedData);
 
-        $user->assignRole($request->input('role_id'));
+        $role = Role::find($request->input('role_id')); // Get role by ID
+
+        if ($role) {
+            $user->assignRole($role->name); // Assign by name
             Artisan::call('permission:cache-reset');
+        } else {
+            return back()->with('error', 'Invalid role selected.');
+        }
+
 
         return redirect()->route('v1.users')->with('success', 'User updated successfully.');
     }
@@ -126,7 +143,10 @@ class UserController extends Controller
                     $btn .= ' <a href="javascript:void(0)" class="delete btn btn-danger btn-sm">Delete</a>';
                     return $btn;
                 })
-                ->rawColumns(['action'])
+                ->addColumn('dept', function($row) {
+                    return $row->dept->name ?? 'No Department';
+                })
+                ->rawColumns(['action','dept'])
                 ->make(true);
         }
     }

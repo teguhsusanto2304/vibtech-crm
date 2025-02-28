@@ -40,7 +40,7 @@
             font-weight: bold;
         }
         .image-container {
-            background: url('../assets/img/banner.png') no-repeat center center;
+            background: url('{{ asset('assets/img/banner.png') }}') no-repeat center center;
             background-size: cover;
         }
 

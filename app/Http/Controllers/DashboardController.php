@@ -4,12 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\JobAssignment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+
+
 
 class DashboardController extends Controller
 {
     public function index()
     {
         return view('dashboard')->with('title', 'Dashboard')->with('breadcrumb', ['Home', 'Dashboard']);
+    }
+
+    public function getNotifications()
+    {
+        $notifications = Auth::user()->notifications->take(5); // Get latest 5 notifications
+
+        return response()->json($notifications);
     }
 
     public function getEvents()

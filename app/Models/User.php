@@ -54,6 +54,12 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function dept()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+
     public function assignedJobs()
     {
         return $this->belongsToMany(JobAssignment::class, 'job_assignment_personnels', 'user_id', 'job_assignment_id');

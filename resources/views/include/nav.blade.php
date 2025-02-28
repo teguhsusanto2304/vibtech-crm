@@ -26,34 +26,70 @@ id="layout-navbar" >
     <!-- Place this tag where you want the button to render. -->
 
     <li class="nav-item navbar-dropdown dropdown-user dropdown">
-        <a
-        class="nav-link dropdown-toggle hide-arrow p-0"
-        href="javascript:void(0);"
-        data-bs-toggle="dropdown">
-        <i class="bx bx-bell bx-md" style="color: #fff;font-size:24px; margin-right:25px;"></i>
-    </a>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li>
-        <div class="dropdown-divider my-1"></div>
-      </li>
-      <li>
-        <a class="dropdown-item" href="#">
-          <small style="color: green;">Your claim has been approved [12:31]</small>
+        <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
+            <i class="bx bx-bell bx-md" style="color: #fff; font-size: 24px; margin-right: 25px;"></i>
+            <span class="badge bg-danger rounded-circle position-absolute" id="notification-count" style="top: 5px; right: 30px; font-size: 12px;">0</span>
         </a>
-      </li>
-      <li>
-        <a class="dropdown-item" href="#">
-          <small style="color: red;">Your claim has been rejected [07:45]</small>
-        </a>
-      </li>
-      <li>
-        <div class="dropdown-divider my-1"></div>
-      </li>
-      <a class="dropdown-item" href="#">
-        <small style="color: orange;">Helen was published a new memo [2d 07:55]</small>
-      </a>
-    </ul>
-  </li>
+
+        <ul class="dropdown-menu dropdown-menu-end" id="notification-list">
+            <li><div class="dropdown-divider my-1"></div></li>
+            <!-- Notifications will be inserted here -->
+            <li class="text-center py-2">
+                <a href="#" id="mark-all-read" class="text-muted">Mark all as read</a>
+            </li>
+        </ul>
+    </li>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            function fetchNotifications() {
+                $.ajax({
+                    url: "{{ route('notifications.get') }}", // Define route in web.php
+                    method: "GET",
+                    success: function (data) {
+                        let list = $("#notification-list");
+                        list.find("li:not(:last)").remove(); // Clear existing notifications
+
+                        if (data.length > 0) {
+                            $("#notification-count").text(data.length).show();
+                            data.forEach(function (notif) {
+                                let color = notif.data.type === "success" ? "green" :
+                                            notif.data.type === "error" ? "red" :
+                                            notif.data.type === "decline" ? "red" :
+                                            notif.data.type === "accept" ? "blue" :
+                                            "orange";
+                                            let link = notif.data.url ? notif.data.url : "#";
+                                list.prepend(`
+                                    <li>
+                                        <a class="dropdown-item" href="${link}">
+                                            <small style="color: ${color};">${notif.data.message} [${notif.data.time}]</small>
+                                        </a>
+                                    </li>
+                                `);
+                            });
+                        } else {
+                            $("#notification-count").hide();
+                            list.prepend(`<li class="text-center py-2"><small>No new notifications</small></li>`);
+                        }
+                    }
+                });
+            }
+
+            fetchNotifications(); // Fetch notifications on page load
+
+            $("#mark-all-read").click(function () {
+                $.ajax({
+                    url: "{{ route('notifications.read') }}",
+                    method: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function () {
+                        fetchNotifications();
+                    }
+                });
+            });
+        });
+    </script>
+
 
     <!-- User -->
     <li class="nav-item navbar-dropdown dropdown-user dropdown">

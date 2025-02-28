@@ -5,7 +5,7 @@
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
-            <!-- custom-icon Breadcrumb-->
+            <!-- Breadcrumb -->
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb breadcrumb-custom-icon">
                     @foreach ($breadcrumb as $item)
@@ -18,6 +18,8 @@
             </nav>
 
             <h3>{{ $title }}</h3>
+
+            <!-- Custom Styles -->
             <style>
                 .btn_primary {
                     background-color: #003366;
@@ -29,28 +31,30 @@
                     color: #fff;
                 }
             </style>
+
+            <!-- Responsive Cards -->
             <div class="tab-pane fade show active" id="btn-text-alignment-preview" role="tabpanel"
                 aria-labelledby="btn-text-alignment-preview-tab">
                 <div class="row gy-4">
-                    <div class="col">
+                    <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body">
                                 <h5 class="card-title">Create New</h5>
                                 <p class="card-text">Create a New Job Assignment</p>
-                                <a href="{{ route('v1.job-assignment-form.create')}}" class="btn btn_primary">Go Create New</a>
+                                <a href="{{ route('v1.job-assignment-form.create') }}" class="btn btn_primary">Go Create New</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body">
                                 <h5 class="card-title">View Job Assignment</h5>
                                 <p class="card-text">Track Job Assignment Progress</p>
-                                <a href="{{ route('v1.job-assignment-form.list')}}" class="btn btn_primary">Go View Job Assignment</a>
+                                <a href="{{ route('v1.job-assignment-form.list') }}" class="btn btn_primary">Go View Job Assignment</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col">
+                    <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body">
                                 <h5 class="card-title">Job Assignment History</h5>
