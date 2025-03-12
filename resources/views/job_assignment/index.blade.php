@@ -30,41 +30,53 @@
                     background-color: #f0cf27;
                     color: #fff;
                 }
+
+                .equal-height-cards .card {
+                    min-height: 100%;
+                    /* Ensure all cards have the same height */
+                }
             </style>
 
             <!-- Responsive Cards -->
             <div class="tab-pane fade show active" id="btn-text-alignment-preview" role="tabpanel"
                 aria-labelledby="btn-text-alignment-preview-tab">
-                <div class="row gy-4">
+                <div class="row gy-4 {{ $title == 'Job Requisition Form' ? 'equal-height-cards' : '' }}">
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
+                            <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Create New</h5>
-                                <p class="card-text">Create a New Job Assignment</p>
-                                <a href="{{ route('v1.job-assignment-form.create') }}" class="btn btn_primary">Go Create New</a>
+                                <p class="card-text">Create a New {{ $title }}</p>
+                                @can('create-job-requisition')
+                                    <a href="{{ route('v1.job-assignment-form.create') }}" class="btn btn_primary mt-auto">
+                                        Create New</a>
+                                @else
+                                    <a href="#" class="btn btn_primary mt-auto">You Can't Create New</a>
+                                @endcan
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
-                                <h5 class="card-title">View Job Assignment</h5>
-                                <p class="card-text">Track Job Assignment Progress</p>
-                                <a href="{{ route('v1.job-assignment-form.list') }}" class="btn btn_primary">Go View Job Assignment</a>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">View {{ $title }}</h5>
+                                <p class="card-text">Track {{ $title }} Progress</p>
+                                <a href="{{ route('v1.job-assignment-form.list') }}" class="btn btn_primary mt-auto">View
+                                    Job Assignment</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
-                                <h5 class="card-title">Job Assignment History</h5>
-                                <p class="card-text">Job Assignment History Records</p>
-                                <a href="javascript:void(0);" class="btn btn_primary">Go Job Assignment History</a>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ $title }} History</h5>
+                                <p class="card-text">{{ $title }} History Records</p>
+                                <a href="{{ route('v1.job-assignment-form.history')}}" class="btn btn_primary mt-auto">{{ $title }} History</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
         </div>
 @endsection

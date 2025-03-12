@@ -23,6 +23,15 @@
 
             <h3>{{ $title }}</h3>
             <style>
+                                input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+    background-color: rgb(241, 243, 244) !important;
+    color: black !important;
+    box-shadow: 0 0 0px 1000px rgb(248, 249, 249) inset !important; /* Forces color */
+}
+
                 .form-container {
                     background-color: #fff;
                     /* Dark blue background */
@@ -60,6 +69,8 @@
                     /* Border color */
                 }
 
+
+
                 .form-check-input {
                     background-color: #fff;
                     /* Radio button background color */
@@ -67,10 +78,7 @@
                     /* Radio button border color */
                 }
 
-                .form-check-input:checked {
-                    background-color: #ffffff34;
-                    /* Checked radio button color */
-                }
+
 
                 .form-select {
                     background-color: white;
@@ -86,8 +94,14 @@
                 }
             </style>
                     @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible" role="alert">
-                        {{ $errors->first() }}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Oops! Something went wrong:</strong>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
             <div class="card" style="background-color: #004080">
@@ -99,16 +113,24 @@
                             <input type="text" class="form-control form-control-input" name="job_record_id" value="{{ $job_no }}" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label for="inputPassword4" class="form-label">Type of Job</label>
-                            <input type="text" class="form-control form-control-input" name="job_type"  >
+                            <label for="inputPassword4" class="form-label">Type of Job {{ date('Y-m-d H:n:s') }}</label>
+                            <input type="text" class="form-control form-control-input" name="job_type"  value="{{ old('job_type')}}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
+                            <br>
+                            <input class="form-check-input" type="checkbox" value="1" name="job_status" />
+                            <label class="form-label" for="defaultCheck1">
+                                Yes
+                            </label>
                         </div>
                         <div class="col-6">
                             <label for="inputAddress" class="form-label">Business Name</label>
-                            <input type="text" class="form-control form-control-input" name="business_name" placeholder="enter business name">
+                            <input type="text" class="form-control form-control-input" name="business_name" value="{{ old('business_name')}}" placeholder="enter business name">
                         </div>
                         <div class="col-6">
                             <label for="inputAddress2" class="form-label">Business Address</label>
-                            <input type="text" class="form-control form-control-input" name="business_address"
+                            <input type="text" class="form-control form-control-input" name="business_address" value="{{ old('business_address')}}"
                                 placeholder="enter business addressr">
                         </div>
                         <div class="col-md-12">
@@ -127,7 +149,7 @@
                         <div class="col-md-8">
                         </div>
                         <div class="col-md-6">
-                            <label for="inputState" class="form-label">Personnel Involved</label>
+                            <label for="inputState" class="form-label">Sent To</label>
                             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                             <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
                                 rel="stylesheet" />
@@ -144,8 +166,8 @@
                             </style>
                             <select class="form-select select2 " name="prsonnel_ids[]" id="personnel-multiple"
                                 multiple="multiple">
-                                @foreach ($users as $department => $departmentUsers)
-                                    <optgroup label="{{ $department }}">
+                                @foreach ($users as $dept => $departmentUsers)
+                                    <optgroup label="{{ $dept }}">
                                         @foreach ($departmentUsers as $user)
                                             <option value="{{ $user->id }}">{{ $user->name }}</option>
                                         @endforeach

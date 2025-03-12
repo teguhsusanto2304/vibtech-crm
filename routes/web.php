@@ -22,6 +22,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionLevelController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleBookingController;
+use App\Http\Controllers\VehicleController;
 
 Route::get('/', function () {
     return view('login');
@@ -34,9 +37,13 @@ Route::get('/login', function () {
 Route::get('/v1/login', [LoginController::class, 'showLoginForm'])->name('v1.login');
 Route::post('/v1/login', [LoginController::class, 'login'])->name('v1.login');
 
-Route::get('/clear-cache', function() {
+Route::get('/clear-cache', function () {
     Artisan::call('config:clear');
     Artisan::call('cache:clear');
+    Artisan::call('view:clear');
+    Artisan::call('route:clear');
+    Artisan::call('event:clear');
+    Artisan::call('package:discover --ansi');
     return "Cache cleared successfully!";
 });
 
@@ -45,195 +52,248 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
     Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
 
-    Route::get('/v1/dashboard', [DashboardController::class, 'index']
-    )->name('v1.dashboard');
-    Route::get('/v1/dashboard/events', [DashboardController::class, 'getEvents']
-    )->name('v1.dashboard.events');
-    Route::get('/v1/dashboard/eventsbydate/{eventAt}', [DashboardController::class, 'getEventsByDate']
-    )->name('v1.dashboard.eventsbydate');
 
-    Route::get('/v1/users', [UserController::class, 'index']
-    )->name('v1.users');
-    Route::get('/v1/users/create', [UserController::class, 'create']
-    )->name('v1.users.create');
-    Route::post('/v1/users/store', [UserController::class, 'store']
-    )->name('v1.users.store');
-    Route::get('/users/{emp_id}/edit', [UserController::class, 'edit'])->name('v1.users.edit');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('v1.users.update');
 
-    Route::get('/v1/users/data', [UserController::class, 'getUsers'])->name('v1.users.data');
-    Route::get('/v1/job-assignment-form', [JobAssignmentController::class, 'index'])->name('v1.job-assignment-form');
-    Route::get('/v1/job-assignment-form/create', [JobAssignmentController::class, 'create'])->name('v1.job-assignment-form.create');
-    Route::post('/v1/job-assignment-form/store', [JobAssignmentController::class, 'store'])->name('v1.job-assignment-form.store');
-    Route::post('/v1/job-assignment-form/respond', [JobAssignmentController::class, 'respond'])->name('v1.job-assignment-form.respond');
-    Route::get('/v1/job-assignment-form/list', [JobAssignmentController::class, 'list'])->name('v1.job-assignment-form.list');
-    Route::get('/v1/job-assignment-form/view/{id}/{respond}', [JobAssignmentController::class, 'view'])->name('v1.job-assignment-form.view');
-    Route::get('/v1/job-assignment-form/job-list', [JobAssignmentController::class, 'getJobsAssignments'])->name('v1.job-assignment-form.job-list');
-    Route::get('/v1/job-assignment-form/job-list-user', [JobAssignmentController::class, 'getJobsAssignmentsByUser'])->name('v1.job-assignment-form.job-list-user');
-    Route::get('/v1/job-assignment-form/invited-staff/{user_id}/{job_id}', [JobAssignmentController::class, 'invitedStaff'])->name('v1.job-assignment-form.job.invited-staff');
+    Route::prefix('v1')->group(function () {
 
-    Route::get('/v1/roles', [RoleController::class, 'index'])->name('v1.roles');
-    Route::get('/v1/roles/data', [RoleController::class, 'getRoles'])->name('v1.roles.data');
-    Route::get('/v1/roles/create', [RoleController::class, 'create'])->name('v1.roles.create');
-    Route::post('/v1/roles/store', [RoleController::class, 'store'])->name('v1.roles.store');
-    Route::get('/v1/roles/{id}/show', [RoleController::class, 'show'])->name('v1.roles.show');
-    Route::get('/v1/roles/{id}/edit', [RoleController::class, 'edit'])->name('v1.roles.edit');
-    Route::put('/v1/roles/{id}', [RoleController::class, 'update'])->name('v1.roles.update');
-    Route::put('/v1/roles/{id}/delete', [RoleController::class, 'destroy'])->name('v1.roles.destroy');
-    Route::post('/v1/roles/assign_permissions',[RoleController::class, 'assignPermissions'])->name('v1.roles.assign_permissions');
+        // 🔹 Dashboard Routes
+        Route::prefix('dashboard')->controller(DashboardController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.dashboard');
+            Route::get('/events', 'getEvents')->name('v1.dashboard.events');
+            Route::get('/eventsbydate/{eventAt}', 'getEventsByDate')->name('v1.dashboard.eventsbydate');
+        });
 
-    Route::get('/v1/permissions', [PermissionController::class, 'index'])->name('v1.permissions');
-    Route::get('/v1/permissions/data', [PermissionController::class, 'getPermissions'])->name('v1.permissions.data');
-    Route::get('/v1/permissions/create', [PermissionController::class, 'create'])->name('v1.permissions.create');
-    Route::post('/v1/permissions/store', [PermissionController::class, 'store'])->name('v1.permissions.store');
+        // 🔹 User Management Routes
+        Route::prefix('users')->controller(UserController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.users');
+            Route::get('/create', 'create')->name('v1.users.create');
+            Route::post('/store', 'store')->name('v1.users.store');
+            Route::get('/{emp_id}/edit', 'edit')->name('v1.users.edit');
+            Route::put('/{id}', 'update')->name('v1.users.update');
+            Route::get('/data', 'getUsers')->name('v1.users.data');
+            Route::post('/toggle-status','toggleStatus')->name('v1.users.toggle-status');
+        });
 
-    Route::get('/v1/departments', [DepartmentController::class, 'index'])->name('v1.departments');
-    Route::get('/v1/departments/data', [DepartmentController::class, 'getDepartments'])->name('v1.departments.data');
-    Route::get('/v1/departments/create', [DepartmentController::class, 'create'])->name('v1.departments.create');
-    Route::post('/v1/departments/store', [DepartmentController::class, 'store'])->name('v1.departments.store');
+        // Group routes for JobAssignmentController
+        Route::prefix('job-assignment-form')->controller(JobAssignmentController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.job-assignment-form');
+            Route::get('/create', 'create')->name('v1.job-assignment-form.create');
+            Route::post('/store', 'store')->name('v1.job-assignment-form.store');
+            Route::post('/respond', 'respond')->name('v1.job-assignment-form.respond');
+            Route::get('/list', 'list')->name('v1.job-assignment-form.list');
+            Route::get('/view/{id}/{respond}', 'view')->name('v1.job-assignment-form.view');
+            Route::get('/job-list', 'getJobsAssignments')->name('v1.job-assignment-form.job-list');
+            Route::get('/job-list-user', 'getJobsAssignmentsByUser')->name('v1.job-assignment-form.job-list-user');
+            Route::get('/invited-staff/{user_id}/{job_id}', 'invitedStaff')->name('v1.job-assignment-form.job.invited-staff');
+            Route::get('/history', 'history')->name('v1.job-assignment-form.history');
+            Route::get('/job-list/history','getJobsAssignmentHistories')->name('v1.job-assignment-form.history.data');
+            Route::post('/update-status','updateJobAssignmentStatus')->name('v1.job-assignment-form.history.update-status');
+            Route::post('/update-vehicle-require','updateJobAssignmentVehicleRequire')->name('v1.job-assignment-form.update-vehicle-require');
+            Route::get('/send-email','sendBookingEmail')->name('v1.job-assignment-form.send-email');
+        });
 
-    Route::get('/v1/position-levels', [PositionLevelController::class, 'index'])->name('v1.position-levels');
-    Route::get('/v1/position-levels/data', [PositionLevelController::class, 'getPositionLevels'])->name('v1.position-levels.data');
-    Route::get('/v1/position-levels/create', [PositionLevelController::class, 'create'])->name('v1.position-levels.create');
-    Route::post('/v1/position-levels/store', [PositionLevelController::class, 'store'])->name('v1.position-levels.store');
+        // 🔹 Role Management Routes
+        Route::prefix('roles')->controller(RoleController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.roles');
+            Route::get('/data', 'getRoles')->name('v1.roles.data');
+            Route::get('/create', 'create')->name('v1.roles.create');
+            Route::post('/store', 'store')->name('v1.roles.store');
+            Route::get('/{id}/show', 'show')->name('v1.roles.show');
+            Route::get('/{id}/edit', 'edit')->name('v1.roles.edit');
+            Route::put('/{id}', 'update')->name('v1.roles.update');
+            Route::put('/{id}/delete', 'destroy')->name('v1.roles.destroy');
+            Route::post('/assign_permissions', 'assignPermissions')->name('v1.roles.assign_permissions');
+        });
+
+        // 🔹 Permission Management Routes
+        Route::prefix('permissions')->controller(PermissionController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.permissions');
+            Route::get('/data', 'getPermissions')->name('v1.permissions.data');
+            Route::get('/create', 'create')->name('v1.permissions.create');
+            Route::post('/store', 'store')->name('v1.permissions.store');
+        });
+
+        // 🔹 Department Management Routes
+        Route::prefix('departments')->controller(DepartmentController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.departments');
+            Route::get('/data', 'getDepartments')->name('v1.departments.data');
+            Route::get('/create', 'create')->name('v1.departments.create');
+            Route::post('/store', 'store')->name('v1.departments.store');
+        });
+
+        // 🔹 Position Level Routes
+        Route::prefix('position-levels')->controller(PositionLevelController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.position-levels');
+            Route::get('/data', 'getPositionLevels')->name('v1.position-levels.data');
+            Route::get('/create', 'create')->name('v1.position-levels.create');
+            Route::post('/store', 'store')->name('v1.position-levels.store');
+        });
+
+        // 🔹 Vehicle Booking Routes
+        Route::prefix('vehicle-bookings')->controller(VehicleBookingController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.vehicle-bookings');
+            Route::get('/create', 'create')->name('v1.vehicle-bookings.create');
+            Route::post('/store', 'store')->name('v1.vehicle-bookings.store');
+            Route::get('/list', 'list')->name('v1.vehicle-bookings.list');
+            Route::get('/data','getData')->name('v1.vehicle-bookings.data');
+        });
+
+        // 🔹 Vehicles Routes
+        Route::prefix('vehicles')->controller(VehicleController::class)->group(function () {
+            Route::get('/create', 'create')->name('v1.vehicles.create');
+            Route::post('/store', 'store')->name('v1.vehicles.store');
+            Route::get('/list', 'list')->name('v1.vehicles.list');
+            Route::get('/car-image', 'getCarImages')->name('v1.vehicles.car-image');
+
+        });
+
+
+    });
+
+
 
 
 
 });
 
-Route::post('/dologin', function (Request $request)
-    {
-        $email = $request->input('email');
-        $password = $request->input('password');
+Route::post('/dologin', function (Request $request) {
+    $email = $request->input('email');
+    $password = $request->input('password');
 
-        if ($email == 'marketing@vib-tech.com.sg') {
-            $request->session()->put('role', 'marketing');
-            return redirect()->intended(route('dashboard'));
-        } else if ($email == 'sales@vib-tech.com.sg') {
-            $request->session()->put('role', 'sales');
-            return redirect()->intended(route('dashboard'));
-        } else if ($email == 'operations@vib-tech.com.sg') {
-            $request->session()->put('role', 'operations');
-            return redirect()->intended(route('dashboard'));
-        } else if ($email == 'project@vib-tech.com.sg') {
-            $request->session()->put('role', 'project');
-            return redirect()->intended(route('dashboard'));
-        } else if ($email == 'it@vib-tech.com.sg') {
-            $request->session()->put('role', 'it');
-            return redirect()->intended(route('dashboard'));
-        } else if ($email == 'admin@vib-tech.com.sg') {
-            $request->session()->put('role', 'admin');
-            return redirect()->intended(route('dashboard'));
-        } else {
+    if ($email == 'marketing@vib-tech.com.sg') {
+        $request->session()->put('role', 'marketing');
+        return redirect()->intended(route('dashboard'));
+    } else if ($email == 'sales@vib-tech.com.sg') {
+        $request->session()->put('role', 'sales');
+        return redirect()->intended(route('dashboard'));
+    } else if ($email == 'operations@vib-tech.com.sg') {
+        $request->session()->put('role', 'operations');
+        return redirect()->intended(route('dashboard'));
+    } else if ($email == 'project@vib-tech.com.sg') {
+        $request->session()->put('role', 'project');
+        return redirect()->intended(route('dashboard'));
+    } else if ($email == 'it@vib-tech.com.sg') {
+        $request->session()->put('role', 'it');
+        return redirect()->intended(route('dashboard'));
+    } else if ($email == 'admin@vib-tech.com.sg') {
+        $request->session()->put('role', 'admin');
+        return redirect()->intended(route('dashboard'));
+    } else {
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ]);
     }
-    })->name('dologin');
+})->name('dologin');
 
-Route::post('/logout',function(Request $request) {
+Route::post('/logout', function (Request $request) {
     $request->session()->invalidate();
 
-        $request->session()->regenerateToken();
+    $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+    return redirect()->route('login');
 
 })->name('logout');
 
 Route::get('/dashboard', function () {
-    return view('dashboard',['title'=>'Dashboard','breadcrumb'=>['Home','Dashboard']]);
+    return view('dashboard', ['title' => 'Dashboard', 'breadcrumb' => ['Home', 'Dashboard']]);
 })->name('dashboard');
 
 Route::get('/job-assignment-form', function () {
-    return view('dummy',['title'=>'Job Assignment Form','breadcrumb'=>['Home','Staff Task','Job Assignment Form']]);
+    return view('dummy', ['title' => 'Job Assignment Form', 'breadcrumb' => ['Home', 'Staff Task', 'Job Assignment Form']]);
 })->name('job-assignment-form');
 
 Route::get('/leave-application', function () {
-    return view('dummy',['title'=>'Leave Application','breadcrumb'=>['Home','Staff Task','Leave Application']]);
+    return view('dummy', ['title' => 'Leave Application', 'breadcrumb' => ['Home', 'Staff Task', 'Leave Application']]);
 })->name('leave-application');
 
 Route::get('/vehicle-booking', function () {
-    return view('vehicle_booking',['title'=>'Vehicle Booking','breadcrumb'=>['Home','Staff Task','Vehicle Booking']]);
+    return view('vehicle_booking', ['title' => 'Vehicle Booking', 'breadcrumb' => ['Home', 'Staff Task', 'Vehicle Booking']]);
 })->name('vehicle-booking');
 
 Route::get('/vehicle-booking/create', function () {
-    return view('vehicle_booking_create',['title'=>'Vehicle Booking','breadcrumb'=>['Home','Staff Task','Vehicle Booking','Create a Vehicle Booking']]);
+    return view('vehicle_booking_create', ['title' => 'Vehicle Booking', 'breadcrumb' => ['Home', 'Staff Task', 'Vehicle Booking', 'Create a Vehicle Booking']]);
 })->name('vehicle-booking-create');
 
 Route::get('/vehicle-booking/list', function () {
-    return view('vehicle_booking_list',['title'=>'Vehicle Booking','breadcrumb'=>['Home','Staff Task','Vehicle Booking']]);
+    return view('vehicle_booking_list', ['title' => 'Vehicle Booking', 'breadcrumb' => ['Home', 'Staff Task', 'Vehicle Booking']]);
 })->name('vehicle-booking-list');
 
 Route::get('/vehicle-booking/view', function (Request $request) {
-    return view('vehicle_booking_view',['title'=>'Vehicle Booking','breadcrumb'=>['Home','Staff Task','Vehicle Booking','Vehicle Booking List'],'id'=>$request->get('id')]);
+    return view('vehicle_booking_view', ['title' => 'Vehicle Booking', 'breadcrumb' => ['Home', 'Staff Task', 'Vehicle Booking', 'Vehicle Booking List'], 'id' => $request->get('id')]);
 })->name('vehicle-booking-view');
 
 Route::get('/referral-program', function () {
-    return view('dummy',['title'=>'Referral Program','breadcrumb'=>['Home','Staff Task','Referral Program']]);
+    return view('dummy', ['title' => 'Referral Program', 'breadcrumb' => ['Home', 'Staff Task', 'Referral Program']]);
 })->name('referral-program');
 
 Route::get('/submit-claim', function () {
-    return view('submit_claim',['title'=>'Submit Claim','breadcrumb'=>['Home','Staff Task','Submit Claim']]);
+    return view('submit_claim', ['title' => 'Submit Claim', 'breadcrumb' => ['Home', 'Staff Task', 'Submit Claim']]);
 })->name('submit-claim');
 
 Route::get('/submit-claim/create', function () {
-    return view('submit_claim_create',['title'=>'Submit Claim','breadcrumb'=>['Home','Staff Task','Submit Claim']]);
+    return view('submit_claim_create', ['title' => 'Submit Claim', 'breadcrumb' => ['Home', 'Staff Task', 'Submit Claim']]);
 })->name('submit-claim-create');
 
 Route::get('/submit-claim/view', function (Request $request) {
-    return view('submit_claim_view',['title'=>'Submit Claim','breadcrumb'=>['Home','Staff Task','Submit Claim','Submit Claim Status'],'id'=>$request->get('id')]);
+    return view('submit_claim_view', ['title' => 'Submit Claim', 'breadcrumb' => ['Home', 'Staff Task', 'Submit Claim', 'Submit Claim Status'], 'id' => $request->get('id')]);
 })->name('submit-claim-view');
 
 Route::get('/submit-claim/list', function () {
-    return view('submit_claim_list',['title'=>'Submit Claim','breadcrumb'=>['Home','Staff Task','Submit Claim']]);
+    return view('submit_claim_list', ['title' => 'Submit Claim', 'breadcrumb' => ['Home', 'Staff Task', 'Submit Claim']]);
 })->name('submit-claim-list');
 
 Route::get('/management-menu', function () {
-    return view('dummy',['title'=>'Management Menu','breadcrumb'=>['Home','Staff Task','Management Menu']]);
+    return view('dummy', ['title' => 'Management Menu', 'breadcrumb' => ['Home', 'Staff Task', 'Management Menu']]);
 })->name('management-menu');
 
 Route::get('/management-memo', function () {
-    return view('management_memo',['title'=>'Management Memo','breadcrumb'=>['Home','Staff Task','Management Memo']]);
+    return view('management_memo', ['title' => 'Management Memo', 'breadcrumb' => ['Home', 'Staff Task', 'Management Memo']]);
 })->name('management-memo');
 
 Route::get('/employee-handbook', function () {
-    return view('emp_handbook',['title'=>'Employee Handbook','breadcrumb'=>['Home','Staff Task','Employee Handbook']]);
+    return view('emp_handbook', ['title' => 'Employee Handbook', 'breadcrumb' => ['Home', 'Staff Task', 'Employee Handbook']]);
 })->name('employee-handbook');
 
 Route::get('/whistleblowing-policy', function () {
-    return view('whistleblowing_policy',['title'=>'Whistleblowing Policy','breadcrumb'=>['Home','Staff Task','Employee Handbook']]);
+    return view('whistleblowing_policy', ['title' => 'Whistleblowing Policy', 'breadcrumb' => ['Home', 'Staff Task', 'Employee Handbook']]);
 })->name('whistleblowing-policy');
 
 Route::get('/profile', function () {
     $user = auth()->user();
-    return view('profile',['title'=>'My Profile','breadcrumb'=>['Home','My Profile'],'user'=>$user]);
+    return view('profile', ['title' => 'My Profile', 'breadcrumb' => ['Home', 'My Profile'], 'user' => $user]);
 })->name('profile');
 
+Route::get('/profile/change-password', function () {
+    return view('change_password', ['title' => 'Change Password', 'breadcrumb' => ['Home', 'My Profile', 'Change Password']]);
+})->name('profile.change-password');
+
+Route::post('/profile/password-update', [ProfileController::class, 'updatePassword'])->name('profile.password-update');
+
 Route::get('/inbox', function () {
-    return view('inbox',['title'=>'Inbox','breadcrumb'=>['Home','Inbox']]);
+    return view('inbox', ['title' => 'Inbox', 'breadcrumb' => ['Home', 'Inbox']]);
 })->name('inbox');
 
 Route::get('/shipping-status', function () {
-    return view('shipping_status',['title'=>'Shipping/Delivery Status','breadcrumb'=>['Home','Admin Tools','Shipping/Delivery Status']]);
+    return view('shipping_status', ['title' => 'Shipping/Delivery Status', 'breadcrumb' => ['Home', 'Admin Tools', 'Shipping/Delivery Status']]);
 })->name('shipping-status');
 
 Route::get('/shipping-status-create', function () {
-    return view('shipping_status_create',['title'=>'Create New Order','breadcrumb'=>['Home','Admin Tools','Shipping/Delivery Status','Create New Order']]);
+    return view('shipping_status_create', ['title' => 'Create New Order', 'breadcrumb' => ['Home', 'Admin Tools', 'Shipping/Delivery Status', 'Create New Order']]);
 })->name('shipping-status-create');
 
 Route::get('/shipping-status-view', function () {
-    return view('shipping_status_view',['title'=>'Shipping/Delivery Status Detail','breadcrumb'=>['Home','Admin Tools','Shipping/Delivery Status','Existing Order']]);
+    return view('shipping_status_view', ['title' => 'Shipping/Delivery Status Detail', 'breadcrumb' => ['Home', 'Admin Tools', 'Shipping/Delivery Status', 'Existing Order']]);
 })->name('shipping-status-view');
 
 Route::get('/shipping-status-list', function () {
-    return view('shipping_status_list',['title'=>'Shipping/Delivery Status List','breadcrumb'=>['Home','Admin Tools','Shipping/Delivery Status','Create New Order']]);
+    return view('shipping_status_list', ['title' => 'Shipping/Delivery Status List', 'breadcrumb' => ['Home', 'Admin Tools', 'Shipping/Delivery Status', 'Create New Order']]);
 })->name('shipping-status-list');
 
 Route::get('/shipping-status-history-list', function () {
-    return view('shipping_status_history_list',['title'=>'Order History List','breadcrumb'=>['Home','Admin Tools','Shipping/Delivery Status','Order History']]);
+    return view('shipping_status_history_list', ['title' => 'Order History List', 'breadcrumb' => ['Home', 'Admin Tools', 'Shipping/Delivery Status', 'Order History']]);
 })->name('shipping-status-history-list');
 
 Route::get('/account-receivable-list', function () {
-    return view('account_receivable_list',['title'=>'Account Receivable','breadcrumb'=>['Home','Admin Tools','Account Receivable']]);
+    return view('account_receivable_list', ['title' => 'Account Receivable', 'breadcrumb' => ['Home', 'Admin Tools', 'Account Receivable']]);
 })->name('account-receivable-list');

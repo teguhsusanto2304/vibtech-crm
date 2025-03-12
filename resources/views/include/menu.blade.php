@@ -60,14 +60,20 @@
                 <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
             </a>
         </li>
-
+        @if(
+            auth()->user()->can('view-job-requisition') ||
+            auth()->user()->can('view-leave-application') ||
+            auth()->user()->can('view-vehicle-booking') ||
+            auth()->user()->can('view-referral-program') ||
+            auth()->user()->can('view-submit-claim')
+        )
         <li
             class="menu-item {{ request()->routeIs(
             'v1.job-assignment-form',
             'v1.job-assignment-form.create',
             'v1.job-assignment-form.list',
             'leave-application',
-            'vehicle-booking',
+            'v1.vehicle-bookings',
             'referral-program',
             'submit-claim') ? 'active open' : '' }}">
             <a href="{{ route('dashboard') }}" class="menu-link  menu-toggle">
@@ -92,34 +98,45 @@
                 <div class="text-truncate" data-i18n="Dashboards">Staff Task</div>
             </a>
             <ul class="menu-sub">
+                @can('view-job-requisition')
                 <li class="no-bullet">
                     <a href="{{ route('v1.job-assignment-form') }}"
                         class="menu-link {{ request()->routeIs('v1.job-assignment-form','v1.job-assignment-form.create','v1.job-assignment-form.list')  ? 'active' : '' }}">
                         <div class="text-truncate" data-i18n="Analytics">Job Requisition Form</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-leave-application')
                 <li class="no-bullet">
                     <a href="{{ route('leave-application') }}" class="menu-link  {{ request()->routeIs('leave-application') ? 'active' : '' }}">
                         <div class="text-truncate" data-i18n="Analytics">Leave Application</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-vehicle-booking')
                 <li class="no-bullet">
-                    <a href="{{ route('vehicle-booking')}}" class="menu-link">
+                    <a href="{{ route('v1.vehicle-bookings')}}" class="menu-link {{ request()->routeIs('v1.vehicle-bookings','v1.vehicle-bookings.create','v1.vehicle-bookings.list')  ? 'active' : '' }}">
                         <div class="text-truncate" data-i18n="Analytics">Vehicle Booking</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-referral-program')
                 <li class="no-bullet">
                     <a href="{{ route('referral-program') }}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Referral Program</div>
                     </a>
                 </li>
+                @endcan
+                @can('view-submit-claim')
                 <li class="no-bullet">
                     <a href="{{ route('submit-claim')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Submit Claim</div>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
+        @endif
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon">

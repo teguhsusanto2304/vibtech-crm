@@ -319,31 +319,31 @@ document.addEventListener("DOMContentLoaded", function () {
         const today = new Date();
         const todayFormatted = today.toISOString().slice(0, 10); // Format as YYYY-MM-DD
 
-        const dayCells = document.querySelectorAll('.fc-daygrid-day'); // Select all day cells
+        const dayCells = document.querySelectorAll(".fc-daygrid-day"); // Select all day cells
 
-        dayCells.forEach(cell => {
-            const cellDate = cell.getAttribute('data-date'); // Get the date of the cell
+        dayCells.forEach((cell) => {
+            const cellDate = cell.getAttribute("data-date"); // Get the date of the cell
 
             if (cellDate === todayFormatted) {
-                cell.style.backgroundColor = 'lightgray'; // Set background color
-                cell.style.cursor = 'pointer'; // Make it look clickable
+                cell.style.backgroundColor = "lightgray"; // Set background color
+                cell.style.cursor = "pointer"; // Make it look clickable
 
                 // Add a click event listener to show the alert
-                cell.addEventListener('click', function() {
+                cell.addEventListener("click", function () {
                     //alert("Today's date: " + todayFormatted);
-                    document.getElementById("eventAt").textContent = cellDate;
+                    //document.getElementById("eventAt").textContent = cellDate;
                     fetchEvents(cellDate);
+                    document.getElementById("eventDate").textContent = cellDate;
                 });
             } else {
-                cell.style.backgroundColor = ''; // Reset background color for other days
-                cell.style.cursor = 'pointer'; // Reset cursor
+                cell.style.backgroundColor = ""; // Reset background color for other days
+                cell.style.cursor = "pointer"; // Reset cursor
                 // Remove any previous click listeners to avoid multiple alerts
                 //cell.removeEventListener('click', arguments.callee);
 
-                cell.addEventListener('click', function() {
-                    //alert("date: " + cellDate);
-                    document.getElementById("eventAt").textContent = cellDate;
+                cell.addEventListener("click", function () {
                     fetchEvents(cellDate);
+                    document.getElementById("eventDate").textContent = cellDate;
                 });
             }
         });
@@ -352,27 +352,58 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function fetchEvents(eventAt) {
     fetch(`/v1/dashboard/eventsbydate/${eventAt}`) // Replace with your actual API URL
-            .then(response => response.json()) // Convert response to JSON
-            .then(data => {
-                let eventListDiv = document.getElementById("eventList");
-                eventListDiv.innerHTML = ""; // Clear existing content
+        .then((response) => response.json()) // Convert response to JSON
+        .then((data) => {
+            let eventListDiv = document.getElementById("eventList");
+            eventListDiv.innerHTML = ""; // Clear existing content
 
-                if (data.length === 0) {
-                    eventListDiv.innerHTML = "<p>No events found.</p>";
-                    return;
+            if (data.length === 0) {
+                eventListDiv.innerHTML = "<p>No events found.</p>";
+                return;
+            }
+
+            let eventHtml = `
+    <table class="table table-striped">
+        <tbody>`;
+
+            data.forEach((event) => {
+                if (event.is_vehicle_require == 1) {
+                    eventHtml += `
+        <tr>
+            <td><small>${event.title}</small></td>
+            <td>
+            <div class="dropdown">
+            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+            <div class="dropdown-menu">
+              <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes"><small>Detail</small></a>
+              <a class="dropdown-item" href="/v1/job-assignment-form/${event.id}/vehicle-booking"><small>Vehicle Booking</small></a>
+            </div>
+          </div>
+
+            </td>
+        </tr>`;
+                } else {
+                    eventHtml += `
+        <tr>
+            <td><small>${event.title}</small></td>
+            <td>
+            <div class="dropdown">
+            <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+            <div class="dropdown-menu">
+              <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes">Detail</a>
+            </div>
+          </div>
+
+            </td>
+        </tr>`;
                 }
+            });
 
-                let eventHtml = "<ul>";
-                data.forEach(event => {
-                    eventHtml += `<li>${event.title}
-                        <a href="#" onclick="showEventModal(${event.id}, '${event.title}')">More</a>
-                    </li>`;
-                });
-                eventHtml += "</ul>";
+            eventHtml += `
+        </tbody>
+    </table>`;
 
-                eventListDiv.innerHTML = eventHtml;
-            })
-            .catch(error => console.error("Error fetching events:", error));
+            eventListDiv.innerHTML = eventHtml;
+        })
+        .catch((error) => console.error("Error fetching events:", error));
 }
-
-

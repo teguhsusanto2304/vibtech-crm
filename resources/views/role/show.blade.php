@@ -53,6 +53,10 @@
                             <input type="text" class="form-control" name="name" value="{{ $data->name }}"
                                readonly>
                         </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="checkAll">
+                            <label class="form-check-label" for="checkAll"><strong>Check All</strong></label>
+                        </div>
                         @foreach ($permissions as $permission)
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox"
@@ -75,8 +79,13 @@
                             <a href="{{ route('v1.roles')}}" class="btn btn-warning">Cancel</a>
                         </div>
                     </form>
-
-
+                    <script>
+                        $(document).ready(function() {
+                            $('#checkAll').click(function() {
+                                $('input[name="permissions[]"]').prop('checked', this.checked);
+                            });
+                        });
+                        </script>
                 </div>
             </div>
         </div>

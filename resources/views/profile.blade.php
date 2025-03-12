@@ -88,12 +88,12 @@
     </style>
     <div class="profile-card">
         <div class="profile-image">
-            <img src="{{ asset('assets/img/photos/'.auth()->user()->path_image) }}" alt="User Profile Picture">
+            <img src="{{ asset(auth()->user()->path_image) }}" alt="User Profile Picture">
           <div class="button-container">
             <a href="#" class="button">Generate QR Code</a>
             <br>
             <br>
-            <a href="#" class="button">Reset Password</a>
+            <a href="{{ route('profile.change-password')}}" class="button">Reset Password</a>
           </div>
         </div>
         <div class="profile-info">
@@ -102,13 +102,13 @@
               <td width="25%">Staff Name:</td>
               <td width="25%">{{ $user->name }}</td>
               <td width="25%">Date of Birth:</td>
-              <td width="25%">01/06/1995</td>
+              <td width="25%">{{ $user->dob }}</td>
             </tr>
             <tr>
               <td>Staff ID:</td>
-              <td>S095</td>
+              <td>{{ $user->user_number }}</td>
               <td>Contact Number:</td>
-              <td>+65 91234567</td>
+              <td>{{ $user->phone_number }}</td>
             </tr>
             <tr>
               <td>Department:</td>
@@ -130,7 +130,7 @@
             </tr>
             <tr>
               <td>Date Joined:</td>
-              <td>20/03/2022</td>
+              <td>{{ $user->joined_at }}</td>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
             </tr>
@@ -138,7 +138,7 @@
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
-                <td> <img src="../assets/img/logo.png" width="170px" height="70px"></td>
+                <td> <img src="{{ asset('assets/img/logo.png') }}" width="170px" height="70px"></td>
             </tr>
           </table>
         </div>

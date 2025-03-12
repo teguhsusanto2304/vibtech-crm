@@ -19,6 +19,7 @@ return new class extends Migration {
 
             // Ensure position_level_id is nullable before adding constraint
             $table->unsignedBigInteger('department_id')->nullable()->change();
+            $table->string('nick_name',50)->nullable();
             $table->foreign('position_level_id')
                 ->references('id')
                 ->on('position_levels')
@@ -36,7 +37,13 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropForeign(['position_level_id']);
+            $table->dropForeign(['department_id']);
+
+            // Revert columns to not nullable (if they were originally not nullable).
+            // If they were originally nullable, you might not need to do anything.
+            $table->unsignedBigInteger('position_level_id')->nullable(false)->change();
+            $table->unsignedBigInteger('department_id')->nullable(false)->change();
         });
     }
 };

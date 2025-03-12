@@ -8,8 +8,6 @@ let date = new Date(),
         11 === date.getMonth()
             ? new Date(date.getFullYear() - 1, 0, 1)
             : new Date(date.getFullYear(), date.getMonth() - 1, 1);
-            window.events = [];
-            let dataku = new Date(date.getFullYear(), date.getMonth() + 1, -3);
 window.eventsx = [
     {
         id: 1,
@@ -99,27 +97,4 @@ window.eventsx = [
         allDay: !0,
         extendedProps: { calendar: "Personal" },
     },
-    {
-        id: 8,
-        url: "",
-        title: "testing teguh "+dataku,
-        start: new Date(date.getFullYear(), date.getMonth() + 1, -3),
-        end: new Date(date.getFullYear(), date.getMonth() + 1, -1),
-        allDay: !0,
-        extendedProps: { calendar: "Business" },
-    },
 ];
-
-async function loadEvents() {
-    try {
-        let response = await fetch(eventsUrl);
-        let data = await response.json();
-        window.events = data;
-        console.log('Events Data:', window.events);
-    } catch (error) {
-        console.error('Error fetching events:', error);
-    }
-}
-
-// Call the function
-loadEvents();

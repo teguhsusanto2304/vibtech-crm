@@ -33,9 +33,16 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
 
     <!-- Card -->
     <div class="card">
+        @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('message') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
         <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
             <!-- Department Filter -->
             <div class="mb-2 mb-md-0">
@@ -52,14 +59,18 @@
             <a href="{{ route('v1.users.create') }}" class="btn btn-primary">Add User</a>
         </div>
 
+
         <!-- Table -->
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped w-100" id="user_datatable">
+                <table class="table table-bordered table-striped nowrap w-100" id="user_datatable">
                     <thead>
                         <tr>
+                            <th>Picture</th>
                             <th>Department</th>
                             <th>Name</th>
+                            <th>Nick Name</th>
+                            <th>Position</th>
                             <th>Email</th>
                             <th>Action</th>
                         </tr>
@@ -67,30 +78,94 @@
                 </table>
             </div>
         </div>
-    </div>
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to <span id="actionText"></span> this user?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="confirmBtn">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- DataTable Script -->
-    <script type="text/javascript">
-        $(document).ready(function () {
-            var table = $('#user_datatable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: "{{ route('v1.users.data') }}",
-                columns: [
-                    {data: 'dept', name: 'dept'},
-                    {data: 'name', name: 'name'},
-                    {data: 'email', name: 'email'},
-                    {data: 'action', name: 'action', orderable: false, searchable: false},
-                ],
-                responsive: true
-            });
+        <!-- DataTable Script -->
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var table = $('#user_datatable').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    ajax: "{{ route('v1.users.data') }}",
+                    columns: [
+                        {data: 'path_image', name: 'path_image', orderable: false, searchable: false },
+                        {data: 'dept', name: 'dept'},
+                        {data: 'name', name: 'name'},
+                        {data: 'nick_name', name: 'nick_name'},
+                        {data: 'position', name: 'position'},
+                        {data: 'email', name: 'email'},
+                        {data: 'action', name: 'action', orderable: false, searchable: false},
+                    ],
+                    scrollX: true, // Enable horizontal scrolling
+                    responsive: false, // Disable responsive mode to ensure scrolling works
+                    fixedColumns: {
+            leftColumns: 0, // Number of columns to fix on the left
+            rightColumns: 1  // Fix the last column (action column) on the right
+        }
+                });
 
-            // Filter by department
-            $('#departmentFilter').on('change', function () {
-                const selectedDepartment = $(this).val();
-                table.column(0).search(selectedDepartment).draw();
+                // Filter by department
+                $('#departmentFilter').on('change', function () {
+                    const selectedDepartment = $(this).val();
+                    table.column(1).search(selectedDepartment).draw();
+                });
             });
+            $(document).ready(function () {
+    let userId, actionType;
+
+    // Show confirmation modal when clicking the action button
+    $(document).on("click", ".confirm-action", function () {
+        userId = $(this).data("id");
+        actionType = $(this).data("action");
+
+        // Set action text in modal
+        $("#actionText").text(actionType === "deactivate" ? "deactivate" : "activate");
+
+        // Show modal
+        $("#confirmModal").modal("show");
+    });
+
+    // Handle confirm button click
+    $("#confirmBtn").on("click", function () {
+        $.ajax({
+            url: "{{ route('v1.users.toggle-status') }}", // Your Laravel route
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                id: userId,
+                action: actionType
+            },
+            success: function (response) {
+                $("#confirmModal").modal("hide"); // Close modal
+                if (response.success) {
+                    //alert("User " + actionType + "d successfully!");
+                    location.reload(); // Refresh DataTables
+                } else {
+                    alert("Failed to " + actionType + " user.");
+                }
+            },
+            error: function () {
+                alert("An error occurred.");
+            }
         });
-    </script>
+    });
+});
+        </script>
 
 @endsection

@@ -60,9 +60,26 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="department" class="form-label">Department</label>
+                            <label for="department" class="form-label">1st Department</label>
                             <div class="input-group mb-3">
                             <select class="form-control" name="department_id">
+                                <option value="">Choose a Department</option>
+                                @foreach ($departments as $department)
+                                    <option value="{{ $department->id }}" {{ old('department', $user->department_id ?? '') == $department->id ? 'selected' : '' }}>
+                                        {{ $department->name }}  {{-- Display the department name --}}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <a class="btn btn-outline-secondary  btn-sm" type="button" id="button-addon1" href="{{ route('v1.departments.create') }}">
+                                <i class="icon-base bx bx-plus icon-md me-4"></i>
+                            </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="department" class="form-label">2nd Department</label>
+                            <div class="input-group mb-3">
+                            <select class="form-control" name="2nd_department_id">
                                 <option value="">Choose a Department</option>
                                 @foreach ($departments as $department)
                                     <option value="{{ $department->id }}" {{ old('department', $user->department_id ?? '') == $department->id ? 'selected' : '' }}>

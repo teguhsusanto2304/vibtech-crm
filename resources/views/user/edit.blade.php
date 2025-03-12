@@ -58,11 +58,11 @@
 
     <div class="col-md-4">
         <label for="staffID" class="form-label">Staff ID</label>
-        <input type="text" class="form-control" value="{{ $emp->user_number ?? '' }}" placeholder="Enter staff ID" readonly>
+        <input type="text" class="form-control" name="user_number" value="{{ $emp->user_number ?? '' }}" placeholder="Enter staff ID" >
     </div>
 
     <div class="col-md-6">
-        <label for="department" class="form-label">Department</label>
+        <label for="department" class="form-label">1st Department</label>
         <select class="form-control" name="department_id">
             <option value="">Choose a Department</option>
             @foreach ($departments as $department)
@@ -75,8 +75,21 @@
     </div>
 
     <div class="col-md-6">
+        <label for="department" class="form-label">2nd Department</label>
+        <select class="form-control" name="2nd_department_id">
+            <option value="">Choose a Department</option>
+            @foreach ($departments as $department)
+                <option value="{{ $department->id }}"
+                    {{ (old('2nd_department_id', isset($emp) ? $emp['2nd_department_id'] : '') == $department->id) ? 'selected' : '' }}>
+                    {{ $department->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-6">
         <label for="location" class="form-label">Location</label>
-        <input type="text" class="form-control" name="location" value="{{ $emp->location ?? '' }}" placeholder="Enter location">
+        <input type="text" class="form-control" name="branch_office" value="{{ $emp->branch_office ?? '' }}" placeholder="Enter location">
     </div>
 
     <div class="col-md-4">
@@ -89,7 +102,7 @@
         <select class="form-control" name="position_level_id">
             <option value="">Choose a Position Level</option>
             @foreach ($position_levels as $position_level)
-                <option value="{{ $position_level->id }}" {{ (old('department_id', isset($emp) ? $emp->position_level_id : '') == $position_level->id) ? 'selected' : '' }}>
+                <option value="{{ $position_level->id }}" {{ (old('position_level_id', isset($emp) ? $emp->position_level_id : '') == $position_level->id) ? 'selected' : '' }}>
                     {{ $position_level->name }}  {{-- Display the department name --}}
                 </option>
             @endforeach
@@ -112,7 +125,7 @@
 
     <div class="col-md-6">
         <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" value="{{ $emp->email ?? '' }}" placeholder="Enter email" readonly>
+        <input type="email" class="form-control" name="email" value="{{ $emp->email ?? '' }}" placeholder="Enter email">
     </div>
 
     <div class="col-md-6">
@@ -124,12 +137,12 @@
     </div>
 
     <div class="col-md-6">
-        <label for="email" class="form-label">Role {{ $emp->roles->first()->id }}</label>
+        <label for="email" class="form-label">Role</label>
         <select class="form-control" name="role_id">
             <option value="">Choose a Role</option>
 
             @foreach ($roles as $role)
-                <option value="{{ $role->id }}" @if($emp->roles->first()->id == $role->id) selected @endif>{{ $role->name }}</option>
+            <option value="{{ $role->id }}" @if($emp->roles->isNotEmpty() && $emp->roles->first()->id == $role->id) selected @endif>{{ $role->name }}</option>
             @endforeach
         </select>
     </div>

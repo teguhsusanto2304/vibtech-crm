@@ -31,7 +31,10 @@ class User extends Authenticatable
         'dob',
         'phone_number',
         'position_level_id',
-        'department_id'
+        'department_id',
+        'nick_name',
+        '2nd_department_id',
+        'user_status'
     ];
 
     /**
@@ -57,6 +60,11 @@ class User extends Authenticatable
     public function dept()
     {
         return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function secondDept()
+    {
+        return $this->belongsTo(Department::class, '2nd_department_id', 'id');
     }
 
 

@@ -57,7 +57,7 @@
 
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Submit</button>
-                            <a href="{{ route('v1.roles')}}" class="btn btn-warning">Cancel</a>
+                            <a href="{{ route('v1.permissions')}}" class="btn btn-warning">Cancel</a>
                         </div>
                     </form>
 
