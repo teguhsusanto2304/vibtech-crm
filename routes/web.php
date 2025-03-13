@@ -135,7 +135,10 @@ Route::middleware('auth')->group(function () {
         Route::prefix('vehicle-bookings')->controller(VehicleBookingController::class)->group(function () {
             Route::get('/', 'index')->name('v1.vehicle-bookings');
             Route::get('/create', 'create')->name('v1.vehicle-bookings.create');
+            Route::get('/{id}/edit', 'edit')->name('v1.vehicle-bookings.edit');
             Route::post('/store', 'store')->name('v1.vehicle-bookings.store');
+            Route::put('/{id}/update', 'update')->name('v1.vehicle-bookings.update');
+            Route::put('/{id}/cancel', 'cancel')->name('v1.vehicle-bookings.cancel');
             Route::get('/list', 'list')->name('v1.vehicle-bookings.list');
             Route::get('/data','getData')->name('v1.vehicle-bookings.data');
         });

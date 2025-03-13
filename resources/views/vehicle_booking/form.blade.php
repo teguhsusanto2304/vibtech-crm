@@ -126,7 +126,7 @@
                             </div>
                             <div class="col-md-12 mt-5">
                                 <button type="submit" class="btn btn-primary">Submit</button>
-                                <a href="{{ route('v1.vehicle-bookings')}}" class="btn btn-warning">Cancel</a>
+                                <a href="{{ route('v1.vehicle-bookings.list')}}" class="btn btn-warning">Cancel</a>
                             </div>
                 </form>
 

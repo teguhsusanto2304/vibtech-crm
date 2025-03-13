@@ -184,7 +184,7 @@ class JobAssignmentController extends Controller
                     'start_at'=>$validated['start_at'],
                     'end_at'=>$validated['end_at'],
                     'is_vehicle_require'=>$request->has('is_vehicle_require') ? 'Yes' : 'No',
-                    'url'=>route('v1.job-assignment-form.view',['id'=>$jobAssignment->id,'respond'=>'no'])
+                    'url'=>route('v1.job-assignment-form.view',['id'=>$jobAssignment->id,'respond'=>'yes'])
                 ];
                 $this->sendEmail($data);
             }
@@ -599,6 +599,7 @@ class JobAssignmentController extends Controller
                 }
             }
         }
+
         if ($request->action === "cancel") {
             return response()->json(['success' => true, 'message' => 'Job Requisition Form has been canceled!']);
         } else {

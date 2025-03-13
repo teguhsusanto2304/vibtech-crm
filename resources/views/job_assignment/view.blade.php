@@ -316,8 +316,8 @@
                                         </style>
                                         <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked"
                                             data-id="{{ $job->id }}" {{ $job->is_vehicle_require ? 'checked' : '' }}>
-                                        <label class="form-check-label" style="color:#fff;" for="flexSwitchCheckChecked"
-                                            id="switchLabel">{{ $job->is_require ? 'Yes' : 'No' }}</label>
+                                            <label class="form-check-label" style="color:#fff;" for="flexSwitchCheckChecked"
+                                            id="switchLabel">{{ $job->is_require=1 ? 'Yes' : 'No' }}</label>
                                     </div>
                                     <div class="toast-container position-fixed top-0 end-0 p-3">
                                         <div id="successToast" class="toast align-items-center text-white bg-success border-0"
