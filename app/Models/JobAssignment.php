@@ -21,7 +21,8 @@ class JobAssignment extends Model
         'vehicle_id',
         'is_vehicle_require',
         'user_id',
-        'job_status'
+        'job_status',
+        'is_publish'
     ];
 
     public function jobType()

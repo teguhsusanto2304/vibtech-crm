@@ -40,7 +40,7 @@ class JobAssignmentController extends Controller
             ->select('users.*', 'departments.name as department_name'); // Select necessary fields
 
         $users2 = User::whereNot('position_level_id', 2)
-        //->whereNotIn('users.id', [auth()->id()])
+            //->whereNotIn('users.id', [auth()->id()])
             ->join('departments', 'departments.id', '=', 'users.2nd_department_id') // Join 1st dept
             ->select('users.*', 'departments.name as department_name'); // Select necessary fields
 
@@ -53,6 +53,28 @@ class JobAssignmentController extends Controller
         return view('job_assignment.form', compact('job_no', 'users', 'vehicles'))
             ->with('title', 'Job Requisition Form')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Create']);
+    }
+
+    public function edit($id)
+    {
+        $job = JobAssignment::findOrFail($id);
+
+        $users1 = User::whereNot('position_level_id', 2)
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->select('users.*', 'departments.name as department_name');
+
+        $users2 = User::whereNot('position_level_id', 2)
+            ->join('departments', 'departments.id', '=', 'users.2nd_department_id')
+            ->select('users.*', 'departments.name as department_name');
+
+        $users = $users1->union($users2)->get()->groupBy('department_name');
+
+        $vehicles = Vehicle::all();
+        $selectedUsers = $job->personnel()->pluck('users.id')->toArray(); // Fetch selected users
+
+        return view('job_assignment.edit', compact('job', 'users', 'vehicles', 'selectedUsers'))
+            ->with('title', 'Edit Job Requisition Form')
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Edit']);
     }
 
     public function list(Request $request)
@@ -159,6 +181,59 @@ class JobAssignmentController extends Controller
         return redirect()->route('v1.job-assignment-form.list')->with('success', 'Job Requisition Form Created Successfully');
     }
 
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'job_record_id' => 'required|string',
+            'job_type' => 'required',
+            'business_name' => 'required|string|max:255',
+            'business_address' => 'required|string|max:255',
+            'scope_of_work' => 'required|string',
+            'start_at' => 'required|date|after_or_equal:today', // Prevent past dates
+            'end_at' => 'required|date|after_or_equal:start_at', // Must be after or same as start_at
+            'prsonnel_ids' => 'array',
+            'prsonnel_ids.*' => 'exists:users,id',
+            'job_status' => 'nullable'
+        ]);
+
+        // Find the existing job assignment
+        $jobAssignment = JobAssignment::findOrFail($id);
+
+        // Update job assignment data
+        $jobAssignment->update([
+            'job_record_id' => $validated['job_record_id'],
+            'job_type' => $validated['job_type'],
+            'business_name' => $validated['business_name'],
+            'business_address' => $validated['business_address'],
+            'scope_of_work' => $validated['scope_of_work'],
+            'start_at' => $validated['start_at'],
+            'end_at' => $validated['end_at'],
+            'is_vehicle_require' => $validated['is_vehicle_require'] ?? 0,
+            'user_id' => auth()->user()->id,
+            'job_status' => $request->has('job_status') ? 1 : 0,
+        ]);
+
+        // Sync personnel (Many-to-Many Relationship)
+        if (!empty($validated['prsonnel_ids'])) {
+            $jobAssignment->personnel()->sync($validated['prsonnel_ids']); // Sync instead of attach
+
+            foreach ($validated['prsonnel_ids'] as $personnelId) {
+                $user = User::find($personnelId);
+                $user->notify(new UserNotification(
+                    'Job ID ' . $jobAssignment->job_record_id . ' has been updated. Please check the details.',
+                    'info',
+                    route('v1.job-assignment-form.view', ['id' => $id, 'respond' => 'yes'])
+                ));
+            }
+        } else {
+            $jobAssignment->personnel()->detach(); // Remove all personnel if none are selected
+        }
+
+        // Redirect back with success message
+        return redirect()->route('v1.job-assignment-form.view', ['id' => $id, 'respond' => 'yes'])->with('success', 'Job Requisition Form has been respond Successfully');
+    }
+
+
     public function view($id, $respond)
     {
         $notif = request('notif');
@@ -224,16 +299,16 @@ class JobAssignmentController extends Controller
                 'job_assignments.job_status',
                 'job_assignments.job_type as job_type_name'
             )
-            ->where('job_assignments.user_id', auth()->user()->id)
-            ->whereNot('job_assignments.job_status', 3)
-            ->where(function ($query) use ($now) {
-                $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
-                      //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
-                      ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
-                      //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
-            })
-            ->orderBy('job_assignments.created_at', 'DESC')
-            ->get();
+                ->where('job_assignments.user_id', auth()->user()->id)
+                ->whereNot('job_assignments.job_status', 3)
+                ->where(function ($query) use ($now) {
+                    $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
+                        //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
+                        ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
+                    //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
+                })
+                ->orderBy('job_assignments.created_at', 'DESC')
+                ->get();
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -384,9 +459,9 @@ class JobAssignmentController extends Controller
                 ->whereNot('job_assignments.job_status', 3)
                 ->where(function ($query) use ($now) {
                     $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
-                          //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
-                          ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
-                          //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
+                        //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
+                        ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
+                    //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
                 })
                 ->orderBy('job_assignments.created_at', 'DESC');
 
@@ -456,7 +531,7 @@ class JobAssignmentController extends Controller
     {
         $request->validate([
             'id' => 'required',
-            'action' => 'required|in:publish,cancel',
+            'action' => 'required|in:publish,recall',
         ]);
 
         $event = JobAssignment::find($request->id); // Example: Find an event (replace with your logic)
@@ -467,9 +542,9 @@ class JobAssignmentController extends Controller
 
         // Update status based on action
         if ($request->action === "publish") {
-            $event->job_status = 1; // Published
-        } elseif ($request->action === "cancel") {
-            $event->job_status = 3; // Canceled
+            $event->is_publish = 1; // Published
+        } elseif ($request->action === "recall") {
+            $event->is_publish = 0; // Canceled
         }
 
         $event->save();

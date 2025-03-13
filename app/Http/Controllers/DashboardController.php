@@ -20,7 +20,7 @@ class DashboardController extends Controller
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->where('start_at', '<=', Carbon::now()) // Ongoing jobs
-                        ->where('end_at', '>=', Carbon::now()->subDays(1));
+                        ->where('end_at', '>=', Carbon::now());
                 })
                     ->orWhere('start_at', '>', Carbon::now()); // Future jobs
             })
@@ -29,9 +29,9 @@ class DashboardController extends Controller
             $event = [
                 'id' => $row->id, // Assuming 'id' exists
                 'url' => "", // You can set this if needed
-                'title' => $row->scope_of_work, // Assuming 'title' exists
+                'title' => $row->job_type, // Assuming 'title' exists
                 'start' => (new DateTime($row->start_at))->format('Y-m-d H:i:s'), // Format as string
-                'end' => (new DateTime($row->end_at))->format('Y-m-d H:i:s'), // Format as string
+                'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Holiday"], // Assuming 'extendedProps' exists, or an empty array
                 'test' => $row->start_at
@@ -54,7 +54,7 @@ class DashboardController extends Controller
                 'url' => "", // You can set this if needed
                 'title' => $row->purposes, // Assuming 'title' exists
                 'start' => (new DateTime($row->start_at))->format('Y-m-d H:i:s'), // Format as string
-                'end' => (new DateTime($row->end_at))->format('Y-m-d H:i:s'), // Format as string
+                'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Business"], // Assuming 'extendedProps' exists, or an empty array
                 'test' => $row->start_at
@@ -85,7 +85,7 @@ class DashboardController extends Controller
             $arr[] = [
                 'id' => $row->id,
                 'url' => '',
-                'title' => $row->scope_of_work,
+                'title' => $row->job_type,
                 'start' => $row->start_at,
                 'end' => $row->end_at,
                 'allDay' => '!1',
@@ -99,6 +99,7 @@ class DashboardController extends Controller
     public function getEventsByDate($eventAt)
     {
         $filterDate = Carbon::parse($eventAt); // Parse the date using Carbon
+        $filterDate = substr($filterDate,0,10);
         $now = Carbon::now(); // Get the current datetime
         $arr = [];
 
@@ -129,20 +130,19 @@ class DashboardController extends Controller
             foreach ($results as $row) {
                 $arr[] = [
                     'id' => $row->id,
-                    'title' => "<div class='callout-event'><label class='text-success'>".substr($row->scope_of_work,0,100)."</label></div>",
+                    'title' => "<div class='callout-event'><label class='text-success'>".$row->job_type."</label></div>",
                     'is_vehicle_require' => $row->is_vehicle_require
                 ];
             }
 
-            $bookings = VehicleBooking::where(function ($query) use ($filterDate, $now) {
-                $query->where('start_at', '>=', $filterDate); // Start date is today or earlier
-            })
-                ->get();
+            $bookings = VehicleBooking::where('start_at', '<=', $filterDate . ' 23:59:59')
+            ->where('end_at', '>=', $filterDate . ' 00:00:00')
+            ->get();
 
             foreach ($bookings as $row) {
                 $arr[] = [
                     'id' => 'VB' . $row->id,
-                    'title' => "<div class='callout'><label class='text-primary'>".$row->purposes."</label></div>",
+                    'title' => "<div class='callout'><label class='text-primary'>".$row->purposes ."</label></div>",
                     'is_vehicle_require' => null
                 ];
             }

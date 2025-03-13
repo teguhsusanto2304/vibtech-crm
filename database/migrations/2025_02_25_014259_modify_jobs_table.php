@@ -29,6 +29,7 @@ return new class extends Migration
             $table->foreign('job_type_id')->references('id')->on('job_types')->onDelete('set null');
             $table->string('job_type')->after('job_type_id'); // Adjust position as needed
             $table->boolean('is_vehicle_require')->default(false)->before('vehicle_id');
+            $table->boolean('is_publish')->default(false)->before('is_vehicle_require');
         });
     }
 

@@ -89,6 +89,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/job-list/history','getJobsAssignmentHistories')->name('v1.job-assignment-form.history.data');
             Route::post('/update-status','updateJobAssignmentStatus')->name('v1.job-assignment-form.history.update-status');
             Route::post('/update-vehicle-require','updateJobAssignmentVehicleRequire')->name('v1.job-assignment-form.update-vehicle-require');
+            Route::get('/{id}/edit','edit')->name('v1.job-assignment-form.edit');
+            Route::put('{id}',  'update')->name('v1.job-assignment-form.update');
             Route::get('/send-email','sendBookingEmail')->name('v1.job-assignment-form.send-email');
         });
 
