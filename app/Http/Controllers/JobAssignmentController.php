@@ -174,6 +174,19 @@ class JobAssignmentController extends Controller
                     'success',
                     route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
                 ));
+                $data = [
+                    'email'=>$user->email,
+                    'originator' => Auth()->user()->name,
+                    'personel' => $user->name,
+                    'job_record_id' => $validated['job_record_id'],
+                    'type_job' => $validated['job_type'],
+                    'scope_of_work' => $validated['scope_of_work'],
+                    'start_at'=>$validated['start_at'],
+                    'end_at'=>$validated['end_at'],
+                    'is_vehicle_require'=>$request->has('is_vehicle_require') ? 'Yes' : 'No',
+                    'url'=>route('v1.job-assignment-form.view',['id'=>$jobAssignment->id,'respond'=>'no'])
+                ];
+                $this->sendEmail($data);
             }
         }
 
@@ -492,6 +505,14 @@ class JobAssignmentController extends Controller
     public function invitedStaff($user_id, $job_id)
     {
         $jobAssignment = JobAssignment::findOrFail($job_id);
+
+        $exists = JobAssignmentPersonnel::where('user_id', $user_id)
+        ->where('job_assignment_id', $jobAssignment->id)
+        ->exists();
+
+        if ($exists) {
+            return redirect()->route('v1.job-assignment-form.view', ['id' => $job_id, 'respond' => 'yes']);
+        }
         $data = [
             'user_id' => $user_id,
             'job_assignment_id' => $jobAssignment->id,
@@ -511,6 +532,19 @@ class JobAssignmentController extends Controller
             'success',
             route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
         ));
+        $data = [
+            'email'=>$member->email,
+            'originator' => Auth()->user()->name,
+            'personel' => $member->name,
+            'job_record_id' => $jobAssignment->job_record_id,
+            'type_job' => $jobAssignment->job_type,
+            'scope_of_work' => $jobAssignment->scope_of_work,
+            'start_at'=>$jobAssignment->start_at,
+            'end_at'=>$jobAssignment->end_at,
+            'is_vehicle_require'=>$jobAssignment->is_vehicle_require ? 'Yes' : 'No',
+            'url'=>route('v1.job-assignment-form.view',['id'=>$jobAssignment->id,'respond'=>'no'])
+        ];
+        $this->sendEmail($data);
         return redirect()->route('v1.job-assignment-form.view', ['id' => $job_id, 'respond' => 'yes'])->with('success', 'Personnel has been involved Successfully');
     }
 
@@ -553,7 +587,7 @@ class JobAssignmentController extends Controller
 
         if (!empty($personnelIds)) {   // ✅ Check if personnel exist
 
-            $event->personnel()->attach($personnelIds);
+            //$event->personnel()->attach($personnelIds);
             foreach ($personnels as $personnelId) {
                 $user = User::find($personnelId->user_id);
                 if ($user) {  // ✅ Ensure the user exists before sending notification
@@ -582,19 +616,31 @@ class JobAssignmentController extends Controller
         return response()->json(['success' => true, 'message' => 'Vehicle Status updated successfully']);
     }
 
+    function sendEmail($data)
+    {
+        Mail::to($data['email'])->send(new ConfirmationMail($data));
+
+        return response()->json(['message' => 'Vibtech Genesis Staff Portal']);
+    }
+
 
     public function sendBookingEmail()
     {
         $booking = [
-            'name' => 'Teguh Susanto',
-            'start_at' => '2025-03-15',
-            'end_at' => '2025-03-20',
-            'purposes' => 'Business Trip'
+            'originator' => 'Teguh Susanto',
+            'personel' => 'Houston Teo',
+            'job_record_id' => '001',
+            'type_job' => 'Testing Email',
+            'scope_of_work' => 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
+            'start_at'=>'2025-03-13',
+            'end_at'=>'2025-03-15',
+            'is_vehicle_require'=>'No',
+            'url'=>'http://localhost:8000/v1/job-assignment-form/view/8/no'
         ];
 
         Mail::to('teguh.susanto@hotmail.com')->send(new ConfirmationMail($booking));
 
-        return response()->json(['message' => 'Booking confirmation email sent!']);
+        return response()->json(['message' => 'Vibtech Genesis Staff Portal']);
     }
 
 }

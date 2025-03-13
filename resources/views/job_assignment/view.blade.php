@@ -132,14 +132,16 @@
                                 width="200px" height="100px">
                             <div class="mt-auto">
                                 <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                                    @if((int) $job->user_id === (int) auth()->user()->id && (int) $job->is_publish === 1)
-                                        <button type="button" class="btn btn-warning btn-md action-btn"
-                                                data-action="recall">Recall</button>
-                                    @else
-                                        <button type="button" class="btn btn-primary btn-md action-btn"
-                                                data-action="publish">Publish</button>
-                                        <a href="{{ route('v1.job-assignment-form.edit', ['id' => $job->id])}}"
-                                                class="btn btn-success">Edit</a>
+                                    @if((int) $job->user_id === (int) auth()->user()->id)
+                                        @if((int) $job->is_publish === 1)
+                                            <button type="button" class="btn btn-warning btn-md action-btn"
+                                                    data-action="recall">Recall</button>
+                                        @else
+                                            <button type="button" class="btn btn-primary btn-md action-btn"
+                                                    data-action="publish">Publish</button>
+                                            <a href="{{ route('v1.job-assignment-form.edit', ['id' => $job->id])}}"
+                                                    class="btn btn-success">Edit</a>
+                                        @endif
                                     @endif
                                     </div>
                                     <h3 class="h3 ">Job Requisition Form</h3>

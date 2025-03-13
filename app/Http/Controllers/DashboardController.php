@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobAssignment;
+use App\Models\JobAssignmentPersonnel;
 use App\Models\VehicleBooking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,7 @@ class DashboardController extends Controller
     {
 
         $events = [];
-        $jobs = JobAssignment::where('job_status', 1)
+        $jobs = JobAssignment::where('is_publish', 1)
             ->where(function ($query) {
                 $query->where(function ($q) {
                     $q->where('start_at', '<=', Carbon::now()) // Ongoing jobs
@@ -76,7 +77,7 @@ class DashboardController extends Controller
 
     public function getEvents()
     {
-        $data = JobAssignment::where('job_status', 1)
+        $data = JobAssignment::where('is_publish', 1)
             ->whereDate('start_at', '>=', Carbon::today()) // Replace 'job_date' with the actual date column name
             ->get();
         $arr = [];
@@ -104,7 +105,7 @@ class DashboardController extends Controller
         $arr = [];
 
         if ($filterDate) {
-            $results = JobAssignment::where('job_status', 1)
+            $results = JobAssignment::where('is_publish', 1)
                 ->where(function ($query) use ($filterDate, $now) {
                     $query->where('start_at', '<=', $filterDate) // Start date is today or earlier
                         ->where('end_at', '>=', $filterDate) // End date is today or later
@@ -128,9 +129,17 @@ class DashboardController extends Controller
                 ->get();
 
             foreach ($results as $row) {
+                $personels = JobAssignmentPersonnel::where('job_assignment_id',$row->id)->get();
+                $colorClasses = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'dark'];
+                $persons = "";
+
+                foreach ($personels as $person) {
+                    $randomColor = $colorClasses[array_rand($colorClasses)]; // Pick a random color
+                    $persons .= "<span class='badge rounded-pill text-bg-{$randomColor}'>" . $person->user->name . "</span> ";
+                }
                 $arr[] = [
                     'id' => $row->id,
-                    'title' => "<div class='callout-event'><label class='text-success'>".$row->job_type."</label></div>",
+                    'title' => "<div class='callout-event'><label class='text-success'>".$row->job_type."</label>".$persons."</div>",
                     'is_vehicle_require' => $row->is_vehicle_require
                 ];
             }

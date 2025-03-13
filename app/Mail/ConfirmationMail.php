@@ -29,7 +29,7 @@ class ConfirmationMail extends Mailable
     public function build()
     {
         return $this->from(env('MAIL_FROM_ADDRESS'))
-                    ->subject('Confirmation')
+                    ->subject('Vibtech Genesis Staff Portal')
                     ->view('emails.confirmation')
                     ->with(['booking' => $this->booking]);
     }
