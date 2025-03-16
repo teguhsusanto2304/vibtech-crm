@@ -4,24 +4,9 @@
 
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="row">
             <!-- custom-icon Breadcrumb-->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb breadcrumb-custom-icon">
-                    @foreach ($breadcrumb as $item)
-                        <li class="breadcrumb-item">
-                            @if($item == 'Job Assignment Form')
-                                <a href="{{ route('v1.job-assignment-form')}}">{{ $item }}</a>
-                            @else
-                                <a href="javascript:void(0);">{{ $item }}</a>
-                            @endif
-                            <i class="breadcrumb-icon icon-base bx bx-chevron-right align-middle"></i>
-                        </li>
-                    @endforeach
-                </ol>
-            </nav>
+            <x-breadcrumb :breadcrumb="$breadcrumb" :title="$title" />
 
-            <h3>{{ $title }}</h3>
             <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
             <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>

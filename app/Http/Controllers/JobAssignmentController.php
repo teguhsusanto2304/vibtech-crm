@@ -125,11 +125,24 @@ class JobAssignmentController extends Controller
         $person->save();
 
         $count = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->count();
-
-        $personnel = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->get();
-
-
-
+        $personnel_accepted = JobAssignmentPersonnel::where(['job_assignment_id'=> $request->input('job_id'),'assignment_status'=>1])->count();
+        if( $count === $personnel_accepted){
+            $jobAssignment->job_status=1;
+            $jobAssignment->save();
+            $creator->notify(new UserNotification(
+                'All personnel involved were <strong>Accepted</strong> at Job ID ' . $jobAssignment->job_record_id,
+                'accept',
+                route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+            ));
+            $personnels = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))->get();
+            foreach ($personnels as $person){
+                $person->user->notify(new UserNotification(
+                    'All personnel involved were <strong>Accepted</strong> at Job ID ' . $jobAssignment->job_record_id,
+                    'accept',
+                    route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+                ));
+            }
+        }
 
         return redirect()->route('v1.job-assignment-form.view', ['id' => $request->input('job_id'), 'respond' => 'yes'])->with('success', 'Job Requisition Form has been respond Successfully');
     }
@@ -223,7 +236,7 @@ class JobAssignmentController extends Controller
             'end_at' => $validated['end_at'],
             'is_vehicle_require' => $validated['is_vehicle_require'] ?? 0,
             'user_id' => auth()->user()->id,
-            'job_status' => $request->has('job_status') ? 1 : 0,
+            'job_status' => 0,
         ]);
 
         // Sync personnel (Many-to-Many Relationship)
@@ -310,7 +323,8 @@ class JobAssignmentController extends Controller
                 'job_assignments.start_at',
                 'job_assignments.end_at',
                 'job_assignments.job_status',
-                'job_assignments.job_type as job_type_name'
+                'job_assignments.job_type as job_type_name',
+                'job_assignments.is_publish',
             )
                 ->where('job_assignments.user_id', auth()->user()->id)
                 ->whereNot('job_assignments.job_status', 3)
@@ -330,17 +344,26 @@ class JobAssignmentController extends Controller
                         return "<span class='badge bg-info'>Pending</span>";
                     } elseif ($row->job_status == 1) {
                         return "<span class='badge bg-success'>Accepted</span>";
-                    } else {
+                    } elseif ($row->job_status == 4) {
+                            return "<span class='badge bg-warning'>Recalled</span>";
+                        } else {
                         return "<span class='badge bg-danger'>Rejected</span>";
                     }
+                })
+                ->addColumn('job_record_id', function ($row) {
+                   $return = '<label class="label label-sm">'.$row->job_record_id.'</label>';
+                   $color = (int) $row->is_publish == 1 ? 'primary' : 'warning';
+                   $title = (int) $row->is_publish == 1 ? 'Publish' : 'Draft';
+                   $return .= '<span class="badge rounded-pill text-bg-'.$color.'">'.$title.'</span>';
+                   return $return;
                 })
                 ->addColumn('action', function ($row) {
                     return '<a href="' . route('v1.job-assignment-form.view', ['id' => $row->id, 'respond' => 'no']) . '" class="edit btn btn-primary btn-sm">View</a>';
                 })
                 ->addColumn('date_range', function ($row) {
-                    return $row->start_at . ' - ' . $row->end_at;
+                    return '<span class="badge rounded-pill text-bg-info">'.$row->start_at . '</span> <span class="badge rounded-pill text-bg-warning">' . $row->end_at.'</span>';
                 })
-                ->rawColumns(['status', 'date_range', 'action'])
+                ->rawColumns(['job_record_id','status', 'date_range', 'action'])
                 ->make(true);
         }
     }
@@ -413,12 +436,37 @@ class JobAssignmentController extends Controller
                 ->where('job_assignments.user_id', auth()->user()->id)
                 ->where('job_assignments.job_status', 3); // ✅ Fetch only status 3
 
+                        // Query for ongoing or future jobs
+            $data4 = JobAssignment::select(
+                'job_assignments.id',
+                'job_assignments.job_record_id',
+                DB::raw("DATE_FORMAT(job_assignments.created_at, '%Y-%m-%d %H:%i') as created_date"),
+                'job_assignments.business_name',
+                'job_assignments.start_at',
+                'job_assignments.end_at',
+                'job_assignments.job_status',
+                'job_assignments.job_type as job_type_name',
+                'departments.id as department_id',
+                'departments.name as department_name',
+                'users.name as user_name',
+                'job_assignments.user_id'
+            )
+                ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
+                ->join('users as user_assigned', 'job_assignment_personnels.user_id', '=', 'user_assigned.id')
+                ->join('users', 'job_assignments.user_id', '=', 'users.id')
+                ->join('departments', 'users.department_id', '=', 'departments.id')
+                ->where('job_assignment_personnels.user_id', auth()->user()->id)
+                ->where('job_assignments.job_status', 3); // Jobs with no end date
+
+
+
 
 
             // Combine both queries with UNION
             $data = $data1
                 ->union($data2)
                 ->union($data3)
+                ->union($data4)
                 ->orderBy('created_date', 'DESC')
                 ->get();
 
@@ -431,10 +479,10 @@ class JobAssignmentController extends Controller
                         return "<span class='badge bg-info'>Pending</span>";
                     } elseif ($row->job_status == 1) {
                         return "<span class='badge bg-success'>Accepted</span>";
-                    } elseif ($row->job_status == 2) {
+                    } elseif ($row->job_status == 4) {
+                            return "<span class='badge bg-warning'>Recalled</span>";
+                        } else {
                         return "<span class='badge bg-danger'>Rejected</span>";
-                    } else {
-                        return "<span class='badge bg-danger'>Canceled</span>";
                     }
                 })
                 ->addColumn('department', function ($row) {
@@ -444,7 +492,7 @@ class JobAssignmentController extends Controller
                     return '<a href="' . route('v1.job-assignment-form.view', ['id' => $row->id, 'respond' => 'no']) . '" class="edit btn btn-primary btn-sm">View</a>';
                 })
                 ->addColumn('date_range', function ($row) {
-                    return $row->start_at . ' - ' . $row->end_at;
+                    return '<span class="badge rounded-pill text-bg-info">'.$row->start_at . '</span> <span class="badge rounded-pill text-bg-warning">' . $row->end_at.'</span>';
                 })
                 ->rawColumns(['status', 'date_range', 'action', 'department'])
                 ->make(true);
@@ -465,7 +513,8 @@ class JobAssignmentController extends Controller
                 'job_assignments.start_at',
                 'job_assignments.end_at',
                 'job_assignments.job_status',
-                'job_assignments.job_type as job_type_name'
+                'job_assignments.job_type as job_type_name',
+                'job_assignments.is_publish'
             )
                 ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
                 ->where('job_assignment_personnels.user_id', auth()->user()->id)
@@ -485,6 +534,10 @@ class JobAssignmentController extends Controller
                         return "<span class='badge bg-info'>Pending</span>";
                     } elseif ($row->job_status == 1) {
                         return "<span class='badge bg-success'>Accepted</span>";
+                    } elseif ($row->job_status == 4) {
+                            return "<span class='badge bg-warning'>Recalled</span>";
+                    } elseif ($row->job_status == 3) {
+                            return "<span class='badge bg-danger'>Deleted</span>";
                     } else {
                         return "<span class='badge bg-danger'>Rejected</span>";
                     }
@@ -493,10 +546,17 @@ class JobAssignmentController extends Controller
                     $label = ($row->job_status == 0) ? "Respond" : "View";
                     return '<a href="' . route('v1.job-assignment-form.view', ['id' => $row->id, 'respond' => 'yes']) . '" class="edit btn btn-primary btn-sm">' . $label . '</a>';
                 })
+                ->addColumn('job_record_id', function ($row) {
+                    $return = '<label class="label label-sm">'.$row->job_record_id.'</label>';
+                    $color = (int) $row->is_publish == 1 ? 'primary' : 'warning';
+                    $title = (int) $row->is_publish == 1 ? 'Publish' : 'Draft';
+                    $return .= '<span class="badge rounded-pill text-bg-'.$color.'">'.$title.'</span>';
+                    return $return;
+                 })
                 ->addColumn('date_range', function ($row) {
-                    return $row->start_at . ' - ' . $row->end_at;
+                    return '<span class="badge rounded-pill text-bg-info">'.$row->start_at . '</span> <span class="badge rounded-pill text-bg-warning">' . $row->end_at.'</span>';
                 })
-                ->rawColumns(['status', 'date_range', 'action'])
+                ->rawColumns(['job_record_id','status', 'date_range', 'action'])
                 ->make(true);
         }
     }
@@ -551,12 +611,11 @@ class JobAssignmentController extends Controller
     public function history()
     {
         $job_type = JobType::all();
-        $job_no = $this->generate_autonumber('JA' . date('ym'));
         $users = User::whereNotIn('id', [auth()->id()])->get()->groupBy('department');
         $vehicles = Vehicle::all();
         $departments = Department::all();
         $persons = User::all();
-        return view('job_assignment.history', compact('persons', 'departments', 'job_type', 'job_no', 'users', 'vehicles'))
+        return view('job_assignment.history', compact('persons', 'departments', 'job_type', 'users', 'vehicles'))
             ->with('title', 'Job Requisition History')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Job Requisition History']);
     }
@@ -565,7 +624,7 @@ class JobAssignmentController extends Controller
     {
         $request->validate([
             'id' => 'required',
-            'action' => 'required|in:publish,recall',
+            'action' => 'required|in:publish,recall,cancel',
         ]);
 
         $event = JobAssignment::find($request->id); // Example: Find an event (replace with your logic)
@@ -578,10 +637,23 @@ class JobAssignmentController extends Controller
         if ($request->action === "publish") {
             $event->is_publish = 1; // Published
         } elseif ($request->action === "recall") {
-            $event->is_publish = 0; // Canceled
+            $event->job_status = 4; // recall
+            $event->is_publish = 0;
+        } elseif ($request->action === "cancel") {
+            $event->job_status = 3; // Canceled
         }
 
         $event->save();
+
+        if($request->action === "recall")
+        {
+            $reset_personnels = JobAssignmentPersonnel::where('job_assignment_id',$event->id)->get();
+            foreach($reset_personnels as $reset_personnel){
+                $reset_personnel->assignment_status = 0;
+                $reset_personnel->save();
+            }
+        }
+
         $personnels = JobAssignmentPersonnel::where('job_assignment_id', $event->id)->get();
         $personnelIds = $personnels->pluck('user_id')->toArray();
 
@@ -643,5 +715,29 @@ class JobAssignmentController extends Controller
 
         return response()->json(['message' => 'Vibtech Genesis Staff Portal']);
     }
+
+    public function assignVehicleBooker(Request $request)
+{
+    // Validate the request
+    $request->validate([
+        'job_id' => 'required',
+    ]);
+
+    // Get the Job Assignment
+    $job = JobAssignmentPersonnel::findOrFail($request->job_id);
+    $job1 = JobAssignmentPersonnel::where('job_assignment_id',$job->job_assignment_id)->get();
+    foreach($job1 as $row){
+        $row->is_booker=0;
+        $row->save();
+    }
+
+
+    // Assign the vehicle booker (You may need to define your own logic here)
+    $job->is_booker=1;
+    $job->save();
+
+    // Return success response
+    return response()->json(['success' => 'Vehicle booker assigned successfully!']);
+}
 
 }

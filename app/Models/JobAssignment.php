@@ -44,4 +44,9 @@ class JobAssignment extends Model
     {
         return $this->belongsToMany(User::class, 'job_assignment_personnels', 'job_assignment_id', 'user_id');
     }
+
+    public function vehicleBookings()
+{
+    return $this->hasMany(VehicleBooking::class, 'job_assignment_id');
+}
 }

@@ -113,14 +113,14 @@
 
                 <div class="col-md-6">
                     <label for="startDate" class="form-label">Start Date</label>
-                    <input type="datetime-local" class="form-control" name="start_at"
-                           value="{{ old('start_at', isset($booking) ? $booking->start_at : '') }}" />
+                    <input type="date" class="form-control" name="start_at"
+                           value="{{ old('start_at', isset($booking) ? \Carbon\Carbon::parse($booking->start_at)->format('Y-m-d') : '') }}" />
                 </div>
 
                 <div class="col-md-6">
                     <label for="startDate" class="form-label">End Date</label>
-                    <input type="datetime-local" class="form-control" name="end_at"
-                           value="{{ old('end_at', isset($booking) ? $booking->end_at : '') }}" />
+                    <input type="date" class="form-control" name="end_at"
+                           value="{{ old('end_at', isset($booking) ? \Carbon\Carbon::parse($booking->end_at)->format('Y-m-d') : '') }}" />
                 </div>
 
                 <div class="col-md-6 mt-5">
@@ -135,7 +135,7 @@
                         @foreach($jobs as $job)
                             <option value="{{ $job->id }}"
                                     {{ isset($booking) && $booking->job_assignment_id == $job->id ? 'selected' : '' }}>
-                                {{ $job->scope_of_work }}
+                                    {{ $job->job_type }} | {{ $job->job_record_id }}
                             </option>
                         @endforeach
                     </select>

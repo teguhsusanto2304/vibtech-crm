@@ -4,22 +4,8 @@
 
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="row">
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb breadcrumb-custom-icon">
-                    @foreach ($breadcrumb as $item)
-                        <li class="breadcrumb-item">
-                            <a href="javascript:void(0);">{{ $item }}</a>
-                            <i class="breadcrumb-icon icon-base bx bx-chevron-right align-middle"></i>
-                        </li>
-                    @endforeach
-                </ol>
-            </nav>
-
-            <h3>{{ $title }}</h3>
-
-            <!-- Custom Styles -->
+            <x-breadcrumb :breadcrumb="$breadcrumb" :title="$title" />
+        <!-- Custom Styles -->
             <style>
                 .btn_primary {
                     background-color: #003366;
@@ -76,7 +62,5 @@
                     </div>
                 </div>
             </div>
-
-
         </div>
 @endsection

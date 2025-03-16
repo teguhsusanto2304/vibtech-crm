@@ -32,16 +32,17 @@
 
 
             <div class="card">
+                <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+                    <div>  </div>
+                    <a href="{{ route('v1.vehicles.create')}}" class="btn btn-primary">Add Vehicle</a>
 
 
                 <div class="card-body">
                     <table class="table table-bordered table-striped" id="booking_datatable">
                         <thead>
                             <tr>
-                                <th>Car</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Purposes</th>
+                                <th>Image</th>
+                                <th>Car Plat Number</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -49,36 +50,48 @@
                 </div>
             </div>
 
-            <x-toast-notification />
-            <x-booking-modal />
-
             <script type="text/javascript">
-                let statusSuccess = 0;
                 $(document).ready(function () {
+                    $(".cancel-booking").click(function () {
+                        var bookingId = $(this).data("id");
+                        var cancelUrl = "{{ route('v1.vehicle-bookings.cancel', ':id') }}".replace(':id', bookingId);
+                        $("#cancelForm").attr("action", cancelUrl); // Ensure this updates correctly
+                    });
                     var table = $('#booking_datatable').DataTable({
                         processing: true,
                         serverSide: true,
-                        ajax: "{{ route('v1.vehicle-bookings.data') }}",
+                        ajax: "{{ route('v1.vehicle.data') }}",
                         columns: [
+                            {data: 'path_image', name: 'path_image', orderable: false, searchable: false },
                             { data: 'name', name: 'name' },
-                            { data: 'start_at', name: 'start_at' },
-                            { data: 'end_at', name: 'end_at' },
-                            { data: 'purposes', name: 'purposes' },
                             { data: 'action', name: 'action' }
                         ]
                     });
-                    window.addEventListener("reloadDataTable", function () {
-                        table.ajax.reload(null, false); // 🔄 Reload table without resetting pagination
-                    });
 
                 });
-
             </script>
-            <x-booking-cancel />
-
-
-
-
+            <!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to cancel this vehicle booking?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
+                <form id="cancelForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 

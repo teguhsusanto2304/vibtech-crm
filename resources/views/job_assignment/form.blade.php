@@ -113,7 +113,7 @@ input:-webkit-autofill:active {
                             <input type="text" class="form-control form-control-input" name="job_record_id" value="{{ $job_no }}" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label for="inputPassword4" class="form-label">Type of Job {{ date('Y-m-d H:n:s') }}</label>
+                            <label for="inputPassword4" class="form-label">Type of Job </label>
                             <input type="text" class="form-control form-control-input" name="job_type"  value="{{ old('job_type')}}">
                         </div>
                         <div class="col-md-2">

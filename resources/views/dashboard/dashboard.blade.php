@@ -10,24 +10,26 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <style>
         .callout {
-  padding: 15px;
-  border-left: 5px solid #80e491;
-  background-color: #e7edfd;
-  margin-bottom: 0px;
-  border-radius: 4px;
-}
-.callout-event {
-  padding: 15px;
-  border-left: 5px solid #80e491;
-  background-color: #defbe3;
-  margin-bottom: 0px;
-  border-radius: 4px;
-}
-.callout h5 {
-  margin-top: 0;
-  font-weight: bold;
-}
-</style>
+            padding: 15px;
+            border-left: 5px solid #80e491;
+            background-color: #e7edfd;
+            margin-bottom: 0px;
+            border-radius: 4px;
+        }
+
+        .callout-event {
+            padding: 15px;
+            border-left: 5px solid #80e491;
+            background-color: #defbe3;
+            margin-bottom: 0px;
+            border-radius: 4px;
+        }
+
+        .callout h5 {
+            margin-top: 0;
+            font-weight: bold;
+        }
+    </style>
     <div class="container-xxl flex-grow-1 container-p-y">
         <!-- custom-icon Breadcrumb-->
         <nav aria-label="breadcrumb">
@@ -43,11 +45,77 @@
 
         <h3>{{ $title }}</h3>
 
+        <!-- Vehicle Booking Modal -->
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Vehicle Image -->
+
+                            <!-- Booking Details -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Vehicle</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingVehicle"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Start Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingStart"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>End Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingEnd"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Purposes</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingPurpose"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingJob"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Created By</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingCreator"></span></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
+                                    style="max-width: 300px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center">
+            <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
+            <div><small>Vehicle Booking</small></div>
+        </div>
+
+        <div class="d-flex align-items-center mt-2 mb-2">
+            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
+            <div><small>Job Requisition Form</small></div>
+        </div>
         <div class="card app-calendar-wrapper ">
             <div class="row g-0">
-
-
-
                 <!-- Calendar & Modal -->
                 <div class="col app-calendar-content">
                     <div class="card shadow-none border-0">
@@ -182,13 +250,13 @@
                             function B(e) {
                                 return e.id
                                     ? `
-        <div class='d-flex flex-wrap align-items-center'>
-          <div class='avatar avatar-xs me-2'>
-            <img src='${assetsPath}img/avatars/${$(e.element).data("avatar")}'
-              alt='avatar' class='rounded-circle' />
-          </div>
-          ${e.text}
-        </div>`
+            <div class='d-flex flex-wrap align-items-center'>
+              <div class='avatar avatar-xs me-2'>
+                <img src='${assetsPath}img/avatars/${$(e.element).data("avatar")}'
+                  alt='avatar' class='rounded-circle' />
+              </div>
+              ${e.text}
+            </div>`
                                     : e.text;
                             }
                             function I() {
@@ -497,45 +565,48 @@
                                 }
 
                                 let eventHtml = `
-        <table class="table">
-            <tbody>`;
+            <table class="table">
+                <tbody>`;
 
                                 data.forEach((event) => {
-                                    if (event.is_vehicle_require == 1) {
+                                    if (event.is_vehicle_require == 99) {
                                         eventHtml += `
-            <tr>
-                <td>${event.title}</td>
-                <td>
-                <div class="dropdown" >
-                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
-                <div class="dropdown-menu">
-                  <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes"><small>Detail</small></a>
-                  <a class="dropdown-item" href="/v1/job-assignment-form/${event.id}/vehicle-booking"><small>Vehicle Booking</small></a>
-                </div>
-              </div>
+                <tr>
+                    <td>${event.title}</td>
+                    <td>
+                    <div class="dropdown" >
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                    <div class="dropdown-menu">
+                      <a  class="dropdown-item view-booking"
+            id="vehiclebookingid"
+            data-id="${event.id}"
+            data-bs-toggle="modal"
+            data-bs-target="#bookingModal"><small>Detail</small></a>
+                    </div>
+                  </div>
 
-                </td>
-            </tr>`;
+                    </td>
+                </tr>`;
                                     } else {
                                         eventHtml += `
-            <tr>
-                <td><small>${event.title}</small></td>
-                <td>
-                <div class="dropdown">
-                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
-                <div class="dropdown-menu">
-                  <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes">Detail</a>
-                </div>
-              </div>
+                <tr>
+                    <td><small>${event.title}</small></td>
+                    <td>
+                    <div class="dropdown">
+                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
+                    <div class="dropdown-menu">
+                      <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes">Detail</a>
+                    </div>
+                  </div>
 
-                </td>
-            </tr>`;
+                    </td>
+                </tr>`;
                                     }
                                 });
 
                                 eventHtml += `
-            </tbody>
-        </table>`;
+                </tbody>
+            </table>`;
 
                                 eventListDiv.innerHTML = eventHtml;
                             })
@@ -543,6 +614,7 @@
                     }
 
                 </script>
+                <x-booking-modal />
                 <!-- /Calendar & Modal -->
 
 
@@ -550,9 +622,6 @@
             <!-- /Calendar Sidebar -->
         </div>
     </div>
-
-
-
 
 
 

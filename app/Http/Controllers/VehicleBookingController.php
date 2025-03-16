@@ -8,6 +8,7 @@ use App\Models\VehicleBooking;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Yajra\DataTables\DataTables;
+use Illuminate\Validation\Rule;
 
 class VehicleBookingController extends Controller
 {
@@ -24,15 +25,19 @@ class VehicleBookingController extends Controller
         // Retrieve the existing vehicle booking record
         $booking = VehicleBooking::findOrFail($id);
 
-        $jobs = JobAssignment::select('id', 'scope_of_work')
-            ->where('job_assignments.user_id', auth()->user()->id)
-            ->whereNot('job_assignments.job_status', 3)
-            ->where(function ($query) use ($now) {
-                $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
-                    ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
-            })
-            ->orderBy('job_assignments.created_at', 'DESC')
-            ->get();
+        $jobs = JobAssignment::select('job_assignments.id', 'job_assignments.job_type','job_assignments.job_record_id')
+        ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
+        ->where('job_assignment_personnels.user_id', auth()->user()->id)
+        ->where('job_assignment_personnels.is_booker', 1)
+        ->whereNot('job_assignments.job_status', 3)
+        ->where(function ($query) use ($now) {
+            $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
+                //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
+                ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
+            //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
+        })
+        ->orderBy('job_assignments.created_at', 'DESC')
+        ->get();
 
         return view('vehicle_booking.edit', compact('vehicles', 'jobs', 'booking'))
             ->with('title', 'Edit Vehicle Booking')
@@ -44,17 +49,19 @@ class VehicleBookingController extends Controller
     {
         $now = Carbon::now();
         $vehicles = Vehicle::all();
-        $jobs = JobAssignment::select('id', 'scope_of_work')
-            ->where('job_assignments.user_id', auth()->user()->id)
-            ->whereNot('job_assignments.job_status', 3)
-            ->where(function ($query) use ($now) {
-                $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
-                    //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
-                    ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
-                //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
-            })
-            ->orderBy('job_assignments.created_at', 'DESC')
-            ->get();
+        $jobs = JobAssignment::select('job_assignments.id', 'job_assignments.job_type','job_assignments.job_record_id')
+        ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
+        ->where('job_assignment_personnels.user_id', auth()->user()->id)
+        ->where('job_assignment_personnels.is_booker', 1)
+        ->whereNot('job_assignments.job_status', 3)
+        ->where(function ($query) use ($now) {
+            $query->where('job_assignments.start_at', '>=', $now) // Job starts today or earlier
+                //->where('job_assignments.end_at', '>=', $now) // Job ends today or later
+                ->orWhereDate('job_assignments.start_at', $now); // Exact match with today's date
+            //->orWhereDate('job_assignments.end_at', $now); // Exact match with today's date
+        })
+        ->orderBy('job_assignments.created_at', 'DESC')
+        ->get();
         return view('vehicle_booking.form', compact('vehicles', 'jobs'))->with('title', 'Create a Vehicle Booking')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking', 'Create a Vehicle Booking']);
     }
 
@@ -84,12 +91,44 @@ class VehicleBookingController extends Controller
             ->with('success', 'Vehicle booking updated successfully.');
     }
 
+    public function show($id)
+    {
+        $booking = VehicleBooking::with(['vehicle', 'jobAssignment', 'creator'])->findOrFail($id);
+
+        return view('vehicle_booking.view', compact('booking'))->with('title', 'Create a Vehicle Booking')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking', 'Detail a Vehicle Booking']);
+    }
+
+    public function commonShow($id)
+    {
+        $booking = VehicleBooking::with(['vehicle', 'jobAssignment', 'creator'])->findOrFail($id);
+        return response()->json($booking);
+    }
+
 
     public function store(Request $request)
     {
         // Validate incoming request data
         $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_id' => [
+        'required',
+        Rule::exists('vehicles', 'id'),
+        function ($attribute, $value, $fail) use ($request) {
+            $exists = VehicleBooking::where('vehicle_id', $value)
+                ->where(function ($query) use ($request) {
+                    $query->whereBetween('start_at', [$request->start_at, $request->end_at])
+                          ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
+                          ->orWhere(function ($q) use ($request) {
+                              $q->where('start_at', '<=', $request->start_at)
+                                ->where('end_at', '>=', $request->end_at);
+                          });
+                })
+                ->exists();
+
+            if ($exists) {
+                $fail('This vehicle is already booked within the selected dates.');
+            }
+        }
+    ],
             'start_at' => 'required|date|after_or_equal:today',
             'end_at' => 'required|date|after:start_at',
             'purposes' => 'required|string',
@@ -121,8 +160,14 @@ class VehicleBookingController extends Controller
     {
         $now = Carbon::now();
         $booking = VehicleBooking::findOrFail($id);
-        $booking->update(['end_at' => $now]); // OR $booking->delete();
-        return redirect()->route('v1.vehicle-bookings.list')->with('success', 'Vehicle Bookings canceled successfully.');
+        if (!$booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+        //$booking->update(['end_at' => $now]); // OR $booking->delete();
+        $booking->end_at = $now->modify('-1 day');
+        $booking->start_at = $now->modify('-1 day');
+        $booking->save();
+        return response()->json(['message' => 'Vehicle booking canceled successfully']);
     }
 
     public function getData(Request $request)
@@ -130,7 +175,9 @@ class VehicleBookingController extends Controller
         if ($request->ajax()) {
             $now = Carbon::now(); // Get current date & time
             // Filter bookings where end_at is today or in the future
-            $data = VehicleBooking::where('end_at', '>=', $now)->select('*');
+            $data = VehicleBooking::where('created_by',auth()->user()->id)
+            ->where('end_at', '>=', $now)
+            ->select('*');
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -139,7 +186,12 @@ class VehicleBookingController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group" role="group" aria-label="Basic example"><a href="' . route('v1.vehicle-bookings.edit', ['id' => $row->id]) . '" class="edit btn btn-success btn-sm">Edit</a>';
-                    $btn1 = '<a href="javascript:void(0);"
+                    $btn .= '<button class="edit btn btn-info btn-sm view-booking"
+            id="vehiclebookingid"
+            data-id="'.$row->id.'"
+            data-bs-toggle="modal"
+            data-bs-target="#bookingModal">Detail</button>';
+                    $btn .= '<a href="javascript:void(0);"
                 class="btn btn-danger btn-sm cancel-booking"
                 data-id="' . $row->id . '"
                 data-bs-toggle="modal"

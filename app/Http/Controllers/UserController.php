@@ -50,8 +50,8 @@ class UserController extends Controller
             if ($request->hasFile('path_image')) {
                 $image = $request->file('path_image');
                 $imageName = time() . '_' . $image->getClientOriginalName(); // Unique image name
-                //$imagePath = 'assets/img/photos/' . $imageName; //dev  Define the path
-                $imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
+                $imagePath = 'assets/img/photos/' . $imageName; //dev  Define the path
+                //$imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
 
                 // Move the image to the public folder
                 $image->move(public_path('assets/img/photos'), $imageName);

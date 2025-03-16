@@ -92,6 +92,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/edit','edit')->name('v1.job-assignment-form.edit');
             Route::put('{id}',  'update')->name('v1.job-assignment-form.update');
             Route::get('/send-email','sendBookingEmail')->name('v1.job-assignment-form.send-email');
+            Route::post('/assign-vehicle-booker', 'assignVehicleBooker')->name('v1.job-assignment-form.assign-vehicle-booker');
         });
 
         // 🔹 Role Management Routes
@@ -141,14 +142,19 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/cancel', 'cancel')->name('v1.vehicle-bookings.cancel');
             Route::get('/list', 'list')->name('v1.vehicle-bookings.list');
             Route::get('/data','getData')->name('v1.vehicle-bookings.data');
+            Route::get('/{id}/detail','show')->name('v1.vehicle-bookings.detail');
+            Route::get('/{id}/modal', 'commonShow')->name('v1.vehicle-bookings.modal');
         });
 
         // 🔹 Vehicles Routes
         Route::prefix('vehicles')->controller(VehicleController::class)->group(function () {
             Route::get('/create', 'create')->name('v1.vehicles.create');
+            Route::get('/{id}/edit', 'edit')->name('v1.vehicles.edit');
             Route::post('/store', 'store')->name('v1.vehicles.store');
+            Route::put('/{id}/update', 'update')->name('v1.vehicles.update');
             Route::get('/list', 'list')->name('v1.vehicles.list');
             Route::get('/car-image', 'getCarImages')->name('v1.vehicles.car-image');
+            Route::get('/data','getData')->name('v1.vehicle.data');
 
         });
 

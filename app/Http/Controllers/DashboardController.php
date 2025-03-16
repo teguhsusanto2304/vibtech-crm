@@ -150,9 +150,9 @@ class DashboardController extends Controller
 
             foreach ($bookings as $row) {
                 $arr[] = [
-                    'id' => 'VB' . $row->id,
+                    'id' =>  $row->id,
                     'title' => "<div class='callout'><label class='text-primary'>".$row->purposes ."</label></div>",
-                    'is_vehicle_require' => null
+                    'is_vehicle_require' => 99
                 ];
             }
         }

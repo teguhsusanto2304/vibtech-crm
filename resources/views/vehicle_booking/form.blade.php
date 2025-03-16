@@ -105,11 +105,11 @@
                                 </div>
                             <div class="col-md-6 ">
                                 <label for="startDate" class="form-label">Start Date</label>
-                                <input type="datetime-local" class="form-control" name="start_at" value="{{ old('start_at') }}" />
+                                <input type="date" class="form-control" name="start_at" value="{{ old('start_at') }}" />
                             </div>
                             <div class="col-md-6">
                                 <label for="startDate" class="form-label">End Date</label>
-                                <input type="datetime-local" class="form-control" name="end_at" value="{{ old('end_at') }}" />
+                                <input type="date" class="form-control" name="end_at" value="{{ old('end_at') }}" />
                             </div>
                             <div class="col-md-6 mt-5">
                                 <label for="startDate" class="form-label">Purposes</label>
@@ -120,7 +120,7 @@
                                 <select class="form-control" name="job_assignment_id" >
                                     <option value="">Choose a job</option>
                                     @foreach($jobs as $job)
-                                    <option value="{{ $job->id }}">{{ $job->scope_of_work }}</option>
+                                    <option value="{{ $job->id }}">{{ $job->job_type }} | {{ $job->job_record_id }}</option>
                                     @endforeach
                                 </select>
                             </div>

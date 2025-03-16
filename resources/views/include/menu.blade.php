@@ -705,7 +705,7 @@
                 @can('view-department')
                     <ul class="menu-sub">
                         <li class="no-bullet">
-                            <a href="{{ route('v1.position-levels')}}" class="menu-link">
+                            <a href="{{ route('v1.vehicles.list')}}" class="menu-link">
                                 <div class="text-truncate" data-i18n="Analytics">Vehicle</div>
                             </a>
                         </li>
