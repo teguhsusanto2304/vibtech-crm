@@ -602,21 +602,9 @@
         <li class="menu-item">
             <a href="{{ route('inbox')}}" class="menu-link">
                 <i class="menu-icon">
-                    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 27">
-                        <defs>
-                            <style>
-                                .cls-inbox {
-                                    fill: none;
-                                    stroke: #fff;
-                                    stroke-miterlimit: 10;
-                                    stroke-width: 1.4px;
-                                }
-                            </style>
-                        </defs>
-                        <path id="Path" class="cls-inbox"
-                            d="M.72,2.98h0c0-1.25,1.01-2.27,2.26-2.28h28.04c1.26,0,2.27,1.02,2.28,2.28v21.04c0,1.26-1.02,2.27-2.28,2.28H2.98c-1.26,0-2.27-1.02-2.28-2.28h0l.02-21.04Z" />
-                        <path id="Path-2" class="cls-inbox" d="M1.23,2.98l15.77,10.52,15.77-10.52" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 27">
+                        <path d="M2.7,2.7h28.6c1.1,0,2,0.9,2,2v16.6c0,1.1-0.9,2-2,2H19.5l-5.6,4.2c-0.3,0.2-0.7,0.2-1,0l-5.6-4.2H2.7c-1.1,0-2-0.9-2-2V4.7c0-1.1,0.9-2,2-2z" stroke="#fff" stroke-width="1.4" fill="none"/>
+                      </svg>
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat</div>
             </a>

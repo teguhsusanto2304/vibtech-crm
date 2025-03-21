@@ -19,81 +19,315 @@
 
     <h3>{{ $title }}</h3>
 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
 
-      <link rel="stylesheet" href="{{ asset('assets/vendor/libs/pickr/pickr-themes.css') }}" />
+        .container {
+            display: flex;
+            gap: 15px;
+        }
 
-    <link rel="stylesheet" href="{{ asset('assets/vendor/css/core.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}" />
+        .online-users {
+            width: 200px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .online-users h3 {
+            margin: 0;
+            font-size: 16px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .user {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .user:hover {
+            background: #f0f0f0;
+        }
+
+        .chat-container {
+            width: 700px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-box {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .message .bubble {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+
+        .sent {
+            justify-content: flex-end;
+        }
+
+        .sent .bubble {
+            background: #007bff;
+            color: white;
+            border-top-right-radius: 0;
+        }
+
+        .received {
+            justify-content: flex-start;
+        }
+
+        .received .bubble {
+            background: #e4e6eb;
+            color: black;
+            border-top-left-radius: 0;
+        }
+
+        .input-container {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .input-container button {
+            margin-left: 5px;
+            padding: 8px 12px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .input-container button:hover {
+            background: #0056b3;
+        }
+        .message-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    position: relative;
+    padding: 5px 10px;
+}
+
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 20px;
+    word-wrap: break-word;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.sent .message-bubble {
+    background-color: #007bff;
+    color: white;
+    border-top-right-radius: 0;
+    align-self: flex-end;
+}
+
+.received .message-bubble {
+    background-color: #e4e6eb;
+    color: black;
+    border-top-left-radius: 0;
+    align-self: flex-start;
+}
+
+.message-timestamp {
+    font-size: 12px;
+    color: gray;
+    margin-top: 3px;
+    text-align: right;
+}
+
+    </style>
+    <div class="container">
+        <!-- Online Users Sidebar -->
+        <div class="online-users">
+            <h3>Online Users</h3>
+            <ul id="online-users-list" style="list-style: none; padding: 0;"></ul>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="chat-container">
+            <div class="invisible">
+                <label for="recipient">To:</label>
+                <input type="text" id="recipient" placeholder="Enter recipient ID">
+                <button onclick="loadPreviousMessages()">Load Chat</button>
+            </div>
+            <div><strong id="recipientLabel"></strong></div>
+            <div class="chat-box" id="chat-box"></div>
+            <div class="input-container">
+                <input type="text" id="message" placeholder="Type a message">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userId = "{{ auth()->user()->name }}";
+        let recipientId = "";
+        let socket;
+
+        // Function to fetch previous messages
+        function loadPreviousMessages() {
+            recipientId = document.getElementById("recipient").value;
+            if (!recipientId) {
+                alert("Enter a recipient ID.");
+                return;
+            }
+
+            fetch(`http://127.0.0.1:8000/messages/${userId}/${recipientId}`)
+                .then(response => response.json())
+                .then(messages => {
+                    const chatBox = document.getElementById("chat-box");
+                    chatBox.innerHTML = ""; // Clear chat box before loading previous messages
+
+                    messages.forEach(msg => {
+                        addMessage(msg.sender_id, msg.message,msg.timestamp);
+                    });
+
+                    startWebSocket();
+                })
+                .catch(error => console.error("Error loading messages:", error));
+        }
+
+        // Function to start WebSocket connection
+        function startWebSocket() {
+            socket = new WebSocket(`ws://127.0.0.1:8000/ws1/${userId}`);
+
+            socket.onopen = function() {
+                console.log("Connected to WebSocket server");
+                updateOnlineUsers();
+            };
+
+            socket.onmessage = function(event) {
+                const messageData = JSON.parse(event.data);
+
+                if (messageData.type === "chat") {
+                    addMessage(messageData.sender, messageData.message);
+                } else if (messageData.type === "online_users") {
+                    updateOnlineUsersList(messageData.users);
+                }
+            };
+
+            socket.onclose = function() {
+                console.log("WebSocket connection closed");
+            };
+        }
+
+        // Function to update online users list
+        function updateOnlineUsersList(users) {
+            const userList = document.getElementById("online-users-list");
+            userList.innerHTML = "";
+            let userLogin = "{{ auth()->user()->name }}";
+
+            users.forEach(user => {
+                if(user!=userLogin){
+                    const li = document.createElement("li");
+                    li.textContent = user;
+                    li.classList.add("user");
+                    li.onclick = () => {
+                        document.getElementById("recipient").value = user;
+                        recipientId = user;
+                        loadPreviousMessages();
+
+                    let recipientLabel = document.getElementById("recipientLabel");
+                    recipientLabel.textContent = user;
+                    };
+                    userList.appendChild(li);
+                }
+            });
+        }
+
+        // Function to add a message bubble
+        function addMessage(sender, message, timestamp) {
+    const chatBox = document.getElementById("chat-box");
+
+    // Create the message container
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("message", sender === userId ? "sent" : "received");
+
+    // Create the inner message wrapper
+    const messageContainer = document.createElement("div");
+    messageContainer.classList.add("message-container");
+
+    // Create message bubble
+    const bubble = document.createElement("div");
+    bubble.classList.add("message-bubble");
+    bubble.textContent = message;
+
+    // Create timestamp element
+    const timestampDiv = document.createElement("div");
+    timestampDiv.classList.add("message-timestamp");
+
+    // Convert and format timestamp
+    const dateObj = new Date(timestamp);
+    const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); // "10:30 PM"
+
+    timestampDiv.textContent = timeString;
+
+    // Append bubble & timestamp to message container
+    messageContainer.appendChild(bubble);
+    messageContainer.appendChild(timestampDiv);
+
+    // Append message container to messageDiv
+    messageDiv.appendChild(messageContainer);
+
+    // Append final messageDiv to chatBox
+    chatBox.appendChild(messageDiv);
+
+    // Scroll to latest message
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
 
 
-    <!-- Vendors CSS -->
 
-      <link rel="stylesheet" href="/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+        // Function to send a new message
+        function sendMessage() {
+            const message = document.getElementById("message").value;
 
-    <!-- endbuild -->
+            if (!recipientId || !message) {
+                alert("Please enter a recipient ID and a message.");
+                return;
+            }
 
-    <link rel="stylesheet" href="/assets/vendor/libs/maxLength/maxLength.css" />
+            const data = JSON.stringify({ type: "chat", to: recipientId, message: message });
+            socket.send(data);
+            addMessage(userId, message);
+            document.getElementById("message").value = "";
+        }
 
-    <!-- Page CSS -->
-
-  <link rel="stylesheet" href="/assets/vendor/css/pages/app-chat.css" />
-
-    <!-- Helpers -->
-    <script src="../../assets/vendor/js/helpers.js"></script>
-    <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
-
-      <!--? Template customizer: To hide customizer set displayCustomizer value false in config.js.  -->
-      <script src="../../assets/vendor/js/template-customizer.js"></script>
-
-    <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
-
-      <script src="../../assets/js/config.js"></script>
-
-teguh susanto
-
-
-
-
-
-
-    <!-- Core JS -->
-    <!-- build:js assets/vendor/js/theme.js  -->
-
-
-      <script src="{{ asset('assets/vendor/libs/jquery/jquery.js') }}"></script>
-
-    <script src="{{ asset('assets/vendor/libs/popper/popper.js') }}"></script>
-    <script src="{{ asset('assets/vendor/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('assets/vendor/libs/@algolia/autocomplete-js.js') }}"></script>
-
-
-
-      <script src="{{ asset('assets/vendor/libs/pickr/pickr.js') }}"></script>
-
-
-
-      <script src="../../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
-
-
-        <script src="{{ asset('assets/vendor/libs/hammer/hammer.js') }}"></script>
-
-          <script src="{{ asset('assets/vendor/libs/i18n/i18n.js') }}"></script>
-
-
-      <script src="{{ asset('assets/vendor/js/menu.js') }}"></script>
-
-    <!-- endbuild -->
-
-    <!-- Vendors JS -->
-
-
-
-    <!-- Main JS -->
-
-      <script src="{{ asset('assets/js/main.js') }}"></script>
-
-
-    <!-- Page JS -->
-    <script src="{{ asset('assets/js/app-chat.js') }}"></script>
-
-    @endsection
+        // Start WebSocket when the page loads
+        startWebSocket();
+    </script>
+@endsection

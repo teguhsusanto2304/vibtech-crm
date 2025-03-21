@@ -284,7 +284,7 @@ Route::get('/profile/change-password', function () {
 Route::post('/profile/password-update', [ProfileController::class, 'updatePassword'])->name('profile.password-update');
 
 Route::get('/inbox', function () {
-    return view('inbox', ['title' => 'Inbox', 'breadcrumb' => ['Home', 'Inbox']]);
+    return view('chat.inbox', ['title' => 'Inbox', 'breadcrumb' => ['Home', 'Inbox']]);
 })->name('inbox');
 
 Route::get('/shipping-status', function () {
