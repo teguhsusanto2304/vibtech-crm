@@ -11,6 +11,7 @@
             $assignment_status = 0;
             $person_id = $person->id;
             $job_status = $person->assignment_status;
+            $confirm_status = $person->assignment_status;
         } else {
             $assignment_status = $person->assignment_status;
         }

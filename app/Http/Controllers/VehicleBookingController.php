@@ -7,6 +7,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleBooking;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use Illuminate\Validation\Rule;
 
@@ -48,7 +49,7 @@ class VehicleBookingController extends Controller
     public function create()
     {
         $now = Carbon::now();
-        $vehicles = Vehicle::all();
+        $vehicles = Vehicle::whereNot('data_status',1)->get();
         $jobs = JobAssignment::select('job_assignments.id', 'job_assignments.job_type','job_assignments.job_record_id')
         ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
         ->where('job_assignment_personnels.user_id', auth()->user()->id)
@@ -203,7 +204,47 @@ class VehicleBookingController extends Controller
         }
     }
 
+    public function getAvailableVehicles(Request $request)
+    {
+        $startAt = $request->query('start_at');
+        $endAt = $request->query('end_at');
+        $id = $request->query('id');
 
+        if (!$startAt || !$endAt) {
+            return response()->json(['error' => 'Start and End date are required'], 400);
+        }
 
+        $bookedVehicleIds = VehicleBooking::where(function ($query) use ($startAt, $endAt) {
+                $query->whereBetween('start_at', [$startAt, $endAt])
+                      ->orWhereBetween('end_at', [$startAt, $endAt])
+                      ->orWhere(function ($query) use ($startAt, $endAt) {
+                          $query->where('start_at', '<=', $startAt)
+                                ->where('end_at', '>=', $endAt);
+                      });
+            })
+            ->pluck('vehicle_id');
+        $bookedVehicleId = VehicleBooking::where('id',$id)
+            ->pluck('vehicle_id');
+
+        if(!empty($id)){
+            $availableVehiclesAll = Vehicle::whereNotIn('id', $bookedVehicleIds)
+            ->orWhere('id', $bookedVehicleId)
+            ->where('data_status',0)
+            ->get();
+            // Append image URL (assuming image field exists)
+            $availableVehiclesAll->each(function ($vehicle) {
+                $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
+            });
+            return response()->json($availableVehiclesAll);
+        } else {
+            $availableVehiclesAll = Vehicle::whereNotIn('id', $bookedVehicleIds)
+            ->where('data_status',0)
+            ->get();
+            $availableVehiclesAll->each(function ($vehicle) {
+                $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
+            });
+            return response()->json($availableVehiclesAll);
+        }
+    }
 
 }

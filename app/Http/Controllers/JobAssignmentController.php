@@ -45,9 +45,24 @@ class JobAssignmentController extends Controller
             ->select('users.*', 'departments.name as department_name'); // Select necessary fields
 
 
+        $authUser = auth()->user(); // Get logged-in user
+        $authDepartment = $authUser->department_id;
+        $authDepartment2nd = $authUser['2nd_department_id'];
 
+        $users3 = User::where('department_id', $authDepartment)
+        ->orWhere('2nd_department_id', $authDepartment)
+            ->where('position_level_id', 2)
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->select('users.*', 'departments.name as department_name');
 
-        $users = $users1->union($users2)->get()->groupBy('department_name');
+        $users4 = User::where('department_id', $authDepartment2nd)
+        ->orWhere('2nd_department_id', $authDepartment2nd)
+            ->where('position_level_id', 2)
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->select('users.*', 'departments.name as department_name');
+
+        // Union all three queries
+        $users = $users1->union($users2)->union($users3)->union($users4)->get()->groupBy('department_name');
 
         $vehicles = Vehicle::all();
         return view('job_assignment.form', compact('job_no', 'users', 'vehicles'))
@@ -272,7 +287,7 @@ class JobAssignmentController extends Controller
 
         $job = JobAssignment::find($id);
         $staff = User::whereNot('id', auth()->user()->id)
-            ->whereNot('position_level_id', 9)
+            ->whereNot('position_level_id', 2)
             ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
                 $query->where('job_assignment_id', $id);
             })

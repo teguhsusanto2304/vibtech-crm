@@ -29,6 +29,12 @@
             margin-top: 0;
             font-weight: bold;
         }
+        .fc-event {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
     </style>
     <div class="container-xxl flex-grow-1 container-p-y">
         <!-- custom-icon Breadcrumb-->
@@ -194,6 +200,44 @@
                     </div>
                 </div>
                 <!-- /Calendar Sidebar -->
+                <style>
+                    .event-dot::before {
+                        content: "●";
+                        /* Unicode dot character */
+                        margin-right: 5px;
+                        font-size: 12px;
+                    }
+
+                    .dot-Holiday::before {
+                        color: blue;
+                    }
+
+                    /* Example for event category 'Holiday' */
+                    .dot-Business::before {
+                        color: green;
+                    }
+
+                    /* Example for event category 'Meeting' */
+                    .dot-Workshop::before {
+                        color: green;
+                    }
+
+                    /* Example for event category 'Workshop' */
+
+                    .fc-h-event {
+                        background-color: transparent;
+                    }
+
+                    .fc .fc-more-popover .fc-popover-body {
+                        min-width: 220px;
+                        padding: 10px;
+                        background: white;
+                    }
+
+                    .fc .fc-day-today:not(.fc-col-header-cell) .fc-popover-body {
+                        background-color: white;
+                    }
+                </style>
                 <script src="{{ asset('assets/vendor/libs/fullcalendar/fullcalendar.js') }}"></script>
                 <script>
                     let eventsUrl = "{{ route('v1.dashboard.events') }}";
@@ -243,20 +287,20 @@
                                 return e.id
                                     ? "<span class='badge badge-dot bg-" +
                                     $(e.element).data("label") +
-                                    " me-2'> </span>" +
+                                    " me-2'></span>" +
                                     e.text
                                     : e.text;
                             }
                             function B(e) {
                                 return e.id
                                     ? `
-            <div class='d-flex flex-wrap align-items-center'>
-              <div class='avatar avatar-xs me-2'>
-                <img src='${assetsPath}img/avatars/${$(e.element).data("avatar")}'
-                  alt='avatar' class='rounded-circle' />
-              </div>
-              ${e.text}
-            </div>`
+                <div class='d-flex flex-wrap align-items-center'>
+                  <div class='avatar avatar-xs me-2'>
+                    <img src='${assetsPath}img/avatars/${$(e.element).data("avatar")}'
+                      alt='avatar' class='rounded-circle' />
+                  </div>
+                  ${e.text}
+                </div>`
                                     : e.text;
                             }
                             function I() {
@@ -278,6 +322,119 @@
                             }
                             let S = new Calendar(w, {
                                 initialView: "dayGridMonth",
+
+                                eventContent: function (arg) {
+
+                                    let dot = document.createElement('span');
+                                     if (arg.event.extendedProps.event_status == 'JR') {
+                                        dot.style.backgroundColor = '#75E166';
+                                    } else {
+                                        dot.style.backgroundColor = ' #8A89E1';
+                                    }
+
+                                    dot.style.width = '10px';
+                                    dot.style.height = '10px';
+                                    dot.style.borderRadius = '50%';
+                                    dot.style.display = 'inline-block';
+                                    dot.style.marginRight = '5px';
+                                    let title = document.createElement('span');
+                                    title.innerText = arg.event.title;
+
+                                    let customButton = document.createElement('button');
+                                    customButton.innerText = arg.event.title;
+                                    customButton.style.background = 'transparent';
+                                    customButton.style.color = 'black';
+                                    customButton.style.border = 'none';
+                                    customButton.style.padding = '5px 10px';
+                                    customButton.style.cursor = 'pointer';
+
+                                    // Handle click event
+                                    customButton.onclick = function (event) {
+                                        event.stopPropagation(); // Prevent FullCalendar from navigating
+                                        let eventStatus = arg.event.extendedProps.event_status; // ✅ Fetch event_status
+
+                                        if (eventStatus === "JR") {
+                                            let eventId = arg.event.id; // Get event ID
+                                            let url = `/v1/job-assignment-form/view/${eventId}/yes?fr=main`; // Replace with your target URL
+
+                                            // Redirect to the new page
+                                            window.location.href = url;
+                                        } else {
+
+                                            let eventId = arg.event.id;
+                                            let modal = document.getElementById('bookingModal');
+                                            let modalTitle = modal.querySelector('.modal-title');
+                                            let modalBody = modal.querySelector('.modal-body');
+
+                                            // Update modal title with the event ID
+                                            modalTitle.innerText = `Vehicle Booking Details`;
+
+                                            // Show loading text while fetching data
+                                            modalBody.innerHTML = `<p>Loading details...</p>`;
+
+                                            // Show the modal
+                                            var myModal = new bootstrap.Modal(modal);
+                                            myModal.show();
+
+                                            // Fetch event details from API
+                                            fetch(`/v1/vehicle-bookings/${eventId}/modal`) // Replace with your API URL
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    // Populate modal with fetched data
+                                                    modalBody.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-5"><strong>Vehicle</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingVehicle">${data.vehicle.name}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Start Date</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingStart">${data.start_at}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>End Date</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingEnd">${data.end_at}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Purposes</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingPurpose">${data.purposes}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingJob">${data.job_assignment ? data.job_assignment.scope_of_work : "N/A"}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Created By</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingCreator">${data.creator.name}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <img id="bookingImage" src="/${data.vehicle.path_image}" alt="Vehicle Image" class="img-fluid rounded"
+                                style="max-width: 300px;">
+                        </div>
+                    </div>
+                `;
+                                                })
+                                                .catch(error => {
+                                                    modalBody.innerHTML = `<p style="color: red;">Error fetching details. Please try again.</p>`;
+                                                    console.error("Error fetching event data:", error);
+                                                });
+                                        }
+
+                                    };
+
+                                    return { domNodes: [dot, customButton] };
+                                },
+
+
                                 events: function (e, t) {
                                     let n = (() => {
                                         let t = [],
@@ -318,45 +475,8 @@
                                 initialDate: new Date(),
                                 navLinks: !0,
                                 eventClassNames: function ({ event: e }) {
-                                    return ["bg-label-" + g[e._def.extendedProps.calendar]];
-                                },
-                                dateClick: function (e) {
-                                    e = moment(e.date).format("YYYY-MM-DD");
-                                    F(),
-                                        L.show(),
-                                        a && (a.innerHTML = "Add Event"),
-                                        (l.innerHTML = "Add"),
-                                        l.classList.remove("btn-update-event"),
-                                        l.classList.add("btn-add-event"),
-                                        i.classList.add("d-none"),
-                                        (o.value = e),
-                                        (s.value = e);
-                                },
-                                eventClick: function (e) {
-                                    alert(initialDate);
-                                    (e = e),
-                                        (E = e.event).url &&
-                                        (e.jsEvent.preventDefault(),
-                                            window.open(E.url, "_blank")),
-                                        L.show(),
-                                        a && (a.innerHTML = "Update Event"),
-                                        (l.innerHTML = "Update"),
-                                        l.classList.add("btn-update-event"),
-                                        l.classList.remove("btn-add-event"),
-                                        i.classList.remove("d-none"),
-                                        (d.value = E.title),
-                                        D.setDate(E.start, !0, "Y-m-d"),
-                                        !0 === E.allDay ? (m.checked = !0) : (m.checked = !1),
-                                        null !== E.end
-                                            ? P.setDate(E.end, !0, "Y-m-d")
-                                            : P.setDate(E.start, !0, "Y-m-d"),
-                                        f.val(E.extendedProps.calendar).trigger("change"),
-                                        void 0 !== E.extendedProps.location &&
-                                        (u.value = E.extendedProps.location),
-                                        void 0 !== E.extendedProps.guests &&
-                                        h.val(E.extendedProps.guests).trigger("change"),
-                                        void 0 !== E.extendedProps.description &&
-                                        (v.value = E.extendedProps.description);
+                                    //return ["bg-label-" + g[e._def.extendedProps.calendar]];
+                                    //return ["event-dot", "dot-" + e._def.extendedProps.calendar];
                                 },
                                 datesSet: function () {
                                     I();
@@ -367,154 +487,9 @@
                                     highlightCurrentDate();
                                 },
                             });
-                            function F() {
-                                (s.value = ""),
-                                    (c.value = ""),
-                                    (o.value = ""),
-                                    (d.value = ""),
-                                    (u.value = ""),
-                                    (m.checked = !1),
-                                    h.val("").trigger("change"),
-                                    (v.value = "");
-                            }
-                            S.render(),
-                                I(),
-                                (A = document.getElementById("eventForm")),
-                                FormValidation.formValidation(A, {
-                                    fields: {
-                                        eventTitle: {
-                                            validators: {
-                                                notEmpty: { message: "Please enter event title " },
-                                            },
-                                        },
-                                        eventStartDate: {
-                                            validators: {
-                                                notEmpty: { message: "Please enter start date " },
-                                            },
-                                        },
-                                        eventEndDate: {
-                                            validators: {
-                                                notEmpty: { message: "Please enter end date " },
-                                            },
-                                        },
-                                    },
-                                    plugins: {
-                                        trigger: new FormValidation.plugins.Trigger(),
-                                        bootstrap5: new FormValidation.plugins.Bootstrap5({
-                                            eleValidClass: "",
-                                            rowSelector: function (e, t) {
-                                                return ".form-control-validation";
-                                            },
-                                        }),
-                                        submitButton: new FormValidation.plugins.SubmitButton(),
-                                        autoFocus: new FormValidation.plugins.AutoFocus(),
-                                    },
-                                })
-                                    .on("core.form.valid", function () {
-                                        y = !0;
-                                    })
-                                    .on("core.form.invalid", function () {
-                                        y = !1;
-                                    }),
-                                T &&
-                                T.addEventListener("click", (e) => {
-                                    r.classList.remove("d-none");
-                                }),
-                                l.addEventListener("click", (e) => {
-                                    var t, n;
-                                    l.classList.contains("btn-add-event")
-                                        ? y &&
-                                        ((n = {
-                                            id: S.getEvents().length + 1,
-                                            title: d.value,
-                                            start: o.value,
-                                            end: s.value,
-                                            startStr: o.value,
-                                            endStr: s.value,
-                                            display: "block",
-                                            extendedProps: {
-                                                location: u.value,
-                                                guests: h.val(),
-                                                calendar: f.val(),
-                                                description: v.value,
-                                            },
-                                        }),
-                                            c.value && (n.url = c.value),
-                                            m.checked && (n.allDay = !0),
-                                            (n = n),
-                                            b.push(n),
-                                            S.refetchEvents(),
-                                            L.hide())
-                                        : y &&
-                                        ((n = {
-                                            id: E.id,
-                                            title: d.value,
-                                            start: o.value,
-                                            end: s.value,
-                                            url: c.value,
-                                            extendedProps: {
-                                                location: u.value,
-                                                guests: h.val(),
-                                                calendar: f.val(),
-                                                description: v.value,
-                                            },
-                                            display: "block",
-                                            allDay: !!m.checked,
-                                        }),
-                                            ((t = n).id = parseInt(t.id)),
-                                            (b[b.findIndex((e) => e.id === t.id)] = t),
-                                            S.refetchEvents(),
-                                            L.hide());
-                                }),
-                                i.addEventListener("click", (e) => {
-                                    var t;
-                                    (t = parseInt(E.id)),
-                                        (b = b.filter(function (e) {
-                                            return e.id != t;
-                                        })),
-                                        S.refetchEvents(),
-                                        L.hide();
-                                }),
-                                x.addEventListener("hidden.bs.offcanvas", function () {
-                                    F();
-                                }),
-                                T.addEventListener("click", (e) => {
-                                    a && (a.innerHTML = "Add Event"),
-                                        (l.innerHTML = "Add"),
-                                        l.classList.remove("btn-update-event"),
-                                        l.classList.add("btn-add-event"),
-                                        i.classList.add("d-none"),
-                                        t.classList.remove("show"),
-                                        n.classList.remove("show");
-                                }),
-                                p &&
-                                p.addEventListener("click", (e) => {
-                                    e.currentTarget.checked
-                                        ? document
-                                            .querySelectorAll(".input-filter")
-                                            .forEach((e) => (e.checked = 1))
-                                        : document
-                                            .querySelectorAll(".input-filter")
-                                            .forEach((e) => (e.checked = 0)),
-                                        S.refetchEvents();
-                                }),
-                                M &&
-                                M.forEach((e) => {
-                                    e.addEventListener("click", () => {
-                                        document.querySelectorAll(".input-filter:checked")
-                                            .length <
-                                            document.querySelectorAll(".input-filter").length
-                                            ? (p.checked = !1)
-                                            : (p.checked = !0),
-                                            S.refetchEvents();
-                                    });
-                                }),
-                                e.config.onChange.push(function (e) {
-                                    S.changeView(S.view.type, moment(e[0]).format("YYYY-MM-DD")),
-                                        I(),
-                                        t.classList.remove("show"),
-                                        n.classList.remove("show");
-                                });
+
+                            S.render()
+
                         }
 
                         function highlightCurrentDate() {
@@ -524,6 +499,7 @@
                             const dayCells = document.querySelectorAll(".fc-daygrid-day"); // Select all day cells
 
                             dayCells.forEach((cell) => {
+
                                 const cellDate = cell.getAttribute("data-date"); // Get the date of the cell
 
                                 if (cellDate === todayFormatted) {
@@ -565,48 +541,32 @@
                                 }
 
                                 let eventHtml = `
-            <table class="table">
-                <tbody>`;
+                <table class="table" width="300px">
+                    <tbody>`;
 
                                 data.forEach((event) => {
                                     if (event.is_vehicle_require == 99) {
                                         eventHtml += `
-                <tr>
-                    <td>${event.title}</td>
-                    <td>
-                    <div class="dropdown" >
-                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
-                    <div class="dropdown-menu">
-                      <a  class="dropdown-item view-booking"
-            id="vehiclebookingid"
-            data-id="${event.id}"
-            data-bs-toggle="modal"
-            data-bs-target="#bookingModal"><small>Detail</small></a>
-                    </div>
-                  </div>
+                    <tr>
+                        <td><a  class="dropdown-item view-booking"
+                id="vehiclebookingid"
+                data-id="${event.id}"
+                data-bs-toggle="modal"
+                data-bs-target="#bookingModal">${event.title}</a></td>
 
-                    </td>
-                </tr>`;
+                    </tr>`;
                                     } else {
                                         eventHtml += `
-                <tr>
-                    <td><small>${event.title}</small></td>
-                    <td>
-                    <div class="dropdown">
-                    <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="icon-base bx bx-dots-vertical-rounded"></i></button>
-                    <div class="dropdown-menu">
-                      <a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes">Detail</a>
-                    </div>
-                  </div>
+                    <tr>
+                        <td><a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes"><small>${event.title}</small></a></td>
 
-                    </td>
-                </tr>`;
+                    </tr>`;
                                     }
                                 });
 
                                 eventHtml += `
-                </tbody>
-            </table>`;
+                    </tbody>
+                </table>`;
 
                                 eventListDiv.innerHTML = eventHtml;
                             })
@@ -614,6 +574,64 @@
                     }
 
                 </script>
+                <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Detail</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Vehicle Image -->
+
+                                    <!-- Booking Details -->
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Vehicle</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingVehicle"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Start Date</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingStart"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>End Date</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingEnd"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Purposes</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingPurpose"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingJob"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Created By</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingCreator"></span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
+                                            style="max-width: 300px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <x-booking-modal />
                 <!-- /Calendar & Modal -->
 

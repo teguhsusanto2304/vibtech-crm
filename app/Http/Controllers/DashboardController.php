@@ -17,15 +17,17 @@ class DashboardController extends Controller
     {
 
         $events = [];
-        $jobs = JobAssignment::where('is_publish', 1)
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                    $q->where('start_at', '<=', Carbon::now()) // Ongoing jobs
-                        ->where('end_at', '>=', Carbon::now());
-                })
-                    ->orWhere('start_at', '>', Carbon::now()); // Future jobs
-            })
-            ->get();
+        $jobs = JobAssignment::select('*', \DB::raw("DATE_FORMAT(start_at,'%Y%m%d') as tgl"))
+    ->where('is_publish', 1)
+    ->where(function ($query) {
+        $query->whereRaw("DATE_FORMAT(start_at,'%Y%m%d') = DATE_FORMAT(NOW(),'%Y%m%d')
+                          AND DATE_FORMAT(end_at,'%Y%m%d') = DATE_FORMAT(NOW(),'%Y%m%d')")
+              ->orWhereRaw("DATE_FORMAT(start_at,'%Y%m%d') <= DATE_FORMAT(NOW(),'%Y%m%d')
+                            AND DATE_FORMAT(end_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')")
+              ->orWhereRaw("DATE_FORMAT(start_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')
+                            AND DATE_FORMAT(end_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')");
+    })
+    ->get();
         foreach ($jobs as $row):
             $event = [
                 'id' => $row->id, // Assuming 'id' exists
@@ -35,30 +37,34 @@ class DashboardController extends Controller
                 'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Holiday"], // Assuming 'extendedProps' exists, or an empty array
-                'test' => $row->start_at
+                'event_status' => 'JR',
+                'color'=>'primary'
             ];
 
             $events[] = $event;
         endforeach;
 
         $bookings = VehicleBooking::where(function ($query) {
-            $query->where(function ($q) {
-                $q->where('start_at', '<=', Carbon::now()) // Ongoing jobs
-                    ->where('end_at', '>=', Carbon::now()->subDays(1));
-            })
-                ->orWhere('start_at', '>', Carbon::now()); // Future jobs
+            $query->whereRaw("DATE_FORMAT(start_at,'%Y%m%d') = DATE_FORMAT(NOW(),'%Y%m%d')
+                              AND DATE_FORMAT(end_at,'%Y%m%d') = DATE_FORMAT(NOW(),'%Y%m%d')")
+                  ->orWhereRaw("DATE_FORMAT(start_at,'%Y%m%d') <= DATE_FORMAT(NOW(),'%Y%m%d')
+                                AND DATE_FORMAT(end_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')")
+                  ->orWhereRaw("DATE_FORMAT(start_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')
+                                AND DATE_FORMAT(end_at,'%Y%m%d') >= DATE_FORMAT(NOW(),'%Y%m%d')");
         })
             ->get();
+
         foreach ($bookings as $row):
             $event = [
-                'id' => 'BV' . $row->id, // Assuming 'id' exists
+                'id' =>  $row->id, // Assuming 'id' exists
                 'url' => "", // You can set this if needed
-                'title' => $row->purposes, // Assuming 'title' exists
+                'title' => $row->vehicle->name, // Assuming 'title' exists
                 'start' => (new DateTime($row->start_at))->format('Y-m-d H:i:s'), // Format as string
                 'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Business"], // Assuming 'extendedProps' exists, or an empty array
-                'test' => $row->start_at
+                'event_status' => 'VB',
+                'color'=>'success'
             ];
 
             $events[] = $event;
@@ -133,13 +139,21 @@ class DashboardController extends Controller
                 $colorClasses = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'dark'];
                 $persons = "";
 
-                foreach ($personels as $person) {
+                $persons = '';
+                $index =0;
+                foreach ($personels as $index => $person) {
                     $randomColor = $colorClasses[array_rand($colorClasses)]; // Pick a random color
                     $persons .= "<span class='badge rounded-pill text-bg-{$randomColor}'>" . $person->user->name . "</span> ";
+
+                    // Add a line break after every 2 persons
+                    if (($index + 1) % 2 == 0) {
+                        $persons .= '<br>';
+                    }
                 }
+                $persons .= '';
                 $arr[] = [
                     'id' => $row->id,
-                    'title' => "<div class='callout-event'><label class='text-success'>".$row->job_type."</label>".$persons."</div>",
+                    'title' => "<div class='callout-event'><label class='text-success'>".$row->job_type."</label><br>".$persons."</div>",
                     'is_vehicle_require' => $row->is_vehicle_require
                 ];
             }
@@ -151,7 +165,8 @@ class DashboardController extends Controller
             foreach ($bookings as $row) {
                 $arr[] = [
                     'id' =>  $row->id,
-                    'title' => "<div class='callout'><label class='text-primary'>".$row->purposes ."</label></div>",
+                    'title' => "<div class='callout'><label class='text-primary' style='font-size: 0.8em;'>".$row->purposes ."</label>
+                    <p><span class='badge rounded-pill text-bg-{$colorClasses[array_rand($colorClasses)]}' style='font-size: 0.7em;'>" . $row->vehicle->name . "</span></p></div>",
                     'is_vehicle_require' => 99
                 ];
             }

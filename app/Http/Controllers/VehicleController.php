@@ -11,7 +11,7 @@ class VehicleController extends Controller
 {
     public function list(Request $request)
     {
-        return view('vehicle.list')->with('title', 'Create a Vehicle')->with('breadcrumb', ['Home', 'Master Data', 'Create a Vehicle']);
+        return view('vehicle.list')->with('title', 'Vehicle List')->with('breadcrumb', ['Home', 'Master Data', 'Vehicle List']);
     }
     public function create(Request $request)
     {
@@ -62,12 +62,13 @@ class VehicleController extends Controller
             'path_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         $vehicle = Vehicle::findOrFail($id);
+
         $imagePath = null;
         if ($request->hasFile('path_image')) {
             $image = $request->file('path_image');
             $imageName = time() . '_' . $image->getClientOriginalName(); // Unique image name
             $imagePath = 'assets/img/cars/' . $imageName; //dev  Define the path
-            //$imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
+            //$image->move(base_path('../public_html/crm/assets/img/cars/'), $imageName);
 
             // Move the image to the public folder
             $image->move(public_path('assets/img/cars'), $imageName);
@@ -80,22 +81,33 @@ class VehicleController extends Controller
         return redirect()->route('v1.vehicles.list')->with('success', 'Vehicle updated successfully.');
     }
 
+    public function delete(Request $request, $id)
+    {
+        $now = Carbon::now();
+        $booking = Vehicle::findOrFail($id);
+        if (!$booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+        $booking->data_status = 1;
+        $booking->save();
+        return response()->json(['message' => 'Vehicle deleted successfully']);
+    }
+
     public function getData(Request $request)
     {
         if ($request->ajax()) {
             $now = Carbon::now(); // Get current date & time
             // Filter bookings where end_at is today or in the future
-            $data = Vehicle::select('*');
-
+            $data = Vehicle::select('*')->whereNot('data_status',1);
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group" role="group" aria-label="Basic example"><a href="' . route('v1.vehicles.edit', ['id' => $row->id]) . '" class="edit btn btn-success btn-sm">Edit</a>';
-                    $btn1 = '<a href="javascript:void(0);"
-                class="btn btn-danger btn-sm cancel-booking"
+                    $btn .= '<a href="javascript:void(0);"
+                class="btn btn-danger btn-sm delete-vehicle"
                 data-id="' . $row->id . '"
                 data-bs-toggle="modal"
-                data-bs-target="#cancelConfirmModal">Cancel</a>';
+                data-bs-target="#cancelConfirmModal">Delete</a>';
                     return $btn;
                 })
                 ->addColumn('path_image', function ($row) {

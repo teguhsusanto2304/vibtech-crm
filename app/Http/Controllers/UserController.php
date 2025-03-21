@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 
 class UserController extends Controller
@@ -125,11 +126,21 @@ class UserController extends Controller
         }
 
         $user->update($validatedData);
-
         $role = Role::find($request->input('role_id')); // Get role by ID
+        //dd($role->name);
 
         if ($role) {
-            $user->assignRole($role->name); // Assign by name
+            DB::table('model_has_roles')
+                ->where('model_id', $id)
+                ->where('model_type', 'App\Models\User')
+                ->delete(); // Remove old role
+                DB::table('model_has_roles')->insert([
+                    'role_id' => $request->input('role_id'),
+                    'model_id' => $id,
+                    'model_type' => 'App\Models\User'
+                ]); // Set new role
+            Artisan::call('cache:clear');
+            Artisan::call('config:clear');
             Artisan::call('permission:cache-reset');
         } else {
             return back()->with('error', 'Invalid role selected.');

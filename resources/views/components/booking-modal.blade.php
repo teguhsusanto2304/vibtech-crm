@@ -7,9 +7,6 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <!-- Vehicle Image -->
-
-                    <!-- Booking Details -->
                     <div class="col-md-6">
                         <div class="row">
                             <div class="col-md-5"><strong>Vehicle</strong></div>

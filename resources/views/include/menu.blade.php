@@ -618,7 +618,7 @@
                         <path id="Path-2" class="cls-inbox" d="M1.23,2.98l15.77,10.52,15.77-10.52" />
                     </svg>
                 </i>
-                <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Inbox</div>
+                <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat</div>
             </a>
         </li>
         @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))

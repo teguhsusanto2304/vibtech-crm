@@ -75,24 +75,51 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                <h5 class="modal-title" id="cancelModalLabel">Confirm Delete</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to cancel this vehicle booking?
+                Are you sure you want to delete this vehicle?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep It</button>
                 <form id="cancelForm" method="POST">
                     @csrf
                     @method('PUT')
-                    <button type="submit" class="btn btn-danger">Yes, Cancel</button>
+                    <button type="button" class="btn btn-danger confirm-delete-vehicle" data-id="">Yes, delete</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
+<x-toast-notification />
+<script>
+    // Set the booking ID in the confirmation modal
+    $(document).on('click', '.delete-vehicle', function () {
+        var bookingId = $(this).data('id');
+        $('.confirm-delete-vehicle').data('id', bookingId);
+    });
 
-
+    // Confirm cancellation and send AJAX request
+    $(document).on('click', '.confirm-delete-vehicle', function () {
+        var bookingId = $(this).data('id');
+        $.ajax({
+            url: '/v1/vehicles/' + bookingId + '/delete',
+            type: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                $('#cancelConfirmModal').modal('hide');
+                showToast("Vehicle deleted successfully!", "success"); // Show toast
+                $('#booking_datatable').DataTable().ajax.reload(null, false);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                alert('Error cancelling booking.');
+            }
+        });
+    });
+</script>
 @endsection

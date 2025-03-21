@@ -1,4 +1,26 @@
+
 <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+    <button id="backButton" class="btn btn-info btn-sm" onclick="goBack()" style=" border: none; cursor: pointer;">
+        Go Back to The List
+    </button>
+
+    <script>
+        let fromDashboard = new URLSearchParams(window.location.search).get("fr");
+        function goBack() {
+            if (fromDashboard === "main") {
+                window.location.href = "{{ route('v1.dashboard' )}}"; // Go back to the previous page
+            } else {
+                window.location.href = "{{ route('v1.job-assignment-form.list' )}}";
+            }
+        }
+
+        // Check if user came from the dashboard
+        document.addEventListener("DOMContentLoaded", function () {
+            if (fromDashboard === "main") {
+                document.getElementById("backButton").innerText = "Go Back to Dashboard"; // Show button
+            }
+        });
+    </script>
     <button type="button" class="btn btn-danger btn-sm" onclick="window.print()"><img
             src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAAXNSR0IArs4c6QAAAYxJREFUWEftl71KxEAUhb+Doo2tP41iucUiNlYWgrWtWFj6IOJb+AQWi9hYCpYWYmMldoIiVhZ2inBNluwyO2ZMZpPIikk7c+/9OOfOzI2YsE8TxsPfBDIzq0NJSYUCFG5IQVqgIjtchcrI7uaLjY22rAXKsy9W9totM7NlYAtYBaaTg3boFDkq6jlv3Y/9BB6AS0nPfq5vPWRm+8AxMBdZOHb7G3Ag6dQNHAEys3XgBpiKzT7m/lStrqT7QbwPdJ4A7WSLd0BvzEJFYXtAJ9t0Iil1pf/5QC/AYrbWccmLKsSsm9kacJvFPEpaCQEN36zY+yZ0skb6w3nLQifXV6gF6veNo1wjCpXpp1+17P8BNTGgVbKsBRo0YUjGJsaPspa9AzMZoDtmDEeI2Bvcszsv54ek2dDTcQ1s/HRsKwLlpb6StBkC6gIXyTy0FIKqGSgd0LaD40cKYWbzwC6w4EA1YdkTcCbpNTighVRpoqmDDsRe82X2V7E7+r+sBaqiQB2xpSyro1DZHBMH9AUIgP8l4FGXAQAAAABJRU5ErkJggg=="
             / height="20px" width="20px"></button>

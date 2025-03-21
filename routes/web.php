@@ -144,6 +144,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/data','getData')->name('v1.vehicle-bookings.data');
             Route::get('/{id}/detail','show')->name('v1.vehicle-bookings.detail');
             Route::get('/{id}/modal', 'commonShow')->name('v1.vehicle-bookings.modal');
+            Route::get('/available-vehicles','getAvailableVehicles')->name('v1.vehicle-bookings.available-vehicles');
         });
 
         // 🔹 Vehicles Routes
@@ -151,6 +152,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', 'create')->name('v1.vehicles.create');
             Route::get('/{id}/edit', 'edit')->name('v1.vehicles.edit');
             Route::post('/store', 'store')->name('v1.vehicles.store');
+            Route::put('/{id}/delete', 'delete')->name('v1.vehicles.delete');
             Route::put('/{id}/update', 'update')->name('v1.vehicles.update');
             Route::get('/list', 'list')->name('v1.vehicles.list');
             Route::get('/car-image', 'getCarImages')->name('v1.vehicles.car-image');

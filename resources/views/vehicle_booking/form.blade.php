@@ -41,95 +41,104 @@
         @endif
         <div class="card">
             <div class="card-body">
-                <form class="row g-3" action="{{  route('v1.vehicle-bookings.store') }}" method="post">
+                <form class="row g-3" action="{{ route('v1.vehicle-bookings.store') }}" method="post">
                     @csrf
                     <style>
                         .car-image {
-                            width: 400px;
+                            width: 100px;
                             height: auto;
-                            margin-bottom: 20px;
+                            margin-right: 10px;
                             border-radius: 10px;
                         }
                     </style>
-                    <div class="col-md-12">
-                        <label for="claimType" style="margin-bottom: 10px;">Choose Vehice:</label>
-                        <div class="col-12">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <img src="{{ asset('assets/img/cars/default.svg') }}" alt="Car 1" class="car-image"
-                                        id="selectedCar">
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="radio-group">
-                                        @foreach ($vehicles as $vehicle)
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="vehicle_id" {{-- Use a
-                                                    common name for all radio buttons --}} id="vehicle_{{ $vehicle->id }}"
-                                                    value="{{ $vehicle->id }}">
 
-                                                <label class="form-check-label" for="vehicle_{{ $vehicle->id }}">
-                                                    <span class="car-code">{{ $vehicle->name }}</span>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                        <script>
-                                            $(document).ready(function () {
-                                                var carImages = {}; // Object to store car images from the database
+                    <div class="col-md-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="datetime-local" class="form-control" id="start_at" name="start_at" value="{{ old('start_at') }}" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="datetime-local" class="form-control" id="end_at" name="end_at" value="{{ old('end_at') }}" required />
+                    </div>
 
-                                                // Fetch car images from the server
-                                                $.ajax({
-                                                    url: "{{ route('v1.vehicles.car-image') }}", // Laravel route
-                                                    type: "GET",
-                                                    dataType: "json",
-                                                    success: function (response) {
-                                                        response.forEach(car => {
-                                                            carImages[car.id] = car.path_image; // Store image path using car ID
-                                                        });
-                                                    },
-                                                    error: function () {
-                                                        console.error("Error fetching car images.");
-                                                    }
-                                                });
+                    <div class="col-md-6 mt-3">
+                        <button type="button" class="btn btn-info mt-6" onclick="fetchAvailableVehicles()">Find Available Vehicles</button>
+                    </div>
 
-                                                // Listen for radio button selection
-                                                $('input[type="radio"]').change(function () {
-                                                    var carId = $(this).val();
-                                                    var carImage = $('#selectedCar');
+                    <!-- Radio Button List -->
+                    <div class="col-md-12 mt-4">
+                        <label class="form-label">Select a Vehicle</label>
+                        <div class="row" id="vehicleList"></div>
+                    </div>
 
-                                                    // Set the image src dynamically from the fetched data
-                                                    carImage.attr('src', "{{ asset('') }}" + carImages[carId] );
-                                                });
-                                            });
-                                        </script>
-                                    </div>
-                                </div>
-                            <div class="col-md-6 ">
-                                <label for="startDate" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" name="start_at" value="{{ old('start_at') }}" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="startDate" class="form-label">End Date</label>
-                                <input type="date" class="form-control" name="end_at" value="{{ old('end_at') }}" />
-                            </div>
-                            <div class="col-md-6 mt-5">
-                                <label for="startDate" class="form-label">Purposes</label>
-                                <textarea class="form-control" name="purposes"  cols=5 rows=5></textarea>
-                            </div>
-                            <div class="col-md-6  mt-5">
-                                <label for="startDate" class="form-label">Job Requisition Form</label>
-                                <select class="form-control" name="job_assignment_id" >
-                                    <option value="">Choose a job</option>
-                                    @foreach($jobs as $job)
-                                    <option value="{{ $job->id }}">{{ $job->job_type }} | {{ $job->job_record_id }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-12 mt-5">
-                                <button type="submit" class="btn btn-primary">Submit</button>
-                                <a href="{{ route('v1.vehicle-bookings.list')}}" class="btn btn-warning">Cancel</a>
-                            </div>
+                    <div class="col-md-6 mt-5">
+                        <label for="purposes" class="form-label">Purposes</label>
+                        <textarea class="form-control" name="purposes" cols="5" rows="5"></textarea>
+                    </div>
+
+                    <div class="col-md-6 mt-5">
+                        <label for="job_assignment_id" class="form-label">Job Requisition Form</label>
+                        <select class="form-control" name="job_assignment_id">
+                            <option value="">Choose a job</option>
+                            @foreach($jobs as $job)
+                                <option value="{{ $job->id }}">{{ $job->job_type }} | {{ $job->job_record_id }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-12 mt-5">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <a href="{{ route('v1.vehicle-bookings.list') }}" class="btn btn-warning">Cancel</a>
+                    </div>
                 </form>
+                <script>
+                    async function fetchAvailableVehicles() {
+                        let start_at = document.getElementById("start_at").value;
+                        let end_at = document.getElementById("end_at").value;
 
+                        if (!start_at || !end_at) {
+                            alert("Please select both start and end date.");
+                            return;
+                        }
+
+                        try {
+                            let response = await fetch(`/v1/vehicle-bookings/available-vehicles?start_at=${start_at}&end_at=${end_at}`);
+                            let vehicles = await response.json();
+
+                            let vehicleList = document.getElementById("vehicleList");
+                            vehicleList.innerHTML = ''; // Clear existing radios
+
+                            if (vehicles.length === 0) {
+                                vehicleList.innerHTML = "<p>No available vehicles found.</p>";
+                                return;
+                            }
+
+                            vehicles.forEach(vehicle => {
+                                let div = document.createElement("div");
+                                div.classList.add("form-check", "mb-2","col-sm-6");
+
+                                let radio = document.createElement("input");
+                                radio.type = "radio";
+                                radio.classList.add("form-check-input");
+                                radio.name = "vehicle_id";
+                                radio.value = vehicle.id;
+                                radio.id = "vehicle_" + vehicle.id;
+
+                                let label = document.createElement("label");
+                                label.classList.add("form-check-label");
+                                label.setAttribute("for", "vehicle_" + vehicle.id);
+                                label.innerHTML = `<img src="${vehicle.image_url}" class="car-image" alt="${vehicle.name}"> ${vehicle.name}`;
+
+                                div.appendChild(radio);
+                                div.appendChild(label);
+                                vehicleList.appendChild(div);
+                            });
+                        } catch (error) {
+                            console.error("Error fetching vehicles:", error);
+                            alert("Failed to fetch available vehicles.");
+                        }
+                    }
+                </script>
 
             </div>
         </div>
