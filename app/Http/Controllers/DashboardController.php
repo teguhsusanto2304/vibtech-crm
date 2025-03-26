@@ -8,11 +8,80 @@ use App\Models\VehicleBooking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use DateTime;
+use Illuminate\Http\Request;
 
 
 
 class DashboardController extends Controller
 {
+    public function index2(Request $request)
+    {
+        // Get current month & year or from request
+        $month = $request->query('month', date('m'));
+        $year = $request->query('year', date('Y'));
+
+        // Get first and last day of the month
+        $firstDay = Carbon::createFromDate($year, $month, 1);
+        $daysInMonth = $firstDay->daysInMonth;
+        $startOfWeek = $firstDay->startOfWeek(Carbon::SUNDAY)->format('Y-m-d'); // Start from Sunday
+
+        // Generate an array of dates
+        $calendar = [];
+        $date = Carbon::parse($startOfWeek);
+
+        for ($i = 0; $i < 42; $i++) { // 6 weeks x 7 days
+            $calendar[] = [
+                'date' => $date->copy(),
+                'isCurrentMonth' => $date->month == $month,
+            ];
+            $date->addDay();
+        }
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
+        // Fetch events and group them by date
+$events = VehicleBooking::select('purposes', 'start_at', 'end_at')->get()->flatMap(function ($event) {
+    $dates = [];
+    $start = Carbon::parse($event->start_at);
+    $end = Carbon::parse($event->end_at);
+
+    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+        $dates[$date->toDateString()][] = $event->purposes; // Store multiple events in an array
+    }
+
+    return $dates;
+});
+
+// Predefined colors for different events
+$availableColors = ['#FF5733', '#33FF57', '#3357FF', '#F39C12', '#8E44AD', '#1ABC9C', '#E74C3C'];
+
+// Assign random colors for unique events
+$eventColors = \Cache::rememberForever('event_colors', function () use ($events, $availableColors) {
+    $assignedColors = [];
+    foreach ($events as $date => $purposes) {
+        foreach ($purposes as $purpose) {
+            if (!isset($assignedColors[$purpose])) {
+                $assignedColors[$purpose] = $availableColors[array_rand($availableColors)];
+            }
+        }
+    }
+    return $assignedColors;
+});
+
+// Generate the calendar array
+$calendar = [];
+
+for ($date = $startDate->copy()->startOfWeek(); $date <= $endDate->copy()->endOfWeek(); $date->addDay()) {
+    $eventNames = $events[$date->toDateString()] ?? [];
+    $calendar[] = [
+        'date' => $date->copy(),
+        'isCurrentMonth' => $date->month == $month,
+        'events' => $eventNames, // Store all events for the date
+        'colors' => array_map(fn($event) => $eventColors[$event] ?? '#000', $eventNames),
+    ];
+}
+
+        return view('dashboard.calendar', compact('calendar', 'month', 'year','events'));
+    }
     public function index()
     {
 
@@ -29,12 +98,20 @@ class DashboardController extends Controller
     })
     ->get();
         foreach ($jobs as $row):
-            $event = [
+            $startAt = (new DateTime($row->start_at))->format('Y-m-d');
+            $endAt = (new DateTime($row->end_at))->format('Y-m-d');
+
+            if ($startAt === $endAt) {
+                $endAt = null;
+            } else {
+                $endAt = (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'); // Format as string
+            }
+                        $event = [
                 'id' => $row->id, // Assuming 'id' exists
                 'url' => "", // You can set this if needed
                 'title' => $row->job_type, // Assuming 'title' exists
                 'start' => (new DateTime($row->start_at))->format('Y-m-d H:i:s'), // Format as string
-                'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
+                'end' => $endAt,
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Holiday"], // Assuming 'extendedProps' exists, or an empty array
                 'event_status' => 'JR',
@@ -55,12 +132,21 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($bookings as $row):
+            $startAt = (new DateTime($row->start_at))->format('Y-m-d');
+            $endAt = (new DateTime($row->end_at))->format('Y-m-d');
+
+            if ($startAt === $endAt) {
+                $endAt = null;
+            } else {
+                $endAt = (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'); // Format as string
+            }
+
             $event = [
                 'id' =>  $row->id, // Assuming 'id' exists
                 'url' => "", // You can set this if needed
                 'title' => $row->vehicle->name, // Assuming 'title' exists
                 'start' => (new DateTime($row->start_at))->format('Y-m-d H:i:s'), // Format as string
-                'end' => (new DateTime($row->end_at))->modify('+1 day')->format('Y-m-d H:i:s'), // Format as string
+                'end' => $endAt, // Format as string
                 'allDay' => true, // Assuming 'all_day' exists
                 'extendedProps' => ['calendar' => "Business"], // Assuming 'extendedProps' exists, or an empty array
                 'event_status' => 'VB',

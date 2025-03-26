@@ -608,6 +608,13 @@
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat</div>
             </a>
+            <ul>
+                <li class="no-bullet">
+                    <a href="{{ route('chat-groups') }}" class="menu-link">
+                        <div class="text-truncate" data-i18n="Analytics">Chat Group</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
             <li class="menu-item {{ request()->routeIs(

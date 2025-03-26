@@ -218,4 +218,12 @@ class UserController extends Controller
 
         return response()->json(['success' => true, 'message' => 'User status updated successfully']);
     }
+
+    public function getOfflineUsers(Request $request)
+    {
+            $data = User::select('name')->get();
+            return response()->json($data);
+    }
+
+
 }

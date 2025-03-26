@@ -77,4 +77,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(JobAssignmentPersonnel::class, 'user_id', 'id'); // Adjust foreign key names if needed
     }
+
+    public function chatGroups()
+    {
+        return $this->belongsToMany(ChatGroup::class, 'chat_group_user');
+    }
 }

@@ -201,6 +201,12 @@
                 </div>
                 <!-- /Calendar Sidebar -->
                 <style>
+                    .bg-label-success {
+                        height: 30px;
+                    }
+                    .bg-label-primary {
+                        height: 30px;
+                    }
                     .event-dot::before {
                         content: "●";
                         /* Unicode dot character */
@@ -322,7 +328,6 @@
                             }
                             let S = new Calendar(w, {
                                 initialView: "dayGridMonth",
-
                                 eventContent: function (arg) {
 
                                     let dot = document.createElement('span');
@@ -475,7 +480,7 @@
                                 initialDate: new Date(),
                                 navLinks: !0,
                                 eventClassNames: function ({ event: e }) {
-                                    //return ["bg-label-" + g[e._def.extendedProps.calendar]];
+                                    return ["bg-label-" + g[e._def.extendedProps.calendar]];
                                     //return ["event-dot", "dot-" + e._def.extendedProps.calendar];
                                 },
                                 datesSet: function () {

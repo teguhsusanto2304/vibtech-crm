@@ -143,6 +143,7 @@ class JobAssignmentController extends Controller
         $personnel_accepted = JobAssignmentPersonnel::where(['job_assignment_id'=> $request->input('job_id'),'assignment_status'=>1])->count();
         if( $count === $personnel_accepted){
             $jobAssignment->job_status=1;
+            $jobAssignment->is_publish=1;
             $jobAssignment->save();
             $creator->notify(new UserNotification(
                 'All personnel involved were <strong>Accepted</strong> at Job ID ' . $jobAssignment->job_record_id,

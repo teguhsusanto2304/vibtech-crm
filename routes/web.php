@@ -25,6 +25,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleBookingController;
 use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\ChatGroupController;
+use App\Http\Controllers\MessageController;
 
 Route::get('/', function () {
     return view('login');
@@ -72,6 +74,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}', 'update')->name('v1.users.update');
             Route::get('/data', 'getUsers')->name('v1.users.data');
             Route::post('/toggle-status','toggleStatus')->name('v1.users.toggle-status');
+            Route::get('/offline-user','getOfflineUsers');
         });
 
         // Group routes for JobAssignmentController
@@ -310,3 +313,9 @@ Route::get('/shipping-status-history-list', function () {
 Route::get('/account-receivable-list', function () {
     return view('account_receivable_list', ['title' => 'Account Receivable', 'breadcrumb' => ['Home', 'Admin Tools', 'Account Receivable']]);
 })->name('account-receivable-list');
+
+Route::get('/chat-groups', [ChatGroupController::class, 'index'])->name('chat-groups');
+Route::post('/chat-groups', [ChatGroupController::class, 'store']);
+
+Route::get('/chat-groups/{group}', [MessageController::class, 'index'])->name('chat-group.messages');
+Route::post('/chat-groups/{group}/messages', [MessageController::class, 'store']);

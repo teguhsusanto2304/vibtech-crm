@@ -136,7 +136,7 @@ input:-webkit-autofill:active {
                         <div class="col-md-12">
                             <label for="inputCity" class="form-label">Scope of work</label>
                             <textarea class="form-control form-control-input" name="scope_of_work" cols="6" rows="3"
-                                placeholder="enter scope of work"></textarea>
+                                placeholder="enter scope of work">{{ old('scope_of_work')}}</textarea>
                         </div>
                         <div class="col-2">
                             <label for="inputAddress" class="form-label">Start Date</label>
