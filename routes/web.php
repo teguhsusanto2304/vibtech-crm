@@ -319,3 +319,6 @@ Route::post('/chat-groups', [ChatGroupController::class, 'store']);
 
 Route::get('/chat-groups/{group}', [MessageController::class, 'index'])->name('chat-group.messages');
 Route::post('/chat-groups/{group}/messages', [MessageController::class, 'store']);
+Route::post('/chat-groups/{groupId}/invite-users', [ChatGroupController::class, 'inviteUsers'])
+    ->name('chat-groups.invite-users');
+Route::get('/chat-groups/{groupId}/invited-users', [ChatGroupController::class, 'getInvitedUsers']);

@@ -67,75 +67,77 @@
             auth()->user()->can('view-referral-program') ||
             auth()->user()->can('view-submit-claim')
         )
-        <li
-            class="menu-item {{ request()->routeIs(
-            'v1.job-assignment-form',
-            'v1.job-assignment-form.create',
-            'v1.job-assignment-form.list',
-            'leave-application',
-            'v1.vehicle-bookings',
-            'referral-program',
-            'submit-claim') ? 'active open' : '' }}">
-            <a href="{{ route('dashboard') }}" class="menu-link  menu-toggle">
-                <i class="menu-icon">
-                    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35.15 33.23">
-                        <defs>
-                            <style>
-                                .cls-task {
-                                    fill: none;
-                                    stroke: #fff;
-                                    stroke-miterlimit: 10;
-                                    stroke-width: 1.4px;
-                                }
-                            </style>
-                        </defs>
-                        <path id="Path" class="cls-task"
-                            d="M1.27.7h32.6c.32,0,.57.26.58.57v11.51c0,.32-.26.57-.58.57H1.27c-.32,0-.57-.26-.57-.57V1.27c0-.32.26-.57.57-.57Z" />
-                        <path id="Path-2" class="cls-task"
-                            d="M1.27,19.88h32.6c.32,0,.57.26.58.57v11.51c0,.32-.26.57-.58.57H1.27c-.32,0-.57-.26-.57-.57v-11.51c0-.32.26-.57.57-.57Z" />
-                    </svg>
-                </i>
-                <div class="text-truncate" data-i18n="Dashboards">Staff Task</div>
-            </a>
-            <ul class="menu-sub">
-                @can('view-job-requisition')
-                <li class="no-bullet">
-                    <a href="{{ route('v1.job-assignment-form') }}"
-                        class="menu-link {{ request()->routeIs('v1.job-assignment-form','v1.job-assignment-form.create','v1.job-assignment-form.list')  ? 'active' : '' }}">
-                        <div class="text-truncate" data-i18n="Analytics">Job Requisition Form</div>
-                    </a>
-                </li>
-                @endcan
-                @can('view-leave-application')
-                <li class="no-bullet">
-                    <a href="{{ route('leave-application') }}" class="menu-link  {{ request()->routeIs('leave-application') ? 'active' : '' }}">
-                        <div class="text-truncate" data-i18n="Analytics">Leave Application</div>
-                    </a>
-                </li>
-                @endcan
-                @can('view-vehicle-booking')
-                <li class="no-bullet">
-                    <a href="{{ route('v1.vehicle-bookings')}}" class="menu-link {{ request()->routeIs('v1.vehicle-bookings','v1.vehicle-bookings.create','v1.vehicle-bookings.list')  ? 'active' : '' }}">
-                        <div class="text-truncate" data-i18n="Analytics">Vehicle Booking</div>
-                    </a>
-                </li>
-                @endcan
-                @can('view-referral-program')
-                <li class="no-bullet">
-                    <a href="{{ route('referral-program') }}" class="menu-link">
-                        <div class="text-truncate" data-i18n="Analytics">Referral Program</div>
-                    </a>
-                </li>
-                @endcan
-                @can('view-submit-claim')
-                <li class="no-bullet">
-                    <a href="{{ route('submit-claim')}}" class="menu-link">
-                        <div class="text-truncate" data-i18n="Analytics">Submit Claim</div>
-                    </a>
-                </li>
-                @endcan
-            </ul>
-        </li>
+                    <li class="menu-item {{ request()->routeIs(
+                    'v1.job-assignment-form',
+                    'v1.job-assignment-form.create',
+                    'v1.job-assignment-form.list',
+                    'leave-application',
+                    'v1.vehicle-bookings',
+                    'referral-program',
+                    'submit-claim'
+                ) ? 'active open' : '' }}">
+                        <a href="{{ route('dashboard') }}" class="menu-link  menu-toggle">
+                            <i class="menu-icon">
+                                <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35.15 33.23">
+                                    <defs>
+                                        <style>
+                                            .cls-task {
+                                                fill: none;
+                                                stroke: #fff;
+                                                stroke-miterlimit: 10;
+                                                stroke-width: 1.4px;
+                                            }
+                                        </style>
+                                    </defs>
+                                    <path id="Path" class="cls-task"
+                                        d="M1.27.7h32.6c.32,0,.57.26.58.57v11.51c0,.32-.26.57-.58.57H1.27c-.32,0-.57-.26-.57-.57V1.27c0-.32.26-.57.57-.57Z" />
+                                    <path id="Path-2" class="cls-task"
+                                        d="M1.27,19.88h32.6c.32,0,.57.26.58.57v11.51c0,.32-.26.57-.58.57H1.27c-.32,0-.57-.26-.57-.57v-11.51c0-.32.26-.57.57-.57Z" />
+                                </svg>
+                            </i>
+                            <div class="text-truncate" data-i18n="Dashboards">Staff Task</div>
+                        </a>
+                        <ul class="menu-sub">
+                            @can('view-job-requisition')
+                                <li class="no-bullet">
+                                    <a href="{{ route('v1.job-assignment-form') }}"
+                                        class="menu-link {{ request()->routeIs('v1.job-assignment-form', 'v1.job-assignment-form.create', 'v1.job-assignment-form.list') ? 'active' : '' }}">
+                                        <div class="text-truncate" data-i18n="Analytics">Job Requisition Form</div>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view-leave-application')
+                                <li class="no-bullet">
+                                    <a href="{{ route('leave-application') }}"
+                                        class="menu-link  {{ request()->routeIs('leave-application') ? 'active' : '' }}">
+                                        <div class="text-truncate" data-i18n="Analytics">Leave Application</div>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view-vehicle-booking')
+                                <li class="no-bullet">
+                                    <a href="{{ route('v1.vehicle-bookings')}}"
+                                        class="menu-link {{ request()->routeIs('v1.vehicle-bookings', 'v1.vehicle-bookings.create', 'v1.vehicle-bookings.list') ? 'active' : '' }}">
+                                        <div class="text-truncate" data-i18n="Analytics">Vehicle Booking</div>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view-referral-program')
+                                <li class="no-bullet">
+                                    <a href="{{ route('referral-program') }}" class="menu-link">
+                                        <div class="text-truncate" data-i18n="Analytics">Referral Program</div>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('view-submit-claim')
+                                <li class="no-bullet">
+                                    <a href="{{ route('submit-claim')}}" class="menu-link">
+                                        <div class="text-truncate" data-i18n="Analytics">Submit Claim</div>
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
         @endif
         <li class="menu-item">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -603,112 +605,206 @@
             <a href="{{ route('inbox')}}" class="menu-link">
                 <i class="menu-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 27">
-                        <path d="M2.7,2.7h28.6c1.1,0,2,0.9,2,2v16.6c0,1.1-0.9,2-2,2H19.5l-5.6,4.2c-0.3,0.2-0.7,0.2-1,0l-5.6-4.2H2.7c-1.1,0-2-0.9-2-2V4.7c0-1.1,0.9-2,2-2z" stroke="#fff" stroke-width="1.4" fill="none"/>
-                      </svg>
+                        <path
+                            d="M2.7,2.7h28.6c1.1,0,2,0.9,2,2v16.6c0,1.1-0.9,2-2,2H19.5l-5.6,4.2c-0.3,0.2-0.7,0.2-1,0l-5.6-4.2H2.7c-1.1,0-2-0.9-2-2V4.7c0-1.1,0.9-2,2-2z"
+                            stroke="#fff" stroke-width="1.4" fill="none" />
+                    </svg>
                 </i>
-                <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat</div>
+                <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat
+                    <span class="badge bg-danger">0</span>
+                </div>
             </a>
             <ul>
                 <li class="no-bullet">
                     <a href="{{ route('chat-groups') }}" class="menu-link">
-                        <div class="text-truncate" data-i18n="Analytics">Chat Group</div>
+                        <div class="text-truncate" data-i18n="Analytics">Chat Group
+                            <span class="badge bg-danger">0</span>
+                        </div>
                     </a>
                 </li>
             </ul>
         </li>
         @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
-            <li class="menu-item {{ request()->routeIs(
-            'v1.users',
-            'v1.users.create',
-            'v1.users.edit',
-            'v1.roles',
-            'v1.roles.create',
-            'v1.roles.edit',
-            'v1.permissions') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon">
-                        <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 288">
-                            <defs>
-                                <style>
-                                    .cls-project {
-                                        fill: #fff;
-                                    }
-                                </style>
-                            </defs>
-                            <path class="cls-project"
-                                d="M46.45,185.81h46.45c7.68,0,13.94-6.25,13.94-13.94s-6.25-13.94-13.94-13.94h-46.45c-7.68,0-13.94,6.25-13.94,13.94s6.25,13.94,13.94,13.94ZM46.45,167.23h46.45c2.56,0,4.65,2.08,4.65,4.65s-2.08,4.65-4.65,4.65h-46.45c-2.56,0-4.65-2.08-4.65-4.65s2.08-4.65,4.65-4.65Z" />
-                            <path class="cls-project"
-                                d="M274.06,102.19c7.68,0,13.94-6.25,13.94-13.94V13.94c0-7.68-6.25-13.94-13.94-13.94h-32.52c-4.37,0-8.53,2.09-11.14,5.57l-9.76,13.01h-39.48c-7.68,0-13.94,6.25-13.94,13.94v18.58h-42.04C122.81,22.53,98.85,0,69.68,0,38.94,0,13.94,25,13.94,55.74s22.53,53.13,51.1,55.51v28.21C27.66,140.51,0,154.07,0,171.87v88.26c0,18.1,35.9,27.87,69.68,27.87s69.68-9.77,69.68-27.87v-27.87h28.11c2.39,31.13,28.42,55.74,60.15,55.74,33.3,0,60.39-27.09,60.39-60.39s-24.61-57.76-55.74-60.15v-65.27h41.81ZM274.06,92.9h-92.9c-2.56,0-4.65-2.09-4.65-4.65v-41.81h102.19v41.81c0,2.56-2.08,4.65-4.65,4.65ZM181.16,27.87h44.13l12.55-16.73c.87-1.16,2.26-1.85,3.71-1.85h32.52c2.56,0,4.65,2.09,4.65,4.65v23.23h-102.19v-4.65c0-2.56,2.08-4.65,4.65-4.65ZM23.23,55.74c0-4.85.76-9.53,2.14-13.94h17.84c-.86,4.34-1.4,8.97-1.4,13.94s.54,9.6,1.41,13.94h-17.85c-1.38-4.4-2.14-9.08-2.14-13.94ZM51.1,55.74c0-5.01.64-9.64,1.64-13.94h33.89c.99,4.29,1.63,8.92,1.63,13.94s-.64,9.64-1.64,13.94h-33.89c-.99-4.29-1.63-8.92-1.63-13.94ZM69.69,11.01c3.61,3.67,9.77,11,14.02,21.5h-28.03c4.25-10.48,10.41-17.82,14.01-21.5ZM83.68,78.97c-4.25,10.48-10.41,17.82-14.01,21.5-3.61-3.67-9.77-11-14.02-21.5h28.03ZM93.68,78.97h16.17c-6.05,10.41-16,18.25-27.86,21.52,4.06-5.24,8.57-12.44,11.7-21.52h0ZM116.13,55.74c0,4.85-.75,9.53-2.14,13.94h-17.84c.86-4.34,1.4-8.97,1.4-13.94s-.54-9.6-1.41-13.94h17.84c1.39,4.4,2.15,9.08,2.15,13.94ZM109.84,32.52h-16.17c-3.12-9.08-7.63-16.28-11.7-21.52,11.86,3.27,21.81,11.11,27.86,21.52ZM57.37,11c-4.06,5.24-8.57,12.44-11.7,21.52h-16.17c6.05-10.41,16-18.25,27.86-21.52ZM29.51,78.97h16.17c3.12,9.08,7.63,16.28,11.7,21.52-11.86-3.27-21.81-11.11-27.86-21.52ZM69.68,148.65c35.59,0,60.39,12.24,60.39,23.23s-24.8,23.23-60.39,23.23-60.39-12.24-60.39-23.23,24.8-23.23,60.39-23.23ZM9.29,188.51c11.82,9.63,33.9,15.87,60.39,15.87s48.57-6.24,60.39-15.87v15.87c0,7.58-23.52,18.58-60.39,18.58s-60.39-11-60.39-18.58v-15.87ZM9.29,218.82c12.85,8.8,37.12,13.44,60.39,13.44s47.53-4.64,60.39-13.44v13.44c0,7.58-23.52,18.58-60.39,18.58s-60.39-11-60.39-18.58v-13.44ZM69.68,278.71c-36.86,0-60.39-11-60.39-18.58v-13.44c12.85,8.8,37.12,13.44,60.39,13.44s47.53-4.64,60.39-13.44v13.44c0,7.58-23.52,18.58-60.39,18.58ZM192.08,264.25c4.25-13.46,16.56-22.71,30.89-22.71h9.29c14.34,0,26.65,9.25,30.89,22.71-9.21,8.93-21.73,14.46-35.54,14.46s-26.33-5.53-35.54-14.46ZM227.61,232.26c-10.25,0-18.58-8.33-18.58-18.58s8.33-18.58,18.58-18.58,18.58,8.33,18.58,18.58-8.33,18.58-18.58,18.58ZM278.71,227.61c0,10.54-3.21,20.35-8.71,28.5-4.81-10.19-13.47-17.92-23.99-21.55,5.79-5.11,9.47-12.57,9.47-20.88,0-15.37-12.5-27.87-27.87-27.87s-27.87,12.5-27.87,27.87c0,8.31,3.68,15.77,9.48,20.88-10.52,3.63-19.18,11.36-23.99,21.55-5.5-8.15-8.71-17.95-8.71-28.5,0-28.17,22.92-51.1,51.1-51.1s51.1,22.92,51.1,51.1ZM222.97,167.46c-29.59,2.27-53.24,25.92-55.51,55.51h-28.11v-51.1c0-17.8-27.66-31.36-65.03-32.41v-28.21c27.03-2.25,48.62-23.83,50.86-50.86h42.04v27.87c0,7.68,6.25,13.94,13.94,13.94h41.81v65.27Z" />
-                            <path class="cls-project" d="M260.13,18.58h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M241.55,18.58h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M185.81,74.32h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M204.39,74.32h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M222.97,74.32h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M74.32,51.1h9.29v9.29h-9.29v-9.29Z" />
-                            <path class="cls-project" d="M55.74,51.1h9.29v9.29h-9.29v-9.29Z" />
-                        </svg>
-                    </i>
-                    <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Master Data</div>
-                </a>
-                @can('view-user')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.users')}}" class="menu-link {{ request()->routeIs(
-            'v1.users',
-            'v1.users.create','v1.users.edit') ? ' active' : '' }}">
-                                <div class="text-truncate" data-i18n="Analytics">User Management</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-                @can('view-role')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.roles')}}" class="menu-link">
-                                <div class="text-truncate" data-i18n="Analytics">User Role</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-                @can('view-permission')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.permissions')}}" class="menu-link">
-                                <div class="text-truncate" data-i18n="Analytics">Permission</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-                @can('view-department')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.departments')}}" class="menu-link">
-                                <div class="text-truncate" data-i18n="Analytics">Department</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-                @can('view-department')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.position-levels')}}" class="menu-link">
-                                <div class="text-truncate" data-i18n="Analytics">Position Level</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-                @can('view-department')
-                    <ul class="menu-sub">
-                        <li class="no-bullet">
-                            <a href="{{ route('v1.vehicles.list')}}" class="menu-link">
-                                <div class="text-truncate" data-i18n="Analytics">Vehicle</div>
-                            </a>
-                        </li>
-                    </ul>
-                @endcan
-            </li>
+                <li class="menu-item {{ request()->routeIs(
+                'v1.users',
+                'v1.users.create',
+                'v1.users.edit',
+                'v1.roles',
+                'v1.roles.create',
+                'v1.roles.edit',
+                'v1.permissions'
+            ) ? 'active open' : '' }}">
+                    <a href="javascript:void(0);" class="menu-link menu-toggle">
+                        <i class="menu-icon">
+                            <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 288">
+                                <defs>
+                                    <style>
+                                        .cls-project {
+                                            fill: #fff;
+                                        }
+                                    </style>
+                                </defs>
+                                <path class="cls-project"
+                                    d="M46.45,185.81h46.45c7.68,0,13.94-6.25,13.94-13.94s-6.25-13.94-13.94-13.94h-46.45c-7.68,0-13.94,6.25-13.94,13.94s6.25,13.94,13.94,13.94ZM46.45,167.23h46.45c2.56,0,4.65,2.08,4.65,4.65s-2.08,4.65-4.65,4.65h-46.45c-2.56,0-4.65-2.08-4.65-4.65s2.08-4.65,4.65-4.65Z" />
+                                <path class="cls-project"
+                                    d="M274.06,102.19c7.68,0,13.94-6.25,13.94-13.94V13.94c0-7.68-6.25-13.94-13.94-13.94h-32.52c-4.37,0-8.53,2.09-11.14,5.57l-9.76,13.01h-39.48c-7.68,0-13.94,6.25-13.94,13.94v18.58h-42.04C122.81,22.53,98.85,0,69.68,0,38.94,0,13.94,25,13.94,55.74s22.53,53.13,51.1,55.51v28.21C27.66,140.51,0,154.07,0,171.87v88.26c0,18.1,35.9,27.87,69.68,27.87s69.68-9.77,69.68-27.87v-27.87h28.11c2.39,31.13,28.42,55.74,60.15,55.74,33.3,0,60.39-27.09,60.39-60.39s-24.61-57.76-55.74-60.15v-65.27h41.81ZM274.06,92.9h-92.9c-2.56,0-4.65-2.09-4.65-4.65v-41.81h102.19v41.81c0,2.56-2.08,4.65-4.65,4.65ZM181.16,27.87h44.13l12.55-16.73c.87-1.16,2.26-1.85,3.71-1.85h32.52c2.56,0,4.65,2.09,4.65,4.65v23.23h-102.19v-4.65c0-2.56,2.08-4.65,4.65-4.65ZM23.23,55.74c0-4.85.76-9.53,2.14-13.94h17.84c-.86,4.34-1.4,8.97-1.4,13.94s.54,9.6,1.41,13.94h-17.85c-1.38-4.4-2.14-9.08-2.14-13.94ZM51.1,55.74c0-5.01.64-9.64,1.64-13.94h33.89c.99,4.29,1.63,8.92,1.63,13.94s-.64,9.64-1.64,13.94h-33.89c-.99-4.29-1.63-8.92-1.63-13.94ZM69.69,11.01c3.61,3.67,9.77,11,14.02,21.5h-28.03c4.25-10.48,10.41-17.82,14.01-21.5ZM83.68,78.97c-4.25,10.48-10.41,17.82-14.01,21.5-3.61-3.67-9.77-11-14.02-21.5h28.03ZM93.68,78.97h16.17c-6.05,10.41-16,18.25-27.86,21.52,4.06-5.24,8.57-12.44,11.7-21.52h0ZM116.13,55.74c0,4.85-.75,9.53-2.14,13.94h-17.84c.86-4.34,1.4-8.97,1.4-13.94s-.54-9.6-1.41-13.94h17.84c1.39,4.4,2.15,9.08,2.15,13.94ZM109.84,32.52h-16.17c-3.12-9.08-7.63-16.28-11.7-21.52,11.86,3.27,21.81,11.11,27.86,21.52ZM57.37,11c-4.06,5.24-8.57,12.44-11.7,21.52h-16.17c6.05-10.41,16-18.25,27.86-21.52ZM29.51,78.97h16.17c3.12,9.08,7.63,16.28,11.7,21.52-11.86-3.27-21.81-11.11-27.86-21.52ZM69.68,148.65c35.59,0,60.39,12.24,60.39,23.23s-24.8,23.23-60.39,23.23-60.39-12.24-60.39-23.23,24.8-23.23,60.39-23.23ZM9.29,188.51c11.82,9.63,33.9,15.87,60.39,15.87s48.57-6.24,60.39-15.87v15.87c0,7.58-23.52,18.58-60.39,18.58s-60.39-11-60.39-18.58v-15.87ZM9.29,218.82c12.85,8.8,37.12,13.44,60.39,13.44s47.53-4.64,60.39-13.44v13.44c0,7.58-23.52,18.58-60.39,18.58s-60.39-11-60.39-18.58v-13.44ZM69.68,278.71c-36.86,0-60.39-11-60.39-18.58v-13.44c12.85,8.8,37.12,13.44,60.39,13.44s47.53-4.64,60.39-13.44v13.44c0,7.58-23.52,18.58-60.39,18.58ZM192.08,264.25c4.25-13.46,16.56-22.71,30.89-22.71h9.29c14.34,0,26.65,9.25,30.89,22.71-9.21,8.93-21.73,14.46-35.54,14.46s-26.33-5.53-35.54-14.46ZM227.61,232.26c-10.25,0-18.58-8.33-18.58-18.58s8.33-18.58,18.58-18.58,18.58,8.33,18.58,18.58-8.33,18.58-18.58,18.58ZM278.71,227.61c0,10.54-3.21,20.35-8.71,28.5-4.81-10.19-13.47-17.92-23.99-21.55,5.79-5.11,9.47-12.57,9.47-20.88,0-15.37-12.5-27.87-27.87-27.87s-27.87,12.5-27.87,27.87c0,8.31,3.68,15.77,9.48,20.88-10.52,3.63-19.18,11.36-23.99,21.55-5.5-8.15-8.71-17.95-8.71-28.5,0-28.17,22.92-51.1,51.1-51.1s51.1,22.92,51.1,51.1ZM222.97,167.46c-29.59,2.27-53.24,25.92-55.51,55.51h-28.11v-51.1c0-17.8-27.66-31.36-65.03-32.41v-28.21c27.03-2.25,48.62-23.83,50.86-50.86h42.04v27.87c0,7.68,6.25,13.94,13.94,13.94h41.81v65.27Z" />
+                                <path class="cls-project" d="M260.13,18.58h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M241.55,18.58h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M185.81,74.32h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M204.39,74.32h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M222.97,74.32h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M74.32,51.1h9.29v9.29h-9.29v-9.29Z" />
+                                <path class="cls-project" d="M55.74,51.1h9.29v9.29h-9.29v-9.29Z" />
+                            </svg>
+                        </i>
+                        <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Master Data</div>
+                    </a>
+                    @can('view-user')
+                            <ul class="menu-sub">
+                                <li class="no-bullet">
+                                    <a href="{{ route('v1.users')}}" class="menu-link {{ request()->routeIs(
+                            'v1.users',
+                            'v1.users.create',
+                            'v1.users.edit'
+                        ) ? ' active' : '' }}">
+                                        <div class="text-truncate" data-i18n="Analytics">User Management</div>
+                                    </a>
+                                </li>
+                            </ul>
+                    @endcan
+                    @can('view-role')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.roles')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">User Role</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                    @can('view-permission')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.permissions')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">Permission</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                    @can('view-department')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.departments')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">Department</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                    @can('view-department')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.position-levels')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">Position Level</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                    @can('view-department')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.vehicles.list')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">Vehicle</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                </li>
         @endif
 
     </ul>
 </aside>
 <!-- / Menu -->
+
+<script>
+    let userIdMenu = "{{ auth()->user()->name }}";
+    let recipientIdMenu = "";
+    let socketMenu;
+
+    // Function to fetch previous messages
+
+    // Function to start WebSocket connection
+    function startWebSocketMenu() {
+        socketMenu = new WebSocket(`ws://43.249.38.133:8181/ws1/${userIdMenu}`);
+
+        socketMenu.onopen = function () {
+            console.log("Connected to WebSocket server");
+            //updateOnlineUsers();
+        };
+
+        socketMenu.onmessage = function (event) {
+            const messageData = JSON.parse(event.data);
+
+            if (messageData.type === "chat") {
+                //addMessage(messageData.sender, messageData.message);
+            } else if (messageData.type === "online_users") {
+                //updateOnlineUsersListMenu(messageData.users);
+                //updateOfflineUsersListMenu(messageData.user_offline);
+            }
+        };
+
+        socketMenu.onclose = function () {
+            console.log("WebSocket connection closed");
+        };
+    }
+
+    // Function to update online users list
+    function updateOnlineUsersListMenu(users) {
+        const userList = document.getElementById("online-users-list");
+        userList.innerHTML = "";
+        let userLogin = "{{ auth()->user()->name }}";
+
+        users.forEach(user => {
+            if (user != userLogin) {
+                const li = document.createElement("li");
+                li.textContent = user;
+                li.classList.add("user");
+                li.onclick = () => {
+                    document.getElementById("recipient").value = user;
+                    recipientIdMenu = user;
+                    loadPreviousMessages();
+
+                    let recipientLabel = document.getElementById("recipientLabel");
+                    recipientLabel.textContent = user;
+                };
+                userList.appendChild(li);
+            }
+        });
+    }
+
+    function updateOfflineUsersListMenu(users) {
+        const userList = document.getElementById("offline-users-list");
+        userList.innerHTML = "";
+        let userLogin = "{{ auth()->user()->name }}";
+
+        users.forEach(user => {
+            if (user != userLogin) {
+                const li = document.createElement("li");
+                li.textContent = user;
+                li.classList.add("user");
+                li.onclick = () => {
+                    document.getElementById("recipient").value = user;
+                    recipientId = user;
+                    loadPreviousMessages();
+
+                    let recipientLabel = document.getElementById("recipientLabel");
+                    recipientLabel.textContent = user;
+                };
+                userList.appendChild(li);
+            }
+        });
+    }
+
+
+    // Start WebSocket when the page loads
+    startWebSocketMenu();
+</script>
+

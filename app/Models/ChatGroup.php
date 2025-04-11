@@ -17,6 +17,11 @@ class ChatGroup extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'chat_group_user');
+        return $this->belongsToMany(User::class, 'chat_group_members');
     }
+
+    public function members()
+{
+    return $this->hasMany('chat_group_members', 'chat_group_id');
+}
 }

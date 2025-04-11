@@ -120,4 +120,5 @@
 
     <a href="{{ route('chat-groups') }}" class="back-link">Back to Groups</a>
 </div>
+
 @endsection

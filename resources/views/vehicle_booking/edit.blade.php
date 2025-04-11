@@ -60,11 +60,11 @@
 
               <div class="col-md-3">
                   <label for="startDate" class="form-label">Start Date</label>
-                  <input type="datetime-local" class="form-control" id="start_at" name="start_at" value="{{ old('start_at', isset($booking) ? \Carbon\Carbon::parse($booking->start_at)->format('Y-m-d') : '') }}" required />
+                  <input type="datetime-local" class="form-control" id="start_at" name="start_at" value="{{ old('start_at', isset($booking) ? \Carbon\Carbon::parse($booking->start_at)->format('Y-m-d H:i:s') : '') }}" required />
               </div>
               <div class="col-md-3">
                   <label for="endDate" class="form-label">End Date</label>
-                  <input type="datetime-local" class="form-control" id="end_at" name="end_at" value="{{ old('end_at', isset($booking) ? \Carbon\Carbon::parse($booking->end_at)->format('Y-m-d') : '') }}" required />
+                  <input type="datetime-local" class="form-control" id="end_at" name="end_at" value="{{ old('end_at', isset($booking) ? \Carbon\Carbon::parse($booking->end_at)->format('Y-m-d H:i:s') : '') }}" required />
               </div>
 
               <div class="col-md-6 mt-3">
@@ -145,7 +145,7 @@
                         let label = document.createElement("label");
                         label.classList.add("form-check-label");
                         label.setAttribute("for", "vehicle_" + vehicle.id);
-                        label.innerHTML = `<img src="${vehicle.image_url}" class="car-image" alt="${vehicle.name}"> ${vehicle.name} - ${vehicle.plate_number}`;
+                        label.innerHTML = `<img src="${vehicle.image_url}" class="car-image" alt="${vehicle.name}"> ${vehicle.name}`;
 
                         div.appendChild(radio);
                         div.appendChild(label);

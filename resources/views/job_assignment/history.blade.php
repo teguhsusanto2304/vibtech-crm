@@ -41,8 +41,14 @@
                         </select>
             </div>
             <div class="mb-2 mb-md-0">
+                <!-- Date Range Picker CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<!-- Date Range Picker JS -->
+<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
                 <label for="createdDateFilter" style="color: black">Created Date:</label>
-                        <input type="date" id="createdDateFilter" class="form-control">
+                        <input type="text" id="createdDateFilter" class="form-control">
             </div>
             <div class="mb-2 mb-md-0">
                 <label for="personFilter" style="color: black">Person:</label>
@@ -77,8 +83,8 @@
                             <th>Type of Job</th>
                             <th>Business Name</th>
                             <th>Date of Job</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th style="background-color: #f7eeee">Status</th>
+                            <th style="background-color: #f7eeee">Action</th>
                         </tr>
                     </thead>
                 </table>
@@ -88,6 +94,26 @@
         <!-- DataTable Script -->
         <script type="text/javascript">
             $(document).ready(function () {
+                $('#createdDateFilter').daterangepicker({
+        autoUpdateInput: false, // Prevents automatic date filling
+        locale: {
+            cancelLabel: 'Clear' // Adds a clear button
+        }
+    });
+
+    $('#createdDateFilter').on('apply.daterangepicker', function (ev, picker) {
+        $(this).val(picker.startDate.format('YYYY-MM-DD') + ' to ' + picker.endDate.format('YYYY-MM-DD'));
+
+        // Fetch filtered data from backend
+        //fetchFilteredData(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'));
+    });
+
+    $('#createdDateFilter').on('cancel.daterangepicker', function (ev, picker) {
+        $(this).val(''); // Clear input when cancel is clicked
+    });
+
+    $('input[name="createdDateFilter"]').daterangepicker();
+
                 var table = $('#job_datatable').DataTable({
                     scrollX: true, // Enable horizontal scrolling
                     responsive: false, // Disable responsive mode to ensure scrolling works
@@ -107,6 +133,14 @@
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'start_at', name: 'job_status', visible: false },
 
+                    ],
+                    columnDefs: [
+                        {
+                            targets: 'action', // Target the 'action' column by name
+                            createdCell: function(td, cellData, rowData, row, col) {
+                                $(td).css('background-color', '#f7eeee'); // Set the background color
+                            }
+                        }
                     ]
                 });
                 $('#departmentFilter').on('change', function () {
@@ -115,13 +149,34 @@
                 $('#personFilter').on('change', function () {
                     table.column(3).search($(this).val()).draw();
                 });
-                $('#createdDateFilter').on('change', function () {
-                    table.column(1).search($(this).val()).draw();
-                });
+
                 $('#statusFilter').on('change', function () {
                     table.column(9).search($(this).val()).draw();
                 });
+
+                $('#createdDateFilter').on('apply.daterangepicker', function (ev, picker) {
+        let startDate = picker.startDate.format('YYYY-MM-DD');
+        let endDate = picker.endDate.format('YYYY-MM-DD');
+
+        $(this).val(startDate + ' to ' + endDate);
+
+        // Custom client-side filter
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            let createdDate = data[1]; // Column index of created_date
+            if (!createdDate) return false;
+
+            return createdDate >= startDate && createdDate <= endDate;
+        });
+
+        table.draw();
+    });
+
+
             });
+
+
+
+
         </script>
 
 @endsection

@@ -227,15 +227,19 @@ class VehicleBookingController extends Controller
             ->pluck('vehicle_id');
 
         if(!empty($id)){
-            $availableVehiclesAll = Vehicle::whereNotIn('id', $bookedVehicleIds)
-            ->orWhere('id', $bookedVehicleId)
-            ->where('data_status',0)
+            $availableVehiclesAllSelf = Vehicle::where(function ($query) use ($bookedVehicleId, $bookedVehicleIds) {
+                $query->where('id', $bookedVehicleId)
+                      ->orWhere(function ($subQuery) use ($bookedVehicleIds) {
+                          $subQuery->whereNotIn('id', $bookedVehicleIds);
+                      });
+            })
+            ->where('data_status', 0)
             ->get();
             // Append image URL (assuming image field exists)
-            $availableVehiclesAll->each(function ($vehicle) {
+            $availableVehiclesAllSelf->each(function ($vehicle) {
                 $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
             });
-            return response()->json($availableVehiclesAll);
+            return response()->json($availableVehiclesAllSelf);
         } else {
             $availableVehiclesAll = Vehicle::whereNotIn('id', $bookedVehicleIds)
             ->where('data_status',0)
