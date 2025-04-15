@@ -187,6 +187,18 @@
                 </div>
 
                     <script>
+                        const knownSenders = new Set();
+                        document.addEventListener("DOMContentLoaded", function () {
+                            const messageInput = document.getElementById("message");
+
+                            messageInput.addEventListener("keydown", function (event) {
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                    event.preventDefault(); // Prevent newline or form submission
+                                    sendMessage(); // Call your sendMessage function
+                                }
+                            });
+                        });
+
                         let userId = "{{ auth()->user()->name }}";
                         let recipientId = "";
                         let socket;
@@ -199,7 +211,7 @@
                                 return;
                             }
 
-                            fetch(` http://localhost:8181/messages/${userId}/${recipientId}`)
+                            fetch(` {{ env('CHAT_URL') }}/messages/${userId}/${recipientId}`)
                                 .then(response => response.json())
                                 .then(messages => {
                                     const chatBox = document.getElementById("chat-box");
@@ -216,17 +228,36 @@
 
                         // Function to start WebSocket connection
                         function startWebSocket() {
-                            socket = new WebSocket(`ws://localhost:8181/ws1/${userId}`);
+                            socket = new WebSocket(`{{ env('WEBSOCKET_CHAT_URL') }}/ws1/${userId}`);
 
                             socket.onopen = function () {
                                 console.log("Connected to WebSocket server");
-                                //updateOnlineUsers();
+                                updateChatBadge();
                             };
 
                             socket.onmessage = function (event) {
                                 const messageData = JSON.parse(event.data);
 
                                 if (messageData.type === "chat") {
+                                    const sender = messageData.sender;
+                                    const isFirstMessageFromSender = !knownSenders.has(sender);
+                                    if (isFirstMessageFromSender) {
+                                        console.log("First time receiving message from:", sender);
+                                        knownSenders.add(sender);
+                                        document.getElementById("recipient").value = sender;
+                                        loadPreviousMessages();
+                                    }
+
+                                    const dateObj = new Date();
+                                    const timeString = dateObj.toLocaleString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    }); // "10:30 PM"
+
                                     addMessage(messageData.sender, messageData.message);
                                 } else if (messageData.type === "online_users") {
                                     updateOnlineUsersList(messageData.users);
@@ -246,22 +277,50 @@
                             let userLogin = "{{ auth()->user()->name }}";
 
                             users.forEach(user => {
-                                alert(user);
-                                if (user != userLogin) {
+                                if (user.username !== userLogin) {
                                     const li = document.createElement("li");
-                                    li.textContent = user.name;
                                     li.classList.add("user");
+                                    li.style.display = "flex";
+                                    li.style.justifyContent = "space-between";
+                                    li.style.alignItems = "center";
+                                    li.style.marginBottom = "8px";
+
+                                    // Username span
+                                    const nameSpan = document.createElement("span");
+                                    nameSpan.textContent = user.username;
+
+                                    // Badge span
+                                    const badge = document.createElement("span");
+                                    badge.classList.add("badge");
+                                    badge.textContent = user.unread > 0 ? user.unread : "";
+                                    badge.style.background = "red";
+                                    badge.style.color = "white";
+                                    badge.style.borderRadius = "50%";
+                                    badge.style.padding = "4px 8px";
+                                    badge.style.fontSize = "0.8rem";
+                                    badge.style.marginLeft = "10px";
+                                    badge.style.display = user.unread > 0 ? "inline-block" : "none";
+
+                                    li.appendChild(nameSpan);
+                                    li.appendChild(badge);
+
                                     li.onclick = () => {
-                                        document.getElementById("recipient").value = user.name;
-                                        recipientId = user.name;
+                                        document.getElementById("recipient").value = user.username;
+                                        recipientId = user.username;
                                         loadPreviousMessages();
 
                                         let recipientLabel = document.getElementById("recipientLabel");
-                                        recipientLabel.textContent = user;
+                                        recipientLabel.textContent = user.username;
+
+                                        // Clear unread badge
+                                        badge.textContent = "";
+                                        badge.style.display = "none";
                                     };
+
                                     userList.appendChild(li);
                                 }
                             });
+
                         }
 
                         function updateOfflineUsersList(users) {
@@ -270,18 +329,46 @@
                             let userLogin = "{{ auth()->user()->name }}";
 
                             users.forEach(user => {
-                                if (user != userLogin) {
+                                if (user.username !== userLogin) {
                                     const li = document.createElement("li");
-                                    li.textContent = user;
                                     li.classList.add("user");
+                                    li.style.display = "flex";
+                                    li.style.justifyContent = "space-between";
+                                    li.style.alignItems = "center";
+                                    li.style.marginBottom = "8px";
+
+                                    // Username span
+                                    const nameSpan = document.createElement("span");
+                                    nameSpan.textContent = user.username;
+
+                                    // Badge span
+                                    const badge = document.createElement("span");
+                                    badge.classList.add("badge");
+                                    badge.textContent = user.unread > 0 ? user.unread : "";
+                                    badge.style.background = "red";
+                                    badge.style.color = "white";
+                                    badge.style.borderRadius = "50%";
+                                    badge.style.padding = "4px 8px";
+                                    badge.style.fontSize = "0.8rem";
+                                    badge.style.marginLeft = "10px";
+                                    badge.style.display = user.unread > 0 ? "inline-block" : "none";
+
+                                    li.appendChild(nameSpan);
+                                    li.appendChild(badge);
+
                                     li.onclick = () => {
-                                        document.getElementById("recipient").value = user;
-                                        recipientId = user;
+                                        document.getElementById("recipient").value = user.username;
+                                        recipientId = user.username;
                                         loadPreviousMessages();
 
                                         let recipientLabel = document.getElementById("recipientLabel");
-                                        recipientLabel.textContent = user;
+                                        recipientLabel.textContent = user.username;
+
+                                        // Clear unread badge
+                                        badge.textContent = "";
+                                        badge.style.display = "none";
                                     };
+
                                     userList.appendChild(li);
                                 }
                             });
@@ -309,8 +396,15 @@
                             timestampDiv.classList.add("message-timestamp");
 
                             // Convert and format timestamp
-                            const dateObj = new Date(timestamp);
-                            const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); // "10:30 PM"
+                            const dateObj = timestamp ? new Date(timestamp) : new Date();
+                            const timeString = dateObj.toLocaleString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true,
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    });
 
                             timestampDiv.textContent = timeString;
 

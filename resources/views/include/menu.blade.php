@@ -180,6 +180,13 @@
                         <div class="text-truncate" data-i18n="Analytics">Whistleblowing Policy</div>
                     </a>
                 </li>
+                @can('view-getting-started')
+                <li class="no-bullet">
+                    <a href="{{ route('v1.getting-started')}}" class="menu-link">
+                        <div class="text-truncate" data-i18n="Analytics">Getting Started</div>
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
         @if(auth()->user()->can('view-mass-emailer') || auth()->user()->can('view-client-database') || auth()->user()->can('view-social-media-scheduler') || auth()->user()->can('view-event-generation'))
@@ -611,7 +618,7 @@
                     </svg>
                 </i>
                 <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat
-                    <span class="badge bg-danger">0</span>
+                    <span class="badge bg-danger rounded-pill">0</span>
                 </div>
             </a>
             <ul>
@@ -729,22 +736,35 @@
     let recipientIdMenu = "";
     let socketMenu;
 
-    // Function to fetch previous messages
+    function updateChatBadge() {
+        fetch(`{{ env('CHAT_URL') }}/unread-count/${userIdMenu}`)
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.querySelector('.menu-link .badge');
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = "inline-block";
+                } else {
+                    badge.style.display = "none";
+                }
+            })
+            .catch(err => console.error("Error fetching unread count:", err));
+    }
 
     // Function to start WebSocket connection
     function startWebSocketMenu() {
-        socketMenu = new WebSocket(`ws://43.249.38.133:8181/ws1/${userIdMenu}`);
+        socketMenu = new WebSocket(`{{ env('WEBSOCKET_CHAT_URL') }}/ws1/${userIdMenu}`);
 
         socketMenu.onopen = function () {
             console.log("Connected to WebSocket server");
-            //updateOnlineUsers();
+            updateChatBadge();
         };
 
         socketMenu.onmessage = function (event) {
             const messageData = JSON.parse(event.data);
 
             if (messageData.type === "chat") {
-                //addMessage(messageData.sender, messageData.message);
+                updateChatBadge();
             } else if (messageData.type === "online_users") {
                 //updateOnlineUsersListMenu(messageData.users);
                 //updateOfflineUsersListMenu(messageData.user_offline);
@@ -802,7 +822,6 @@
             }
         });
     }
-
 
     // Start WebSocket when the page loads
     startWebSocketMenu();

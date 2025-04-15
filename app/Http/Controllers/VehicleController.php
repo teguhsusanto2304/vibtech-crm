@@ -43,7 +43,7 @@ class VehicleController extends Controller
             'path_image' => $imagePath,
         ]);
 
-        return redirect()->route('v1.vehicles')->with('success', 'Vehicle added successfully.');
+        return redirect()->route('v1.vehicles.list')->with('success', 'Vehicle added successfully.');
     }
 
     public function edit($id)

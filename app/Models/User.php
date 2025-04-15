@@ -80,6 +80,7 @@ class User extends Authenticatable
 
     public function chatGroups()
     {
-        return $this->belongsToMany(ChatGroup::class, 'chat_group_user');
+        return $this->belongsToMany(ChatGroup::class, 'chat_group_members', 'user_id', 'chat_group_id')
+                    ->withTimestamps();
     }
 }

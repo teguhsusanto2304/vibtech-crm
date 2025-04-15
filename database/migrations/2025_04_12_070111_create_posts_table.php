@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('chat_groups', function (Blueprint $table) {
+        Schema::create('posts', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->tinyInteger('data_status')->default(1);
+            $table->string('title',150);
+            $table->string('description',150)->nullable();
+            $table->text('content');
+            $table->integer('post_type')->default(0);
+            $table->integer('data_status')->default(1);
+            $table->bigInteger('created_by');
             $table->timestamps();
         });
     }
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_groups');
+        Schema::dropIfExists('posts');
     }
 };

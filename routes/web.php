@@ -27,6 +27,7 @@ use App\Http\Controllers\VehicleBookingController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\ChatGroupController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PostController;
 
 Route::get('/', function () {
     return view('login');
@@ -161,6 +162,18 @@ Route::middleware('auth')->group(function () {
             Route::get('/car-image', 'getCarImages')->name('v1.vehicles.car-image');
             Route::get('/data','getData')->name('v1.vehicle.data');
 
+        });
+
+        // 🔹 Post Management Routes
+        Route::prefix('getting-started')->controller(PostController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.getting-started');
+            Route::get('/{id}/read', 'read')->name('v1.getting-started.read');
+            Route::get('/data', 'getPosts')->name('v1.getting-started.data');
+            Route::get('/create', 'create')->name('v1.getting-started.create');
+            Route::post('/store', 'store')->name('v1.getting-started.store');
+            Route::get('/{id}/edit', 'edit')->name('v1.getting-started.edit');
+            Route::put('/{id}/update', 'update')->name('v1.getting-started.update');
+            Route::put('/{id}/destroy', 'destroy')->name('v1.getting-started.destroy');
         });
 
 
@@ -316,9 +329,18 @@ Route::get('/account-receivable-list', function () {
 
 Route::get('/chat-groups', [ChatGroupController::class, 'index'])->name('chat-groups');
 Route::post('/chat-groups', [ChatGroupController::class, 'store']);
+Route::get('/chat-groups/{id}/edit', [ChatGroupController::class, 'edit'])->name('chat-groups.edit');
+Route::put('/chat-groups/{id}/destroy', [ChatGroupController::class, 'destroy'])->name('chat-groups.destroy');
+Route::put('/chat-groups/{id}/update', [ChatGroupController::class, 'update'])->name('chat-groups.update');
+
 
 Route::get('/chat-groups/{group}', [MessageController::class, 'index'])->name('chat-group.messages');
+Route::get('/chat-groups/{groupId}/members', [ChatGroupController::class, 'getMembers'])->name('chat-group.members');
+Route::get('/chat-groups/{id}/messages', [ChatGroupController::class, 'getMessages']);
+Route::post('/chat-groups/send-message', [ChatGroupController::class, 'sendMessage'])->name('chat-group.send-message');
 Route::post('/chat-groups/{group}/messages', [MessageController::class, 'store']);
 Route::post('/chat-groups/{groupId}/invite-users', [ChatGroupController::class, 'inviteUsers'])
     ->name('chat-groups.invite-users');
 Route::get('/chat-groups/{groupId}/invited-users', [ChatGroupController::class, 'getInvitedUsers']);
+Route::post('/ckeditor/upload', [App\Http\Controllers\CKEditorController::class, 'upload'])->name('ckeditor.upload');
+
