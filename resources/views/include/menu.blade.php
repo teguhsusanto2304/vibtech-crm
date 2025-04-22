@@ -638,7 +638,9 @@
                 <li class="no-bullet">
                     <a href="{{ route('chat-groups') }}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Chat Group
+                            @if($count_group>0)
                             <span class="badge bg-danger">{{ $count_group }}</span>
+                            @endif
                         </div>
                     </a>
                 </li>
