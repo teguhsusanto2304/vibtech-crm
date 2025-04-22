@@ -42,7 +42,7 @@ class ChatGroupController extends Controller
     {
         $userId = auth()->user()->id;
         // Fetch only groups where the user is a member
-        $groups = DB::table('chat_groups')
+        /**$groups1 = DB::table('chat_groups')
             ->join('chat_group_members', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
             ->join('users', 'chat_group_members.user_id', '=', 'users.id') // Join with users to get names
             ->where('chat_group_members.user_id', $userId) // Only fetch groups the user is in
@@ -50,8 +50,42 @@ class ChatGroupController extends Controller
             ->select('chat_groups.id', 'chat_groups.name', 'chat_group_members.is_creator')
             ->latest('chat_groups.created_at')
             ->paginate(20);
+            **/
 
-        return view('chat.groups', compact('groups'))->with('title', 'Chat Group')->with('breadcrumb', ['Home', 'Chat', 'Chat Group']);
+            $groups = DB::table('chat_groups')
+            ->join('chat_group_members', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
+            ->join('users', 'chat_group_members.user_id', '=', 'users.id')
+            ->leftJoin('messages', 'chat_groups.id', '=', 'messages.chat_group_id')
+            ->leftJoin('message_reads', function ($join) use ($userId) {
+                $join->on('messages.id', '=', 'message_reads.message_id')
+                     ->where('message_reads.user_id', '=', $userId)
+                     ->whereNull('message_reads.read_at');
+            })
+            ->where('chat_group_members.user_id', $userId)
+            ->where('chat_groups.data_status', 1)
+            ->select(
+                'chat_groups.id',
+                'chat_groups.name',
+                'chat_group_members.is_creator',
+                DB::raw('COUNT(message_reads.id) as unread_count')
+            )
+            ->groupBy('chat_groups.id', 'chat_groups.name', 'chat_group_members.is_creator')
+            ->orderByDesc('chat_groups.created_at')
+            ->paginate(20);
+
+
+            $del_groups = DB::table('chat_groups')
+            ->join('chat_group_members', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
+            ->join('users', 'chat_group_members.user_id', '=', 'users.id') // Join with users to get names
+            ->where('chat_group_members.user_id', $userId) // Only fetch groups the user is in
+            ->where('chat_group_members.is_creator', 1)
+            ->where('chat_groups.data_status', 0)
+            ->select('chat_groups.id', 'chat_groups.name', 'chat_group_members.is_creator')
+            ->latest('chat_groups.created_at')
+            ->paginate(20);
+
+
+        return view('chat.groups', compact('groups','del_groups'))->with('title', 'Chat Group')->with('breadcrumb', ['Home', 'Chat', 'Chat Group']);
     }
 
     public function store(Request $request)
@@ -151,10 +185,14 @@ class ChatGroupController extends Controller
     public function getMessages($id)
     {
         $group = ChatGroup::findOrFail($id);
-
         // Adjust 'messages' to match your actual relationship/method name
         $messages = $group->messages()->with('user')->orderBy('created_at')->get();
-
+        foreach($messages as $message){
+            DB::table('message_reads')
+            ->where('message_id', $message->id)
+            ->where('user_id', auth()->user()->id)
+            ->update(['read_at' => now()]);
+        }
         return response()->json($messages);
     }
 
@@ -170,6 +208,26 @@ class ChatGroupController extends Controller
             'user_id' => auth()->id(),
             'message' => $request->message,
         ]);
+
+        // Get all other members in the group (exclude sender)
+        $otherMembers = DB::table('chat_group_members')
+        ->where('chat_group_id', $request->group_id)
+        ->where('user_id', '!=', auth()->user()->id)
+        ->pluck('user_id');
+
+        // Insert entries into message_reads for each member
+        $reads = [];
+        foreach ($otherMembers as $userId) {
+            $reads[] = [
+                'message_id' => $message->id,
+                'user_id' => $userId,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'read_at' => null // Unread by default
+            ];
+        }
+
+        DB::table('message_reads')->insert($reads);
 
         return response()->json([
             'sender_name' => auth()->user()->name,
@@ -208,6 +266,35 @@ class ChatGroupController extends Controller
 
         return redirect()->back()->with('success', 'Group updated successfully.');
     }
+
+    public function unreadMessageCounts()
+    {
+        $userId = auth()->id();
+
+        $groups = DB::table('chat_group_members')
+            ->join('chat_groups', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
+            ->where('chat_group_members.user_id', $userId)
+            ->select('chat_groups.id', 'chat_groups.name')
+            ->get();
+
+        $counts = [];
+
+        foreach ($groups as $group) {
+            $unreadCount = Message::where('chat_group_id', $group->id)
+                ->whereDoesntHave('readers', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                })->count();
+
+            $counts[] = [
+                'group_id' => $group->id,
+                'group_name' => $group->name,
+                'unread_count' => $unreadCount,
+            ];
+        }
+
+        return response()->json($counts);
+    }
+
 
 
 }

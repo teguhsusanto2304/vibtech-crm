@@ -83,9 +83,14 @@
         @endif
     </form>
     @else
-        <div class="col-12 mt-4 text-center">
-            <button type="submit" class="btn btn-warning">Send Reminder</button>
-        </div>
+        <form action="{{ route('v1.job-assignment-form.respond') }}" method="post">
+            @csrf
+                <div class="col-12 mt-4 text-center">
+                    <input type="hidden" name="id" value="{{ $job->user_id }}">
+                    <input type="hidden" name="job_id" value="{{ $job->id }}">
+                    <button type="submit" name="response" value="reminder" class="btn btn-warning">Send Reminder</button>
+                </div>
+        </form>
     @endif
 @else
     <form action="{{ route('v1.job-assignment-form.respond') }}" method="post">

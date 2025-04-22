@@ -1,3 +1,4 @@
+
 <div class="btn-group" role="group" aria-label="Basic mixed styles example">
     @if((int) $job->user_id === (int) auth()->user()->id)
         @if((int) $job->is_publish != 1 && (int) $job->job_status != 4 && (int) $job->job_status != 3)
@@ -18,6 +19,7 @@
         @endif
     @endif
 </div>
+
 
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">

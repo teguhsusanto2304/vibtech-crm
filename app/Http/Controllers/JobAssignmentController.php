@@ -136,6 +136,24 @@ class JobAssignmentController extends Controller
                 'accept',
                 route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
             ));
+        } else if ($response === 'reminder') {
+            $personInvolveds = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))
+            ->whereNot('user_id',auth()->user()->id)
+            ->get();
+            foreach($personInvolveds as $personInvolved){
+                $user1 = User::where('id',$personInvolved->user_id)->first();
+                try {
+                    $user1->notify(new UserNotification(
+                        auth()->user()->name . ' <strong>Remindered</strong> at Job ID ' . $jobAssignment->job_record_id,
+                        'accept',
+                        route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
+                    ));
+                } catch (\Exception $e) {
+                    dd($e->getMessage());
+                    \Log::error('Notification failed: ' . $e->getMessage());
+                }
+            }
+
         }
         $person->save();
 

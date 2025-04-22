@@ -621,11 +621,24 @@
                     <span class="badge bg-danger rounded-pill">0</span>
                 </div>
             </a>
+            @php
+            $msg_unread = DB::table('message_reads')
+            ->join('messages', 'message_reads.message_id', '=', 'messages.id')
+            ->where('message_reads.user_id', auth()->user()->id)
+            ->whereNull('message_reads.read_at')
+            ->select('messages.chat_group_id', DB::raw('count(*) as unread_count'))
+            ->groupBy('messages.chat_group_id')
+            ->pluck('unread_count', 'messages.chat_group_id');
+            $count_group = 0;
+            foreach($msg_unread as $row){
+                $count_group ++;
+            }
+            @endphp
             <ul>
                 <li class="no-bullet">
                     <a href="{{ route('chat-groups') }}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Chat Group
-                            <span class="badge bg-danger">0</span>
+                            <span class="badge bg-danger">{{ $count_group }}</span>
                         </div>
                     </a>
                 </li>

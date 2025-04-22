@@ -159,7 +159,7 @@
                         </div>
                         <div class="card mt-4">
                             <div class="card-header text-bg-primary">
-                                <strong>Chat Group</strong>
+                                <strong>Active Chat Group</strong>
                             </div>
                             <div class="card-body">
                                 @forelse($groups as $group)
@@ -199,7 +199,14 @@
                                     <div class="card h-100 mb-5 group-card" data-group-id="{{ $group->id }}"
                                         data-group-name="{{ $group->name }}">
                                         <div class="card-body d-flex flex-column user">
-                                            <strong class="card-title">{{ $group->name }}</strong>
+                                            <strong class="card-title d-flex justify-content-between align-items-center">
+                                                {{ $group->name }}
+                                                @if(!empty($group->unread_count) && $group->unread_count > 0)
+                                                    <span class="badge bg-danger ms-2">
+                                                        {{ $group->unread_count }}
+                                                    </span>
+                                                @endif
+                                            </strong>
                                             @if($group->is_creator == 1)
                                                 <div class="mt-auto d-flex justify-content-center">
                                                     <div class="btn-group btn-group-sm" style="justify-content: center;"
@@ -304,8 +311,25 @@
                                         </button>
                                     </div>
                                 </div>
-
-
+                            </div>
+                        </div>
+                        <div class="card mt-4">
+                            <div class="card-header text-bg-info">
+                                <strong>Archive Chat Group</strong>
+                            </div>
+                            <div class="card-body">
+                                @forelse($del_groups as $del_group)
+                                <div class="card h-100 mb-5 group-card" data-group-id="{{ $del_group->id }}"
+                                    data-group-name="{{ $del_group->name }}" data-group-status="0">
+                                    <div class="card-body d-flex flex-column user">
+                                        <strong class="card-title">{{ $del_group->name }}</strong>
+                                    </div>
+                                </div>
+                                @empty
+                                    <tr>
+                                        <td>No chat group available.</td>
+                                    </tr>
+                                @endforelse
                             </div>
                         </div>
                     </div>
@@ -359,6 +383,37 @@
 </div>
 
                 <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                            const messageInput = document.getElementById("message-input");
+
+                            messageInput.addEventListener("keydown", function (event) {
+                                if (event.key === "Enter" && !event.shiftKey) {
+
+                                    event.preventDefault(); // Prevent newline or form submission
+                                    const message = document.getElementById("message-input").value;
+                                    const groupId = document.getElementById("group-id").value;
+
+                                    if (message.trim() === "") return;
+
+                                    $.ajax({
+                                        url: "{{ route('chat-group.send-message') }}",
+                                        method: "POST",
+                                        data: {
+                                            _token: "{{ csrf_token() }}",
+                                            message: message,
+                                            group_id: groupId
+                                        },
+                                        success: function (response) {
+                                            $('#message-input').val('');
+                                            addMessage(response.sender_name, response.message, response.timestamp);
+                                        },
+                                        error: function () {
+                                            alert("❌ Failed to send message.");
+                                        }
+                                    });
+                                }
+                            });
+                        });
                     $(document).ready(function () {
                         $('#send-button').click(function () {
                             let message = $('#message-input').val();
@@ -522,6 +577,19 @@
                         groupCards.forEach(card => {
                             card.addEventListener("click", function () {
                                 const groupId = this.dataset.groupId;
+                                const messageInput = document.getElementById("message-input");
+                                    const sendButton = document.getElementById("send-button");
+                                if (this.dataset.groupStatus==="0"){
+                                    // To disable the text input field:
+                                    messageInput.disabled = true
+                                    // To disable the button:
+                                    sendButton.disabled = true;
+                                } else {
+                                    messageInput.disabled = false
+                                    // To disable the button:
+                                    sendButton.disabled = false;
+                                }
+
                                 loadGroupMessages(groupId);
                                 $('#group-id').val(groupId);
                                 fetch(`/chat-groups/${groupId}/members`)
