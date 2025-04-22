@@ -137,6 +137,7 @@ class JobAssignmentController extends Controller
                 route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
             ));
         } else if ($response === 'reminder') {
+            $jobAssignment = JobAssignment::find($request->input('job_id'));
             $personInvolveds = JobAssignmentPersonnel::where('job_assignment_id', $request->input('job_id'))
             ->whereNot('user_id',auth()->user()->id)
             ->get();
@@ -149,7 +150,6 @@ class JobAssignmentController extends Controller
                         route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes'])
                     ));
                 } catch (\Exception $e) {
-                    dd($e->getMessage());
                     \Log::error('Notification failed: ' . $e->getMessage());
                 }
             }
