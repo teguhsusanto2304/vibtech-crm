@@ -243,11 +243,14 @@ class ChatGroupController extends Controller
         return response()->json($data);
     }
 
-    public function destroy($id)
+    public function destroy($id,$type)
     {
         $group = ChatGroup::findOrFail($id);
-
-        $group->update(['data_status' => 0]);
+        if($type=='archive'){
+            $group->update(['data_status' => 0]);
+        } else {
+            $group->update(['data_status' => 3]);
+        }
 
         return redirect()->back()->with('success', 'Group destroyed successfully.');
     }

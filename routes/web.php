@@ -330,7 +330,7 @@ Route::get('/account-receivable-list', function () {
 Route::get('/chat-groups', [ChatGroupController::class, 'index'])->name('chat-groups');
 Route::post('/chat-groups', [ChatGroupController::class, 'store']);
 Route::get('/chat-groups/{id}/edit', [ChatGroupController::class, 'edit'])->name('chat-groups.edit');
-Route::put('/chat-groups/{id}/destroy', [ChatGroupController::class, 'destroy'])->name('chat-groups.destroy');
+Route::put('/chat-groups/{id}/{type}/destroy', [ChatGroupController::class, 'destroy'])->name('chat-groups.destroy');
 Route::put('/chat-groups/{id}/update', [ChatGroupController::class, 'update'])->name('chat-groups.update');
 
 
