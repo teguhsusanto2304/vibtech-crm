@@ -251,6 +251,14 @@ class ChatGroupController extends Controller
         } else {
             $group->update(['data_status' => 3]);
         }
+        // Adjust 'messages' to match your actual relationship/method name
+        $messages = $group->messages()->with('user')->orderBy('created_at')->get();
+        foreach($messages as $message){
+            DB::table('message_reads')
+            ->where('message_id', $message->id)
+            ->where('user_id', auth()->user()->id)
+            ->update(['read_at' => now()]);
+        }
 
         return redirect()->back()->with('success', 'Group destroyed successfully.');
     }
