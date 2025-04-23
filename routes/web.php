@@ -145,7 +145,9 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/update', 'update')->name('v1.vehicle-bookings.update');
             Route::put('/{id}/cancel', 'cancel')->name('v1.vehicle-bookings.cancel');
             Route::get('/list', 'list')->name('v1.vehicle-bookings.list');
+            Route::get('/histories', 'history')->name('v1.vehicle-bookings.histories');
             Route::get('/data','getData')->name('v1.vehicle-bookings.data');
+            Route::get('/histories-data','getHistoryData')->name('v1.vehicle-bookings.histories-data');
             Route::get('/{id}/detail','show')->name('v1.vehicle-bookings.detail');
             Route::get('/{id}/modal', 'commonShow')->name('v1.vehicle-bookings.modal');
             Route::get('/available-vehicles','getAvailableVehicles')->name('v1.vehicle-bookings.available-vehicles');

@@ -60,7 +60,7 @@
                         <div class="card text-center">
                             <div class="card-body">
                                 <h5 class="card-title">Vehicle Booking History </h5>
-                                <a href="{{ route('v1.vehicles.list') }}" class="btn btn_primary">View Vehicle Booking History</a>
+                                <a href="{{ route('v1.vehicle-bookings.histories') }}" class="btn btn_primary">View Vehicle Booking History</a>
                             </div>
                         </div>
                     </div>

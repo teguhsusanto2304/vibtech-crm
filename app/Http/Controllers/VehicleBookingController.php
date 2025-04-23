@@ -18,6 +18,11 @@ class VehicleBookingController extends Controller
         return view('vehicle_booking.index')->with('title', 'Vehicle Booking')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking']);
     }
 
+    public function history()
+    {
+        return view('vehicle_booking.history')->with('title', 'Vehicle Booking History')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking','Vehicle Booking History']);
+    }
+
     public function edit($id)
     {
         $now = Carbon::now();
@@ -197,6 +202,35 @@ class VehicleBookingController extends Controller
                 data-id="' . $row->id . '"
                 data-bs-toggle="modal"
                 data-bs-target="#cancelConfirmModal">Cancel</a>';
+                    return $btn;
+                })
+                ->rawColumns(['name', 'action'])
+                ->make(true);
+        }
+    }
+
+    public function getHistoryData(Request $request)
+    {
+        if ($request->ajax()) {
+            $now = Carbon::now(); // Get current date & time
+            // Filter bookings where end_at is today or in the future
+            $data = VehicleBooking::where('created_by',auth()->user()->id)
+            ->where('end_at', '<', $now)
+            ->orderBy('start_at','desc')
+            ->select('*');
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('name', function ($row) {
+                    return $row->vehicle->name;
+                })
+                ->addColumn('action', function ($row) {
+                    $btn = '<button class="edit btn btn-info btn-sm view-booking"
+            id="vehiclebookingid"
+            data-id="'.$row->id.'"
+            data-bs-toggle="modal"
+            data-bs-target="#bookingModal">Detail</button>';
+
                     return $btn;
                 })
                 ->rawColumns(['name', 'action'])
