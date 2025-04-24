@@ -319,14 +319,14 @@ class ChatGroupController extends Controller
             ->where('user_id', $currentUser)
             ->value('is_creator');
 
-        if (!$isCreator) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if ($isCreator==1) {
+            return response()->json(['message' => 'Forbidden '], 403);
         }
 
         // Prevent creator from removing themselves
-        if ($userId == $currentUser) {
-            return response()->json(['message' => 'Cannot remove yourself'], 400);
-        }
+        //if ($userId == $currentUser) {
+            //return response()->json(['message' => 'Cannot remove yourself'], 400);
+        //}
 
         DB::table('chat_group_members')
             ->where('chat_group_id', $groupId)
