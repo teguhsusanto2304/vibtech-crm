@@ -732,8 +732,8 @@
 
                                                 removeBtn.addEventListener("click", () => {
                                                     if (!confirm(`Remove ${member.name} from group?`)) return;
-                                                    fetch(`/chat-groups/${groupId}/invited-users`, {
-                                                    method: "POST",
+                                                    fetch(`/chat-groups/${member.chat_group_id}/members/${member.user_id}`, {
+                                                    method: "DELETE",
                                                     headers: {
                                                         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
                                                         "Accept": "application/json"
@@ -749,11 +749,9 @@
                                                 }
                                             );
                                             // 1) if *you* (current user) are the creator
-                                            if (creator === member.user_id) {
-                                                //li.appendChild(removeBtn);
-                                                // show for everyone except yourself
-                                                if (creator === parseInt(userLoggin, 10)) {
-                                                    //li.appendChild(removeBtn);
+                                            if (creator === parseInt(userLoggin, 10)) {
+                                                if(member.is_creator===0){
+                                                    li.appendChild(removeBtn);
                                                 }
 
                                             // 2) if you are *not* the creator
@@ -761,8 +759,8 @@
                                                 if(member.user_id === parseInt(userLoggin, 10)){
                                                     li.appendChild(removeBtn);
                                                 } else {
-                                                    if(creator === member.user_id){
-                                                        li.appendChild(removeBtn);
+                                                    if(creator !== member.user_id){
+                                                        //li.appendChild(removeBtn);
                                                     }
                                                 }
                                             }
@@ -770,7 +768,9 @@
 
                                             });
 
+
                                             if (creator === parseInt(userLoggin, 10)) {
+
                                                 const li = document.createElement("li");
                                                 const inviteButton = document.createElement("button");
                                                 inviteButton.classList.add("btn", "btn-secondary", "invite-user-btn");

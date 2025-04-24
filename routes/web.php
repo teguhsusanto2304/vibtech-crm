@@ -343,6 +343,7 @@ Route::put('/chat-groups/{id}/update', [ChatGroupController::class, 'update'])->
 
 Route::get('/chat-groups/{group}', [MessageController::class, 'index'])->name('chat-group.messages');
 Route::get('/chat-groups/{groupId}/members', [ChatGroupController::class, 'getMembers'])->name('chat-group.members');
+Route::delete('/chat-groups/{groupId}/members/{userId}',    [ChatGroupController::class, 'removeMember'])->name('chat-groups.members.remove');
 Route::get('/chat-groups/{id}/messages', [ChatGroupController::class, 'getMessages']);
 Route::post('/chat-groups/send-message', [ChatGroupController::class, 'sendMessage'])->name('chat-group.send-message');
 Route::post('/chat-groups/{group}/messages', [MessageController::class, 'store']);

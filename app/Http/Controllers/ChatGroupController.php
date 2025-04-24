@@ -152,7 +152,7 @@ class ChatGroupController extends Controller
             ]);
             $member = User::find($userId);
             $member->notify(new UserNotification(
-                auth()->user()->name . ' <strong>Invited</strong> you at Chat Group' . $group->name,
+                auth()->user()->name . ' <strong>Invited</strong> you at Chat Group ' . $group->name,
                 'success',
                 route('chat-groups')
             ));
@@ -175,6 +175,7 @@ class ChatGroupController extends Controller
             ->join('chat_groups', 'chat_group_members.chat_group_id', '=', 'chat_groups.id')
             ->select(
                 'users.name as name',
+                'chat_group_members.chat_group_id',
                 'chat_group_members.user_id',
                 'chat_group_members.is_creator as is_creator'
             )
@@ -306,6 +307,41 @@ class ChatGroupController extends Controller
         }
 
         return response()->json($counts);
+    }
+
+    public function removeMember($groupId, $userId)
+    {
+        $currentUser = auth()->id();
+
+        // Ensure only the creator can remove others
+        $isCreator = DB::table('chat_group_members')
+            ->where('chat_group_id', $groupId)
+            ->where('user_id', $currentUser)
+            ->value('is_creator');
+
+        if (!$isCreator) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Prevent creator from removing themselves
+        if ($userId == $currentUser) {
+            return response()->json(['message' => 'Cannot remove yourself'], 400);
+        }
+
+        DB::table('chat_group_members')
+            ->where('chat_group_id', $groupId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        $member = User::find($userId);
+        $group = ChatGroup::find($groupId);
+        $member->notify(new UserNotification(
+                auth()->user()->name . ' has <strong>Removed</strong> you from Chat Group ' . $group->name,
+                'danger',
+                route('chat-groups')
+            ));
+
+        return response()->json(['message' => 'Member removed']);
     }
 
 
