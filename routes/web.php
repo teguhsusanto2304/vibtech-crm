@@ -178,6 +178,11 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/destroy', 'destroy')->name('v1.getting-started.destroy');
         });
 
+        Route::prefix('employee-handbooks')->controller(PostController::class)->group(function () {
+            Route::get('/list', 'handbook')->name('v1.employee-handbooks.list');
+        });
+
+
 
     });
 

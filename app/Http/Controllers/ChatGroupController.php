@@ -248,6 +248,8 @@ class ChatGroupController extends Controller
         $group = ChatGroup::findOrFail($id);
         if($type=='archive'){
             $group->update(['data_status' => 0]);
+        } else if($type=='restore'){
+            $group->update(['data_status' => 1]);
         } else {
             $group->update(['data_status' => 3]);
         }

@@ -171,7 +171,7 @@
                     </a>
                 </li>
                 <li class="no-bullet">
-                    <a href="{{ route('employee-handbook')}}" class="menu-link">
+                    <a href="{{ route('v1.employee-handbooks.list')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Employee Handbook</div>
                     </a>
                 </li>

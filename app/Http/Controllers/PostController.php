@@ -16,12 +16,22 @@ class PostController extends Controller
         $this->middleware('permission:create-getting-started', ['only' => ['create','store']]);
         $this->middleware('permission:edit-getting-started', ['only' => ['edit','update']]);
         $this->middleware('permission:delete-getting-started', ['only' => ['destroy']]);
+        $this->middleware('permission:view-handbook', ['only' => ['handbook']]);
     }
     public function index()
     {
         $posts = Post::latest()->paginate(20);
         return view('post.list',compact('posts'))->with('title', 'Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
+
+    public function handbook()
+    {
+        $posts = Post::where('post_type', 1)
+        ->whereNot('data_status', 3)->latest()->paginate(20);
+        return view('handbook.list',compact('posts'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
+    }
+
+
 
     public function create()
     {

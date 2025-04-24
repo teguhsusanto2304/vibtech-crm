@@ -31,7 +31,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Create</h5>
-                                <p class="card-text">Create a New {{ $title }}</p>
+                                <p class="card-text">Create a New Job Requisition</p>
                                 @can('create-job-requisition')
                                     <a href="{{ route('v1.job-assignment-form.create') }}" class="btn btn_primary mt-auto">
                                         Create New</a>
