@@ -741,6 +741,7 @@
                                                     }).then(res => {
                                                     if (res.ok) {
                                                         li.remove();
+                                                        window.location.reload();
                                                     } else {
                                                         alert("Failed to remove user.");
                                                     }
