@@ -9,4 +9,9 @@ class Post extends Model
 {
     use HasFactory;
     protected $fillable = ['title','content','path_file','description','post_type','data_status','created_by'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

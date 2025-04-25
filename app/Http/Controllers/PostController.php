@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use Yajra\DataTables\DataTables;
-use Str;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -16,7 +16,7 @@ class PostController extends Controller
         $this->middleware('permission:create-getting-started', ['only' => ['create','store']]);
         $this->middleware('permission:edit-getting-started', ['only' => ['edit','update']]);
         $this->middleware('permission:delete-getting-started', ['only' => ['destroy']]);
-        $this->middleware('permission:view-handbook', ['only' => ['handbook']]);
+        $this->middleware('permission:view-employee-handbook', ['only' => ['handbook']]);
     }
     public function index()
     {
@@ -26,8 +26,14 @@ class PostController extends Controller
 
     public function handbook()
     {
-        $posts = Post::where('post_type', 1)
-        ->whereNot('data_status', 3)->latest()->paginate(20);
+        if(auth()->user()->can('create-employee-handbook')){
+            $posts = Post::where('post_type', 1)
+            ->whereNot('data_status', 3)->latest()->paginate(20);
+        } else {
+            $posts = Post::where('post_type', 1)
+            ->where('data_status', 1)->latest()->paginate(20);
+        }
+
         return view('handbook.list',compact('posts'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
@@ -36,6 +42,11 @@ class PostController extends Controller
     public function create()
     {
         return view('post.form')->with('title', 'Create a New Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Creat a Getting Started']);
+    }
+
+    public function create_handbook()
+    {
+        return view('handbook.form')->with('title', 'Create a New Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Create a New Employee Handbook']);
     }
 
     public function store(Request $request)
@@ -56,10 +67,42 @@ class PostController extends Controller
         return redirect()->route('v1.getting-started.index')->with('success', 'Post created successfully.');
     }
 
+    public function store_handbook(Request $request)
+    {
+        $data = $request->validate([
+          'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+          'pdf'   => 'nullable|file|mimes:pdf|max:5120', // max 5MB
+        ]);
+        $data['content'] = $request->input('title');
+          $data['post_type'] = 1;
+          $data['data_status'] = 1;
+          $data['created_by'] = auth()->user()->id;
+
+        if ($request->hasFile('path_file')) {
+          $file = $request->file('path_file');
+          $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+          //$path = $file->storeAs('public/pdfs', $filename);
+          $file->move(public_path('pdfs'), $filename);
+          $data['path_file'] = 'pdfs/' . $filename;
+        }
+
+        Post::create($data);
+
+        return redirect()->route('v1.employee-handbooks.list')
+                         ->with('success','Employee handbook has created!');
+    }
+
     public function edit(string $id)
     {
         $post = Post::findOrFail($id);
         return view('post.edit',compact('post'))->with('title', 'Edit Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Edit a Getting Started']);
+    }
+
+    public function edit_handbook($id)
+    {
+        $handbook = Post::findOrFail($id);
+        return view('handbook.edit',compact('handbook'))->with('title', 'Edit Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbooks', 'Edit a Employee Handbook']);
     }
 
     public function update(Request $request, $id)
@@ -76,6 +119,27 @@ class PostController extends Controller
         return redirect()->route('v1.getting-started')->with('success', 'Post updated successfully.');
     }
 
+    public function update_handbook(Request $request,$id)
+    {
+        $post = Post::findOrFail($id);
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+              'description' => 'nullable|string|max:500',
+            'pdf'   => 'nullable|file|mimes:pdf|max:5120', // max 5MB
+          ]);
+
+          if ($request->hasFile('path_file')) {
+            $file = $request->file('path_file');
+            $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+            //$path = $file->storeAs('public/pdfs', $filename);
+            $file->move(public_path('pdfs'), $filename);
+            $data['path_file'] = 'pdfs/' . $filename;
+            //$request->merge($data);
+          }
+          $post->update($data);
+        return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
+    }
+
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
@@ -83,6 +147,15 @@ class PostController extends Controller
         $post->save();
 
         return redirect()->route('v1.getting-started')->with('success', 'Post updated successfully.');
+    }
+
+    public function destroy_handbook($id,$status)
+    {
+        $post = Post::findOrFail($id);
+        $post->data_status = $status;
+        $post->save();
+
+        return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
     }
 
     public function read($id)

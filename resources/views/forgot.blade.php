@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Vibtech Genesis</title>
+    <title>Reset Password - Vibtech Genesis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -64,18 +64,22 @@
                 <img src="{{ asset('assets/img/logo.png') }}" alt="Vibtech Genesis" width="150">
                 <p><em>No Problem! Only Solutions</em></p>
 
-                <form method="POST" action="{{ route('v1.login') }}">
+                <form method="POST" action="{{ route('v1.password.reset-link') }}">
                     @csrf
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible" role="alert">
                             {{ $errors->first() }}
                         </div>
                     @endif
-                    <input type="text" name="email" placeholder="Staff ID">
-                    <input type="password" name="password" placeholder="Password">
-                    <button type="submit">Login</button>
+                    @if (session('status'))
+                        <div class="alert alert-danger alert-dismissible" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+                    <input type="text" name="email" placeholder="your email">
+                    <button type="submit">Email Password Reset Link</button>
                 </form>
-                <p class="mt-3"><a href="{{ route('v1.password.forgot') }}" class="text-white">Reset Password</a></p>
+                <p class="mt-3"><a href="{{ route('v1.login') }}" class="text-white">Back to Login</a></p>
                 <p class="mt-5">www.vibtech-genesis.com</p>
             </div>
 

@@ -28,10 +28,28 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\ChatGroupController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
 Route::get('/', function () {
     return view('login');
 });
+
+// Route to show the form where the user enters their email to request a reset link
+Route::get('/password/reset', [PasswordResetLinkController::class, 'create'])
+    ->name('password.request');
+
+// Route to handle sending the reset link via email
+Route::post('/password/email', [PasswordResetLinkController::class, 'store'])
+    ->name('password.email');
+
+// Route to show the form where the user enters their new password (the token is in the URL)
+Route::get('/password/reset/{token}', [NewPasswordController::class, 'create'])
+    ->name('password.reset');
+
+// Route to handle the actual password reset process
+Route::post('/password/reset', [NewPasswordController::class, 'store'])
+    ->name('password.store');
 
 Route::get('/login', function () {
     return view('login');
@@ -39,6 +57,13 @@ Route::get('/login', function () {
 
 Route::get('/v1/login', [LoginController::class, 'showLoginForm'])->name('v1.login');
 Route::post('/v1/login', [LoginController::class, 'login'])->name('v1.login');
+
+Route::get('/v1/password/forgot', [LoginController::class, 'forgot'])->name('v1.password.forgot');
+Route::post('/v1/password/reset-link', [LoginController::class, 'resetLink'])->name('v1.password.reset-link');
+Route::get('/v1/password/reset/{token}', [LoginController::class, 'createNewPassword'])
+    ->name('v1.password.reset');
+Route::post('/v1/password/update-reset', [LoginController::class, 'saveNewPassword'])
+    ->name('v1.password.update-reset');
 
 Route::get('/clear-cache', function () {
     Artisan::call('config:clear');
@@ -180,6 +205,11 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('employee-handbooks')->controller(PostController::class)->group(function () {
             Route::get('/list', 'handbook')->name('v1.employee-handbooks.list');
+            Route::get('/create', 'create_handbook')->name('v1.employee-handbooks.create');
+            Route::post('/store', 'store_handbook')->name('v1.employee-handbooks.store');
+            Route::get('/{id}/edit','edit_handbook')->name('v1.employee-handbooks.edit');
+            Route::put('/{id}/update','update_handbook')->name('v1.employee-handbooks.update');
+            Route::put('/{id}/{status}/destroy','destroy_handbook')->name('v1.employee-handbooks.destroy');
         });
 
 
