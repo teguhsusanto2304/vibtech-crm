@@ -181,7 +181,9 @@
                                                                     <th>No</th>
                                                                     <th>Name</th>
                                                                     <th>Position</th>
-                                                                    <th>Invite</th>
+                                                                    <th style="align-content: center">Invite
+                                                                        <input type="checkbox" class ="form-check-input" id="selectAllCheckbox{{ $group->id }}" style="margin-left: 8px;">
+                                                                    </th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody id="staffTableBody{{ $group->id }}">
@@ -196,6 +198,17 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <script>
+                                        document.addEventListener('DOMContentLoaded', function () {
+                                            const groupId = {{ $group->id }};
+                                            const selectAllCheckbox = document.getElementById(`selectAllCheckbox${groupId}`);
+
+                                            selectAllCheckbox.addEventListener('change', function () {
+                                                const checkboxes = document.querySelectorAll(`#staffTableBody${groupId} input[type="checkbox"]`);
+                                                checkboxes.forEach(cb => cb.checked = this.checked);
+                                            });
+                                        });
+                                    </script>
                                     <div class="card h-100 mb-5 group-card" data-group-id="{{ $group->id }}"
                                         data-group-name="{{ $group->name }}">
                                         <div class="card-body d-flex flex-column user">
@@ -677,6 +690,10 @@
 
                     document.addEventListener("DOMContentLoaded", function () {
                         const groupCards = document.querySelectorAll(".group-card");
+                        const leftIcon = '<svg width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+                            '<path d="M14 7.63636L14 4.5C14 4.22386 13.7761 4 13.5 4L4.5 4C4.22386 4 4 4.22386 4 4.5L4 19.5C4 19.7761 4.22386 20 4.5 20L13.5 20C13.7761 20 14 19.7761 14 19.5L14 16.3636" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+                            '<path d="M10 12L21 12M21 12L18.0004 8.5M21 12L18 15.5" stroke="red" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+                            '</svg>';
 
                         groupCards.forEach(card => {
                             card.addEventListener("click", function () {
@@ -696,6 +713,7 @@
 
                                 loadGroupMessages(groupId);
                                 let userLoggin = "{{ auth()->user()->id }}";
+
                                 $('#group-id').val(groupId);
                                 fetch(`/chat-groups/${groupId}/members`)
                                     .then(response => response.json())
@@ -725,13 +743,13 @@
                                                 li.appendChild(nameSpan);
                                                 membersList.appendChild(li);
                                                 const removeBtn = document.createElement("button");
-                                                removeBtn.classList.add("btn","btn-sm","btn-danger");
-                                                removeBtn.innerHTML = "&times;";
+                                                removeBtn.classList.add("btn","btn-sm");
+                                                removeBtn.innerHTML = leftIcon;
                                                 removeBtn.title = "Remove user";
                                                 removeBtn.setAttribute("data-user-id", member.user_id);
 
                                                 removeBtn.addEventListener("click", () => {
-                                                    if (!confirm(`Remove ${member.name} from group?`)) return;
+                                                    if (!confirm(`${member.name}, are you sure want remove by your self from this group?`)) return;
                                                     fetch(`/chat-groups/${member.chat_group_id}/members/${member.user_id}`, {
                                                     method: "DELETE",
                                                     headers: {
@@ -752,7 +770,7 @@
                                             // 1) if *you* (current user) are the creator
                                             if (creator === parseInt(userLoggin, 10)) {
                                                 if(member.is_creator===0){
-                                                    li.appendChild(removeBtn);
+                                                    //li.appendChild(removeBtn);
                                                 }
 
                                             // 2) if you are *not* the creator

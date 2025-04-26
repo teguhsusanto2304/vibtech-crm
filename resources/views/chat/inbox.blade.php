@@ -185,8 +185,19 @@
                     </div>
                 </div>
                 </div>
+                    @php
+                    $users = \App\Models\User::all();  // Or use a more specific query, like ->select('username', 'avatar')
 
+                    // Format the users as needed (optional)
+                    $formattedUsers = $users->map(function($user) {
+                        return [
+                            'username' => $user->name,
+                            'avatar' => $user->path_image ? asset($user->path_image) : null,  // Assuming avatar is stored as a filename
+                        ];
+                    });
+                    @endphp
                     <script>
+                        const usersAvatar = @json($formattedUsers);
                         const knownSenders = new Set();
                         document.addEventListener("DOMContentLoaded", function () {
                             const messageInput = document.getElementById("message");
@@ -281,11 +292,30 @@
                                     const li = document.createElement("li");
                                     li.classList.add("user");
                                     li.style.display = "flex";
-                                    li.style.justifyContent = "space-between";
+                                    //li.style.justifyContent = "space-between";
                                     li.style.alignItems = "center";
                                     li.style.marginBottom = "8px";
 
-                                    // Username span
+                                    // Create a container for avatar and username
+                                    const userInfo = document.createElement("div");
+                                    userInfo.style.display = "flex";
+                                    userInfo.style.alignItems = "center";
+                                    userInfo.style.gap = "10px"; // spacing between avatar and name
+
+                                    userAvatar = usersAvatar.find(u => u.username.trim() === user.username.trim());
+                                    userAvatar = userAvatar ? userAvatar : '';
+
+                                    // Avatar
+                                    const avatar = document.createElement("img");
+                                    avatar.src = userAvatar.avatar || '{{ asset('assets/img/photos/default.png') }}'; // fallback
+                                    avatar.alt = `${user.username}'s avatar`;
+                                    avatar.style.width = "40px";
+                                    avatar.style.height = "40px";
+                                    avatar.style.borderRadius = "50%";
+                                    avatar.style.objectFit = "cover";
+                                    avatar.style.marginRight = "10px";
+
+                                    // Username
                                     const nameSpan = document.createElement("span");
                                     nameSpan.textContent = user.username;
 
@@ -301,6 +331,7 @@
                                     badge.style.marginLeft = "10px";
                                     badge.style.display = user.unread > 0 ? "inline-block" : "none";
 
+                                    li.appendChild(avatar);
                                     li.appendChild(nameSpan);
                                     li.appendChild(badge);
 
@@ -333,11 +364,30 @@
                                     const li = document.createElement("li");
                                     li.classList.add("user");
                                     li.style.display = "flex";
-                                    li.style.justifyContent = "space-between";
+                                    //li.style.justifyContent = "space-between";
                                     li.style.alignItems = "center";
                                     li.style.marginBottom = "8px";
 
-                                    // Username span
+                                    // Create a container for avatar and username
+                                    const userInfo = document.createElement("div");
+                                    userInfo.style.display = "flex";
+                                    userInfo.style.alignItems = "center";
+                                    userInfo.style.gap = "10px"; // spacing between avatar and name
+
+                                    userAvatar = usersAvatar.find(u => u.username.trim() === user.username.trim());
+                                    userAvatar = userAvatar ? userAvatar : '';
+
+                                    // Avatar
+                                    const avatar = document.createElement("img");
+                                    avatar.src = userAvatar.avatar || '{{ asset('assets/img/photos/default.png') }}'; // fallback
+                                    avatar.alt = `${user.username}'s avatar`;
+                                    avatar.style.width = "40px";
+                                    avatar.style.height = "40px";
+                                    avatar.style.borderRadius = "50%";
+                                    avatar.style.objectFit = "cover";
+                                    avatar.style.marginRight = "10px";
+
+                                    // Username
                                     const nameSpan = document.createElement("span");
                                     nameSpan.textContent = user.username;
 
@@ -353,6 +403,7 @@
                                     badge.style.marginLeft = "10px";
                                     badge.style.display = user.unread > 0 ? "inline-block" : "none";
 
+                                    li.appendChild(avatar);
                                     li.appendChild(nameSpan);
                                     li.appendChild(badge);
 
