@@ -203,6 +203,17 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/destroy', 'destroy')->name('v1.getting-started.destroy');
         });
 
+        // 🔹 Post Management Routes
+        Route::prefix('management-memo')->controller(PostController::class)->group(function () {
+            Route::get('/list', 'memo')->name('v1.management-memo.list');
+            Route::get('/{id}/read', 'read_memo')->name('v1.management-memo.read');
+            Route::get('/create', 'create_memo')->name('v1.management-memo.create');
+            Route::post('/store', 'store_memo')->name('v1.management-memo.store');
+            Route::get('/{id}/edit', 'edit_memo')->name('v1.management-memo.edit');
+            Route::put('/{id}/update', 'update_memo')->name('v1.management-memo.update');
+            Route::put('/{id}/{status}/destroy','destroy_memo')->name('v1.management-memo.destroy');
+        });
+
         Route::prefix('employee-handbooks')->controller(PostController::class)->group(function () {
             Route::get('/list', 'handbook')->name('v1.employee-handbooks.list');
             Route::get('/create', 'create_handbook')->name('v1.employee-handbooks.create');

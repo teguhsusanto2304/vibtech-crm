@@ -37,6 +37,19 @@ class PostController extends Controller
         return view('handbook.list',compact('posts'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
+    public function memo()
+    {
+        if(auth()->user()->can('create-management-memo')){
+            $posts = Post::where('post_type', 2)
+            ->whereNot('data_status', 3)->latest()->paginate(20);
+        } else {
+            $posts = Post::where('post_type', 2)
+            ->where('data_status', 1)->latest()->paginate(20);
+        }
+
+        return view('memo.list',compact('posts'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
+    }
+
 
 
     public function create()
@@ -47,6 +60,11 @@ class PostController extends Controller
     public function create_handbook()
     {
         return view('handbook.form')->with('title', 'Create a New Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Create a New Employee Handbook']);
+    }
+
+    public function create_memo()
+    {
+        return view('memo.form')->with('title', 'Create a New Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo', 'Create a New Management Memo']);
     }
 
     public function store(Request $request)
@@ -93,6 +111,25 @@ class PostController extends Controller
                          ->with('success','Employee handbook has created!');
     }
 
+    public function store_memo(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'content' => 'required|string',
+        ]);
+
+        Post::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'content' => $request->content,
+            'post_type'=>2,
+            'created_by' => auth()->user()->id
+        ]);
+
+        return redirect()->route('v1.management-memo.index')->with('success', 'Management Memo created successfully.');
+    }
+
     public function edit(string $id)
     {
         $post = Post::findOrFail($id);
@@ -103,6 +140,12 @@ class PostController extends Controller
     {
         $handbook = Post::findOrFail($id);
         return view('handbook.edit',compact('handbook'))->with('title', 'Edit Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbooks', 'Edit a Employee Handbook']);
+    }
+
+    public function edit_memo(string $id)
+    {
+        $post = Post::findOrFail($id);
+        return view('memo.edit',compact('post'))->with('title', 'Edit Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo', 'Edit a Management Memo']);
     }
 
     public function update(Request $request, $id)
@@ -140,6 +183,20 @@ class PostController extends Controller
         return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
     }
 
+    public function update_memo(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+        $request->validate([
+            'title' => 'required|string|max:150',
+            'description' => 'nullable|string|max:150',
+            'content' => 'required|string',
+        ]);
+
+        $post->update($request->all());
+
+        return redirect()->route('v1.management-memo.list')->with('success', 'Management memo updated successfully.');
+    }
+
     public function destroy($id)
     {
         $post = Post::findOrFail($id);
@@ -158,11 +215,22 @@ class PostController extends Controller
         return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
     }
 
+    public function destroy_memo($id,$status)
+    {
+        $post = Post::findOrFail($id);
+        $post->data_status = $status;
+        $post->save();
+
+        return redirect()->route('v1.management-memo.list')->with('success', 'Management memo updated successfully.');
+    }
+
     public function read($id)
     {
         $post = Post::findOrFail($id);
         return view('post.show',compact('post'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
     }
+
+
 
     public function getPosts(Request $request)
     {

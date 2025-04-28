@@ -166,7 +166,7 @@
             </a>
             <ul class="menu-sub">
                 <li class="no-bullet">
-                    <a href="{{ route('management-memo')}}" class="menu-link">
+                    <a href="{{ route('v1.management-memo.list')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Management Memo</div>
                     </a>
                 </li>
