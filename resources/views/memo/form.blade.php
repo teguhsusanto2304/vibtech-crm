@@ -63,7 +63,7 @@
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Submit</button>
-                            <a href="{{ route('v1.management-memo')}}" class="btn btn-warning">Cancel</a>
+                            <a href="{{ route('v1.management-memo.list')}}" class="btn btn-warning">Cancel</a>
                         </div>
                     </form>
                     <!-- TinyMCE CDN -->
