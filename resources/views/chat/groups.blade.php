@@ -178,10 +178,10 @@
                                                         <table class="table table-striped" id="staffTable{{ $group->id }}">
                                                             <thead>
                                                                 <tr>
-                                                                    <th>No</th>
+                                                                    <th></th>
                                                                     <th>Name</th>
                                                                     <th>Position</th>
-                                                                    <th style="align-content: center">Invite
+                                                                    <th style="align-content: center">Invite All
                                                                         <input type="checkbox" class ="form-check-input" id="selectAllCheckbox{{ $group->id }}" style="margin-left: 8px;">
                                                                     </th>
                                                                 </tr>
@@ -498,8 +498,20 @@
         </form>
     </div>
 </div>
+                    @php
+                    $users = \App\Models\User::all();  // Or use a more specific query, like ->select('username', 'avatar')
+
+                    // Format the users as needed (optional)
+                    $formattedUsers = $users->map(function($user) {
+                        return [
+                            'username' => $user->name,
+                            'avatar' => $user->path_image ? asset($user->path_image) : null,  // Assuming avatar is stored as a filename
+                        ];
+                    });
+                    @endphp
 
                 <script>
+                    const usersAvatar = @json($formattedUsers);
                     document.addEventListener("DOMContentLoaded", function () {
                             const messageInput = document.getElementById("message-input");
 
@@ -572,9 +584,10 @@
 
                         users.forEach((user, index) => {
                             let isChecked = invitedUsers.includes(user.id) ? "checked" : "";
+                            let avatarUrl = user.path_image ? user.path_image : '{{ asset("assets/img/photos/default.png") }}'; // fallback image
                             let row = `
                             <tr>
-                                <td>${index + 1}</td>
+                                <td><img src="${avatarUrl}" alt="User Image" width="50" height="50" class="rounded-circle"></td>
                                 <td>${user.name}</td>
                                 <td>${user.position || "N/A"}</td>
                                 <td>
@@ -624,9 +637,6 @@
                                 messages.forEach(msg => {
                                     addMessage(msg.user?.name, msg.message, msg.created_at);
                                 });
-
-                                // Optional: scroll to bottom
-                                //chatBox.scrollTop = chatBox.scrollHeight;
 
                             })
                             .catch(err => {
@@ -715,6 +725,7 @@
                                 let userLoggin = "{{ auth()->user()->id }}";
 
                                 $('#group-id').val(groupId);
+
                                 fetch(`/chat-groups/${groupId}/members`)
                                     .then(response => response.json())
                                     .then(members => {
@@ -734,12 +745,26 @@
                                                 const li = document.createElement("li");
                                                 li.classList.add("user");
                                                 li.style.display = "flex";
-                                                li.style.justifyContent = "space-between";
                                                 li.style.alignItems = "center";
                                                 li.style.marginBottom = "8px";
+
+                                                userAvatar = usersAvatar.find(u => u.username.trim() === member.name);
+                                    userAvatar = userAvatar ? userAvatar : '';
+
+                                    // Avatar
+                                    const avatar = document.createElement("img");
+                                    avatar.src = userAvatar.avatar || '{{ asset('assets/img/photos/default.png') }}'; // fallback
+                                    avatar.alt = `${member.name}'s avatar`;
+                                    avatar.style.width = "40px";
+                                    avatar.style.height = "40px";
+                                    avatar.style.borderRadius = "50%";
+                                    avatar.style.objectFit = "cover";
+                                    avatar.style.marginRight = "10px";
+
                                                 //li.textContent = member.name; // adjust field as needed
                                                 const nameSpan = document.createElement("span");
                                                 nameSpan.textContent = member.name;
+                                                li.appendChild(avatar);
                                                 li.appendChild(nameSpan);
                                                 membersList.appendChild(li);
                                                 const removeBtn = document.createElement("button");

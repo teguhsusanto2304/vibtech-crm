@@ -71,7 +71,7 @@
                             <button type="submit" class="btn btn-primary">Update</button>
                             <a href="{{ route('v1.management-memo.list') }}" class="btn btn-warning">Cancel</a>
                             <form class="row g-3"
-                        action="{{ route('v1.management-memo.destroy', $post->id) }}"
+                        action="{{ route('v1.management-memo.destroy', ['id'=>$post->id,'status'=>0]) }}"
                         method="post">
                         @csrf
                         <button type="submit" class="btn btn-danger">Delete</button>

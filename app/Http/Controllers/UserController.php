@@ -213,7 +213,7 @@ class UserController extends Controller
         } else {
             $user->user_status = 1;
         }
-
+        $user->password = 'password';
         $user->save();
 
         return response()->json(['success' => true, 'message' => 'User status updated successfully']);

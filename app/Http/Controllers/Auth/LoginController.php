@@ -95,8 +95,13 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            // Custom logic after successful login
-            return redirect()->intended('/v1/dashboard')->with('success', 'Welcome back!');
+            if (Auth::user()->user_status ==1){
+                // Custom logic after successful login
+                return redirect()->intended('/v1/dashboard')->with('success', 'Welcome back!');
+            } else {
+                return back()->withErrors(['email' => 'Your account deactivated'])->withInput();
+            }
+
         }
 
         return back()->withErrors(['email' => 'Invalid credentials'])->withInput();

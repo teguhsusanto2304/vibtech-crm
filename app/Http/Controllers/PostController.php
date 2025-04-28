@@ -41,10 +41,10 @@ class PostController extends Controller
     {
         if(auth()->user()->can('create-management-memo')){
             $posts = Post::where('post_type', 2)
-            ->whereNot('data_status', 3)->latest()->paginate(20);
+            ->whereNot('data_status', 3)->get();
         } else {
             $posts = Post::where('post_type', 2)
-            ->where('data_status', 1)->latest()->paginate(20);
+            ->where('data_status', 1)->get();
         }
 
         return view('memo.list',compact('posts'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
@@ -127,7 +127,7 @@ class PostController extends Controller
             'created_by' => auth()->user()->id
         ]);
 
-        return redirect()->route('v1.management-memo.index')->with('success', 'Management Memo created successfully.');
+        return redirect()->route('v1.management-memo.list')->with('success', 'Management Memo created successfully.');
     }
 
     public function edit(string $id)
