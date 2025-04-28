@@ -49,7 +49,23 @@
                 @forelse($posts as $post)
                     @if((auth()->user()->can('view-employee-handbook') && $post->data_status==0) || $post->data_status==1 )
                     <div class="col-md-4 mb-4">
-                        <div class="card h-100 d-flex flex-column align-items-center text-center">
+                        <div class="card h-100 d-flex flex-column align-items-center text-center" style="position: relative;">
+                            @can('create-employee-handbook')
+                            <div style="
+                                position: absolute;
+                                top: 10px;
+                                left: -10px;
+                                background: {{ $post->data_status == 1 ? '#28a745' : '#ffc107' }}; /* Green for published, yellow for draft */
+                                color: white;
+                                padding: 2px 10px;
+                                transform: rotate(-0deg);
+                                font-weight: bold;
+                                font-size: 11px;
+                                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            ">
+                                {{ $post->data_status == 1 ? 'Active' : 'Archive' }}
+                            </div>
+                        @endcan
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">{{ $post->title }}</h5>
                                 <p class="card-text">{{ Str::limit($post->description, 100) }}</p>
