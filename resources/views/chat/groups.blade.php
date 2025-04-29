@@ -697,6 +697,7 @@
                         // Scroll to latest message
                         chatBox.scrollTop = chatBox.scrollHeight;
                     }
+                    let refreshInterval;
 
                     document.addEventListener("DOMContentLoaded", function () {
                         const groupCards = document.querySelectorAll(".group-card");
@@ -721,39 +722,56 @@
                                     sendButton.disabled = false;
                                 }
 
-                                loadGroupMessages(groupId);
+                                //loadGroupMessages(groupId);
                                 let userLoggin = "{{ auth()->user()->id }}";
 
                                 $('#group-id').val(groupId);
+                                onloadGroupMessages(groupId,this.dataset.groupName,leftIcon,userLoggin);
+                                if (refreshInterval) {
+                                    clearInterval(refreshInterval);
+                                }
 
-                                fetch(`/chat-groups/${groupId}/members`)
-                                    .then(response => response.json())
-                                    .then(members => {
-                                        const membersList = document.getElementById("member-list");
-                                        membersList.innerHTML = ""; // clear previous members
+                                refreshInterval = setInterval(() => {
+                                    onloadGroupMessages(groupId,this.dataset.groupName,leftIcon,userLoggin);
+                                }, 10000);
 
-                                        if (members.length === 0) {
-                                            membersList.innerHTML = "<li>No members found.</li>";
-                                        } else {
-                                            let creator = "";
-                                            members.forEach(member => {
-                                                if (member.is_creator===1){
-                                                    creator = member.user_id;
-                                                }
-                                                const groupId = this.dataset.groupName;
-                                                document.getElementById("recipientLabel").textContent = this.dataset.groupName;
-                                                const li = document.createElement("li");
-                                                li.classList.add("user");
-                                                li.style.display = "flex";
-                                                li.style.alignItems = "center";
-                                                li.style.marginBottom = "8px";
+                            });
+                        });
+                    });
+                    function onloadGroupMessages(groupId, groupName,leftIcon,userLoggin)
+                    {
+                        loadGroupMessages(groupId);
+                        fetch(`/chat-groups/${groupId}/members`)
+                            .then(response => response.json())
+                            .then(members => {
+                                const membersList = document.getElementById("member-list");
+                                membersList.innerHTML = ""; // clear previous members
 
-                                                userAvatar = usersAvatar.find(u => u.username.trim() === member.name);
+                                // ✅ use the passed groupName instead of this.dataset
+                                document.getElementById("recipientLabel").textContent = groupName;
+
+                                if (members.length === 0) {
+                                    membersList.innerHTML = "<li>No members found.</li>";
+                                    return;
+                                }
+
+                                let creator = "";
+                                members.forEach(member => {
+                                    if (member.is_creator === 1) {
+                                        creator = member.user_id;
+                                    }
+
+                                    const li = document.createElement("li");
+                                    li.classList.add("user");
+                                    li.style.display = "flex";
+                                    li.style.alignItems = "center";
+                                    li.style.marginBottom = "8px";
+
+                                    let userAvatar = usersAvatar.find(u => u.username.trim() === member.name);
                                     userAvatar = userAvatar ? userAvatar : '';
 
-                                    // Avatar
                                     const avatar = document.createElement("img");
-                                    avatar.src = userAvatar.avatar || '{{ asset('assets/img/photos/default.png') }}'; // fallback
+                                    avatar.src = userAvatar.avatar || '{{ asset('assets/img/photos/default.png') }}';
                                     avatar.alt = `${member.name}'s avatar`;
                                     avatar.style.width = "40px";
                                     avatar.style.height = "40px";
@@ -761,80 +779,68 @@
                                     avatar.style.objectFit = "cover";
                                     avatar.style.marginRight = "10px";
 
-                                                //li.textContent = member.name; // adjust field as needed
-                                                const nameSpan = document.createElement("span");
-                                                nameSpan.textContent = member.name;
-                                                li.appendChild(avatar);
-                                                li.appendChild(nameSpan);
-                                                membersList.appendChild(li);
-                                                const removeBtn = document.createElement("button");
-                                                removeBtn.classList.add("btn","btn-sm");
-                                                removeBtn.innerHTML = leftIcon;
-                                                removeBtn.title = "Remove user";
-                                                removeBtn.setAttribute("data-user-id", member.user_id);
+                                    const nameSpan = document.createElement("span");
+                                    nameSpan.textContent = member.name;
+                                    li.appendChild(avatar);
+                                    li.appendChild(nameSpan);
 
-                                                removeBtn.addEventListener("click", () => {
-                                                    if (!confirm(`${member.name}, are you sure want remove by your self from this group?`)) return;
-                                                    fetch(`/chat-groups/${member.chat_group_id}/members/${member.user_id}`, {
-                                                    method: "DELETE",
-                                                    headers: {
-                                                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                                                        "Accept": "application/json"
-                                                    }
-                                                    }).then(res => {
-                                                    if (res.ok) {
-                                                        li.remove();
-                                                        window.location.reload();
-                                                    } else {
-                                                        alert("Failed to remove user.");
-                                                    }
-                                                    });
+                                    const removeBtn = document.createElement("button");
+                                    removeBtn.classList.add("btn", "btn-sm");
+                                    removeBtn.innerHTML = leftIcon;
+                                    removeBtn.title = "Remove user";
+                                    removeBtn.setAttribute("data-user-id", member.user_id);
 
-                                                }
-                                            );
-                                            // 1) if *you* (current user) are the creator
-                                            if (creator === parseInt(userLoggin, 10)) {
-                                                if(member.is_creator===0){
-                                                    //li.appendChild(removeBtn);
-                                                }
+                                    removeBtn.addEventListener("click", () => {
+                                        if (!confirm(`${member.name}, are you sure want to remove yourself from this group?`)) return;
 
-                                            // 2) if you are *not* the creator
+                                        fetch(`/chat-groups/${member.chat_group_id}/members/${member.user_id}`, {
+                                            method: "DELETE",
+                                            headers: {
+                                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                                                "Accept": "application/json"
+                                            }
+                                        }).then(res => {
+                                            if (res.ok) {
+                                                li.remove();
+                                                window.location.reload();
                                             } else {
-                                                if(member.user_id === parseInt(userLoggin, 10)){
-                                                    li.appendChild(removeBtn);
-                                                } else {
-                                                    if(creator !== member.user_id){
-                                                        //li.appendChild(removeBtn);
-                                                    }
-                                                }
+                                                alert("Failed to remove user.");
                                             }
-                                                membersList.appendChild(li);
-
-                                            });
-
-
-                                            if (creator === parseInt(userLoggin, 10)) {
-
-                                                const li = document.createElement("li");
-                                                const inviteButton = document.createElement("button");
-                                                inviteButton.classList.add("btn", "btn-secondary", "invite-user-btn");
-                                                inviteButton.setAttribute("data-toggle", "modal");
-                                                inviteButton.setAttribute("data-target", "#inviteUserModal" + groupId); // Assuming $group->id is available
-                                                inviteButton.setAttribute("data-group-id", groupId); // Assuming $group->id is available
-                                                inviteButton.textContent = "Invite User";
-
-                                                // Append the button to the li
-                                                li.appendChild(inviteButton);
-                                                membersList.appendChild(li);
-                                            }
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error("Failed to fetch members:", error);
+                                        });
                                     });
+
+                                    // Conditionally append remove button
+                                    if (creator === parseInt(userLoggin, 10)) {
+                                        if (member.is_creator === 0) {
+                                            // li.appendChild(removeBtn); // Uncomment if creator can remove anyone
+                                        }
+                                    } else {
+                                        if (member.user_id === parseInt(userLoggin, 10)) {
+                                            li.appendChild(removeBtn); // user can remove self
+                                        }
+                                    }
+
+                                    membersList.appendChild(li);
+                                });
+
+                                // If creator, show invite button
+                                if (creator === parseInt(userLoggin, 10)) {
+                                    const li = document.createElement("li");
+                                    const inviteButton = document.createElement("button");
+                                    inviteButton.classList.add("btn", "btn-secondary", "invite-user-btn");
+                                    inviteButton.setAttribute("data-toggle", "modal");
+                                    inviteButton.setAttribute("data-target", "#inviteUserModal" + groupId);
+                                    inviteButton.setAttribute("data-group-id", groupId);
+                                    inviteButton.textContent = "Invite User";
+                                    li.appendChild(inviteButton);
+                                    membersList.appendChild(li);
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Failed to fetch members:", error);
                             });
-                        });
-                    });
+                    }
+
                 </script>
 
 
