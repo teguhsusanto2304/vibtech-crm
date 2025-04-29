@@ -127,7 +127,6 @@ class UserController extends Controller
 
         $user->update($validatedData);
         $role = Role::find($request->input('role_id')); // Get role by ID
-        //dd($role->name);
 
         if ($role) {
             DB::table('model_has_roles')

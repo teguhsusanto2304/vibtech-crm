@@ -80,6 +80,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
     Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
 
+    Route::post('/logout', function (Request $request) {
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+
+    })->name('logout');
 
 
     Route::prefix('v1')->group(function () {
@@ -263,14 +271,7 @@ Route::post('/dologin', function (Request $request) {
     }
 })->name('dologin');
 
-Route::post('/logout', function (Request $request) {
-    $request->session()->invalidate();
 
-    $request->session()->regenerateToken();
-
-    return redirect()->route('login');
-
-})->name('logout');
 
 Route::get('/dashboard', function () {
     return view('dashboard', ['title' => 'Dashboard', 'breadcrumb' => ['Home', 'Dashboard']]);
