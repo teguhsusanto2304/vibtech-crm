@@ -126,7 +126,7 @@
             pageLength: 10, // show 10 rows per page
             lengthChange: true, // show "Show 10/25/50/All" dropdown
             ordering: true, // allow sorting
-            order: [[1, 'desc']],
+            order: [[1, 'asc']],
         });
     });
 </script>

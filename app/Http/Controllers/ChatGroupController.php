@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use App\Notifications\UserNotification;
+use Illuminate\Support\Facades\Auth;
 
 class ChatGroupController extends Controller
 {
@@ -150,13 +151,19 @@ class ChatGroupController extends Controller
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
-            $member = User::find($userId);
-            $member->notify(new UserNotification(
-                auth()->user()->name . ' <strong>Invited</strong> you at Chat Group ' . $group->name,
-                'success',
-                route('chat-groups')
-            ));
         }
+
+        $existsMebers = DB::table('chat_group_members')
+            ->where('chat_group_id',$groupId)
+            ->get();
+            foreach($existsMebers as $existsMeber){
+                $member = User::find($existsMeber->user_id);
+                $member->notify(new UserNotification(
+                    auth()->user()->name . ' has <strong>added</strong> new user to Chat Group ' . $group->name,
+                    'success',
+                    route('chat-groups')
+                ));
+            }
 
         return back()->with('success', 'Users updated successfully!');
     }
@@ -333,13 +340,27 @@ class ChatGroupController extends Controller
             ->where('user_id', $userId)
             ->delete();
 
-        $member = User::find($userId);
+        $creator = DB::table('chat_group_members')
+        ->where('chat_group_id', $groupId)
+        ->where('is_creator',1)
+        ->first();
         $group = ChatGroup::find($groupId);
-        $member->notify(new UserNotification(
+        if($currentUser == $userId){
+            $member = User::find($creator->user_id);
+            $member->notify(new UserNotification(
+                auth()->user()->name . ' has <strong>Left</strong> the group chat ' . $group->name,
+                'danger',
+                route('chat-groups')
+            ));
+        } else {
+            $member = User::find($userId);
+            $member->notify(new UserNotification(
                 auth()->user()->name . ' has <strong>Removed</strong> you from Chat Group ' . $group->name,
                 'danger',
                 route('chat-groups')
             ));
+        }
+
 
         return response()->json(['message' => 'Member removed']);
     }

@@ -87,6 +87,12 @@ class PostController extends Controller
         return view('handbook.form')->with('title', 'Create a New Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Create a New Employee Handbook']);
     }
 
+    public function read_handbook($id)
+    {
+        $post = Post::findOrFail($id);
+        return view('handbook.read',compact('post'))->with('title', 'Read Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Read Employee Handbook']);
+    }
+
     public function create_memo()
     {
         return view('memo.form')->with('title', 'Create a New Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo', 'Create a New Management Memo']);

@@ -227,6 +227,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/create', 'create_handbook')->name('v1.employee-handbooks.create');
             Route::post('/store', 'store_handbook')->name('v1.employee-handbooks.store');
             Route::get('/{id}/edit','edit_handbook')->name('v1.employee-handbooks.edit');
+            Route::get('/{id}/read','read_handbook')->name('v1.employee-handbooks.read');
             Route::put('/{id}/update','update_handbook')->name('v1.employee-handbooks.update');
             Route::put('/{id}/{status}/destroy','destroy_handbook')->name('v1.employee-handbooks.destroy');
         });

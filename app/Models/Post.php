@@ -39,7 +39,7 @@ class Post extends Model
                     $user->notify(new UserNotification(
                         'A new Employee Handbook has been uploaded. Click to read handbook. ' . $post->title,
                         'accept',
-                        route('v1.employee-handbook.read', ['id' => $post->id])
+                        route('v1.employee-handbooks.read', ['id' => $post->id])
                     ));
                 }
 
@@ -74,7 +74,7 @@ class Post extends Model
                     $user->notify(new UserNotification(
                         'Employee Handbook - An existing employee handbook has been updated. Click to read updated handbook. ' . $post->title,
                         'accept',
-                        route('v1.management-memo.read', ['id' => $post->id])
+                        route('v1.employee-handbooks.read', ['id' => $post->id])
                     ));
                 }
             }

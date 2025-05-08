@@ -168,7 +168,7 @@
                                         <div class="modal-dialog" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title">Invite User to {{ $group->name }}</h5>
+                                                    <h5 class="modal-title">Add User to {{ $group->name }}</h5>
 
                                                 </div>
                                                 <form action="{{ route('chat-groups.invite-users', $group->id) }}"
@@ -181,7 +181,7 @@
                                                                     <th></th>
                                                                     <th>Name</th>
                                                                     <th>Position</th>
-                                                                    <th style="align-content: center">Invite All
+                                                                    <th style="align-content: center">Add All
                                                                         <input type="checkbox" class ="form-check-input" id="selectAllCheckbox{{ $group->id }}" style="margin-left: 8px;">
                                                                     </th>
                                                                 </tr>
@@ -726,7 +726,7 @@
                                 let userLoggin = "{{ auth()->user()->id }}";
 
                                 $('#group-id').val(groupId);
-                                onloadGroupMessages(groupId,this.dataset.groupName,leftIcon,userLoggin);
+                                onloadGroupMessages(groupId,this.dataset.groupName,leftIcon,userLoggin,this.dataset.groupStatus);
                                 if (refreshInterval) {
                                     clearInterval(refreshInterval);
                                 }
@@ -738,7 +738,7 @@
                             });
                         });
                     });
-                    function onloadGroupMessages(groupId, groupName,leftIcon,userLoggin)
+                    function onloadGroupMessages(groupId, groupName,leftIcon,userLoggin,groupStatus)
                     {
                         loadGroupMessages(groupId);
                         fetch(`/chat-groups/${groupId}/members`)
@@ -781,6 +781,17 @@
 
                                     const nameSpan = document.createElement("span");
                                     nameSpan.textContent = member.name;
+                                    if (member.is_creator === 1) {
+                                        const badge = document.createElement("span");
+                                        badge.textContent = "Admin";
+                                        badge.classList.add("badge", "bg-primary", "ms-2");
+                                        badge.style.fontSize = "0.7rem";
+                                        badge.style.padding = "4px 6px";
+                                        badge.style.borderRadius = "5px";
+
+                                        nameSpan.appendChild(document.createTextNode(" ")); // space between name and badge
+                                        nameSpan.appendChild(badge);
+                                    }
                                     li.appendChild(avatar);
                                     li.appendChild(nameSpan);
 
@@ -791,7 +802,7 @@
                                     removeBtn.setAttribute("data-user-id", member.user_id);
 
                                     removeBtn.addEventListener("click", () => {
-                                        if (!confirm(`${member.name}, are you sure want to remove yourself from this group?`)) return;
+                                        if (!confirm(`Exit group?`)) return;
 
                                         fetch(`/chat-groups/${member.chat_group_id}/members/${member.user_id}`, {
                                             method: "DELETE",
@@ -826,13 +837,18 @@
                                 // If creator, show invite button
                                 if (creator === parseInt(userLoggin, 10)) {
                                     const li = document.createElement("li");
-                                    const inviteButton = document.createElement("button");
-                                    inviteButton.classList.add("btn", "btn-secondary", "invite-user-btn");
-                                    inviteButton.setAttribute("data-toggle", "modal");
-                                    inviteButton.setAttribute("data-target", "#inviteUserModal" + groupId);
-                                    inviteButton.setAttribute("data-group-id", groupId);
-                                    inviteButton.textContent = "Invite User";
-                                    li.appendChild(inviteButton);
+                                    if(groupStatus!=="0"){
+                                        const inviteButton = document.createElement("button");
+                                        inviteButton.classList.add("btn", "btn-secondary", "invite-user-btn");
+                                        inviteButton.setAttribute("data-toggle", "modal");
+                                        inviteButton.setAttribute("data-target", "#inviteUserModal" + groupId);
+                                        inviteButton.setAttribute("data-group-id", groupId);
+                                        inviteButton.textContent = "Add User";
+                                        li.appendChild(inviteButton);
+                                    }
+
+
+
                                     membersList.appendChild(li);
                                 }
                             })
