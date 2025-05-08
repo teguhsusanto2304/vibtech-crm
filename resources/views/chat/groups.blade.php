@@ -191,7 +191,7 @@
                                                         </table>
                                                     </div>
                                                     <div class="modal-footer">
-                                                        <button type="submit" class="btn btn-primary">Invite Selected
+                                                        <button type="submit" class="btn btn-primary">Add Selected
                                                             Users</button>
                                                     </div>
                                                 </form>
