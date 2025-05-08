@@ -57,7 +57,7 @@
                                 placeholder="Enter title">
                         </div>
 
-                        <div class="col-md-12">
+                        <div class="col-md-12" style="display: none;">
                             <label for="staffName" class="form-label">Description</label>
                             <input type="text" class="form-control" name="description" value="{{ old('description',$post->description) }}"
                                 placeholder="Enter description">
