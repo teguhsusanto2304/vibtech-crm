@@ -76,7 +76,7 @@
                     <button type="submit">Login</button>
                 </form>
                 <p class="mt-3"><a href="{{ route('v1.password.forgot') }}" class="text-white">Reset Password</a></p>
-                <p class="mt-5">www.vibtech-genesis.com</p>
+                <p class="mt-5"><a href="https://www.vibtech-genesis.com/" target="_blank" class="text-white">www.vibtech-genesis.com</a></p>
             </div>
 
             <!-- Image Section (Hidden on small screens) -->

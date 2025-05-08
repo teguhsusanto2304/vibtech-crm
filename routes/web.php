@@ -214,7 +214,7 @@ Route::middleware('auth')->group(function () {
         // 🔹 Post Management Routes
         Route::prefix('management-memo')->controller(PostController::class)->group(function () {
             Route::get('/list', 'memo')->name('v1.management-memo.list');
-            Route::get('/{id}/read', 'read_memo')->name('v1.management-memo.read');
+            Route::get('/{id}/read', 'read')->name('v1.management-memo.read');
             Route::get('/create', 'create_memo')->name('v1.management-memo.create');
             Route::post('/store', 'store_memo')->name('v1.management-memo.store');
             Route::get('/{id}/edit', 'edit_memo')->name('v1.management-memo.edit');

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\PostUpdateLog;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
+use Auth;
 
 class PostController extends Controller
 {
@@ -24,7 +26,7 @@ class PostController extends Controller
         return view('post.list',compact('posts'))->with('title', 'Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
-    public function handbook()
+    public function handbook(Request $request)
     {
         if(auth()->user()->can('create-employee-handbook')){
             $posts = Post::where('post_type', 1)
@@ -34,20 +36,43 @@ class PostController extends Controller
             ->where('data_status', 1)->latest()->paginate(20);
         }
 
-        return view('handbook.list',compact('posts'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
+        $selectedPost = null;
+        if ($request->has('post_id')) {
+            $selectedPost = Post::find($request->post_id);
+
+            $notif = request('notif');
+
+            if ($notif) {
+                Auth::user()->notifications()
+                    ->where('id', $request->notif)
+                    ->update(['read_at' => now()]);
+            }
+        }
+
+        return view('handbook.list',compact('posts','selectedPost'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
-    public function memo()
+    public function memo(Request $request)
     {
         if(auth()->user()->can('create-management-memo')){
             $posts = Post::where('post_type', 2)
-            ->whereNot('data_status', 3)->get();
+            ->whereNot('data_status', 3)
+            ->orderBy('created_at','desc')
+            ->get();
         } else {
             $posts = Post::where('post_type', 2)
-            ->where('data_status', 1)->get();
+            ->where('data_status', 1)
+            ->orderBy('created_at','desc')
+            ->get();
         }
 
-        return view('memo.list',compact('posts'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
+
+        $selectedPost = null;
+        if ($request->has('post_id')) {
+            $selectedPost = Post::find($request->post_id);
+        }
+
+        return view('memo.list',compact('posts','selectedPost'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
     }
 
 
@@ -226,9 +251,22 @@ class PostController extends Controller
 
     public function read($id)
     {
+        $notif = request('notif');
+
+        if ($id) {
+            Auth::user()->notifications()
+                ->where('id', $notif)
+                ->update(['read_at' => now()]);
+        }
         $post = Post::findOrFail($id);
-        return view('post.show',compact('post'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
+        $logs = PostUpdateLog::with('user')
+             ->where('post_id', $id)
+             ->latest()
+             ->get();
+        return view('post.show',compact('post','logs'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
     }
+
+
 
 
 

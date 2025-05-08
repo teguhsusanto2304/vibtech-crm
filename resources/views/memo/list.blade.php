@@ -49,9 +49,9 @@
                 <table id="managementMemoTable" class="table table-bordered table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Status</th>
+                            <th width="60%">Title</th>
+                            <th width="20%">Created</th>
+                            <th width="10%">Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -60,7 +60,8 @@
                             @if((auth()->user()->can('view-management-memo') && $post->data_status==0) || $post->data_status==1)
                                 <tr>
                                     <td>{{ $post->title }}</td>
-                                    <td>{{ Str::limit($post->description, 100) }}</td>
+                                    <td><small>{{ $post->created_at->format('d M Y') }}</small>
+                                    <br><small>{{ $post->user->name }}</small></td>
                                     <td>
                                         @if($post->data_status == 1)
                                             <span class="badge bg-success">Active</span>
@@ -70,7 +71,7 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('v1.getting-started.read',['id'=>$post->id]) }}" class="btn btn-primary btn-sm" title="Read">
+                                            <a href="{{ route('v1.management-memo.read',['id'=>$post->id]) }}" class="btn btn-primary btn-sm" title="Read">
                                                 Read
                                             </a>
 
@@ -118,56 +119,6 @@
             </div>
         </div>
 
-<!-- Modal -->
-<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">PDF Preview</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-0">
-          <!-- Container for either the PDF or the "not found" message -->
-          <div id="pdfContainer" style="width:100%; height:80vh; position:relative;">
-            <!-- We'll inject either an <object> or a fallback div here -->
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    var pdfModal = document.getElementById('pdfPreviewModal');
-    pdfModal.addEventListener('show.bs.modal', function (event) {
-      var button = event.relatedTarget;
-      var pdfUrl = button.getAttribute('data-pdf-url');
-      var container = document.getElementById('pdfContainer');
-      container.innerHTML = ''; // clear previous contents
-
-      if (pdfUrl) {
-      // Create an <object> to embed the PDF
-      var obj = document.createElement('object');
-      obj.data = pdfUrl;
-      obj.type = 'application/pdf';
-      obj.width = '100%';
-      obj.height = '100%';
-      // If loading fails, the browser will fire the 'error' event
-
-
-      container.appendChild(obj);
-      } else {
-        container.innerHTML =
-          '<div style="display:flex;align-items:center;justify-content:center; height:100%; color:#888;">' +
-            '🚫 File not found.' +
-          '</div>';
-      }
-    });
-
-    // Clear out on hide
-    pdfModal.addEventListener('hidden.bs.modal', function () {
-      document.getElementById('pdfContainer').innerHTML = '';
-    });
-  </script>
   <script>
     $(document).ready(function () {
         $('#managementMemoTable').DataTable({
@@ -175,6 +126,7 @@
             pageLength: 10, // show 10 rows per page
             lengthChange: true, // show "Show 10/25/50/All" dropdown
             ordering: true, // allow sorting
+            order: [[1, 'desc']],
         });
     });
 </script>

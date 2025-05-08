@@ -69,6 +69,20 @@
 
                     <div class="post-content">
                         {!! $post->content !!}
+                        @if($logs->count())
+                            <div class="mt-4">
+                                <h5>Update Logs</h5>
+                                <ul class="list-group">
+                                    @foreach($logs as $log)
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>{{ $log->user->name ?? 'Unknown User' }}</span>
+                                            <small class="text-muted">{{ $log->created_at->format('d M Y H:i') }}</small>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                     </div>
                 </div>
             </div>

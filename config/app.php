@@ -185,4 +185,16 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Define Global Constants
+    |--------------------------------------------------------------------------
+    |
+    | You can define global constants here using the define() function.
+    |
+    */
+
+    define('MEMO', 2),
+    define('HANDBOOK', 1)
+
 ];

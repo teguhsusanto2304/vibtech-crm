@@ -18,6 +18,23 @@
         </nav>
 
         <h3>{{ $title }}</h3>
+        @if($selectedPost && $selectedPost->path_file)
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const pdfModal = new bootstrap.Modal(document.getElementById('pdfPreviewModal'));
+                const triggerBtn = document.createElement('button');
+                triggerBtn.setAttribute('data-pdf-url', "{{ asset($selectedPost->path_file) }}");
+
+                // Attach it manually as if it's the relatedTarget
+                const event = new Event('show.bs.modal', { bubbles: true });
+                event.relatedTarget = triggerBtn;
+
+                // Trigger modal manually with correct context
+                document.getElementById('pdfPreviewModal').dispatchEvent(event);
+                pdfModal.show();
+            });
+        </script>
+        @endif
 
         <!-- Success Message -->
         @if (session('success'))
