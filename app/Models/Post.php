@@ -72,7 +72,7 @@ class Post extends Model
                     ));
                 } else if($post->post_type==HANDBOOK){
                     $user->notify(new UserNotification(
-                        'Employee Handbook - An existing employee handbook has been updated. Click to read updated handbook. ' . $post->title,
+                        'Employee Handbook - An existing employee handbook has been updated. Click to read updated handbook. ',
                         'accept',
                         route('v1.employee-handbooks.read', ['id' => $post->id])
                     ));
