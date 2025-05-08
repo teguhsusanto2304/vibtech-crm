@@ -54,11 +54,13 @@ class Post extends Model
                 unset($changes['updated_at']); // ignore updated_at if not needed
 
                 if (!empty($changes)) {
-                    PostUpdateLog::create([
+                    if(isset($changes['content'])){
+                        PostUpdateLog::create([
                             'post_id' => $post->id,
                             'updated_by' => Auth::id(),
                             'changes' => $changes['content'],
                         ]);
+                    }
                 }
             }
             // Choose the users to notify (e.g., all admins or all users)
