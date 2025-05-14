@@ -30,6 +30,9 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\WhistleblowningPolicyController;
+use App\Http\Controllers\ClientController;
 
 Route::get('/', function () {
     return view('login');
@@ -232,7 +235,34 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/{status}/destroy','destroy_handbook')->name('v1.employee-handbooks.destroy');
         });
 
+        Route::prefix('whistleblowing-policy')->controller(WhistleblowningPolicyController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.whistleblowing-policy');
+            Route::get('/create', 'create')->name('v1.whistleblowing-policy.create');
+            Route::get('/edit','edit')->name('v1.whistleblowing-policy.edit');
+            Route::get('/read','read')->name('v1.whistleblowing-policy.read');
+            Route::post('/update','update')->name('v1.whistleblowing-policy.update');
+            Route::post('/report','report')->name('v1.whistleblowing-policy.report');
+            Route::delete('/destroy','destroy')->name('v1.whistleblowing-policy.destroy');
+        });
 
+        // 🔹 Client Database Management Routes
+        Route::prefix('client-database')->controller(ClientController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.client-database');
+            Route::get('/list', 'list')->name('v1.client-database.list');
+            Route::get('/data', 'getClientsData')->name('v1.client-database.data');
+            Route::get('/{id}/show', 'show')->name('v1.client-database.show');
+            Route::get('/create', 'create')->name('v1.client-database.create');
+            Route::post('/store', 'store')->name('v1.client-database.store');
+            Route::post('/toggle-status','toggleStatus')->name('v1.client-database.toggle-status');
+            Route::get('/{id}/edit', 'edit')->name('v1.client-database.edit');
+            Route::put('/{id}/update', 'update')->name('v1.client-database.update');
+            Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
+        });
+
+        Route::prefix('configuration')->controller(ConfigurationController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.configuration');
+            Route::post('/update','update')->name('v1.configuration.update');
+        });
 
     });
 
@@ -394,4 +424,13 @@ Route::post('/chat-groups/{groupId}/invite-users', [ChatGroupController::class, 
     ->name('chat-groups.invite-users');
 Route::get('/chat-groups/{groupId}/invited-users', [ChatGroupController::class, 'getInvitedUsers']);
 Route::post('/ckeditor/upload', [App\Http\Controllers\CKEditorController::class, 'upload'])->name('ckeditor.upload');
+
+Route::get('/link-storage', function () {
+    if (app()->environment('local')) { // Hanya izinkan di lingkungan lokal
+        $output = shell_exec('php ../artisan storage:link');
+        return '<pre>' . $output . '</pre>';
+    } else {
+        return 'Aksi ini tidak diizinkan di lingkungan produksi.';
+    }
+});
 

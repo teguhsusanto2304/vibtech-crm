@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-md-12">
                             <label for="staffName" class="form-label">Content</label>
-                            <textarea class="form-control" name="content" id="ckeditor">{{ old('content') }}</textarea>
+                            <textarea class="form-control" name="content" id="ckeditor" rows="10" rows="10">{{ old('content') }}</textarea>
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Submit</button>

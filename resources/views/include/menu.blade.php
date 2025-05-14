@@ -175,11 +175,13 @@
                         <div class="text-truncate" data-i18n="Analytics">Employee Handbook</div>
                     </a>
                 </li>
+                @can('view-whistleblowing-policy')
                 <li class="no-bullet">
-                    <a href="{{ route('whistleblowing-policy')}}" class="menu-link">
+                    <a href="{{ route('v1.whistleblowing-policy')}}" class="menu-link">
                         <div class="text-truncate" data-i18n="Analytics">Whistleblowing Policy</div>
                     </a>
                 </li>
+                @endcan
                 @can('view-getting-started')
                 <li class="no-bullet">
                     <a href="{{ route('v1.getting-started')}}" class="menu-link">
@@ -246,7 +248,7 @@
                     @endcan
                     @can('view-client-database')
                         <li class="no-bullet">
-                            <a href="index.html" class="menu-link">
+                            <a href="{{ route('v1.client-database') }}" class="menu-link">
                                 <div class="text-truncate" data-i18n="Analytics">Client Database</div>
                             </a>
                         </li>
@@ -735,6 +737,15 @@
                             <li class="no-bullet">
                                 <a href="{{ route('v1.vehicles.list')}}" class="menu-link">
                                     <div class="text-truncate" data-i18n="Analytics">Vehicle</div>
+                                </a>
+                            </li>
+                        </ul>
+                    @endcan
+                    @can('view-configuration')
+                        <ul class="menu-sub">
+                            <li class="no-bullet">
+                                <a href="{{ route('v1.configuration')}}" class="menu-link">
+                                    <div class="text-truncate" data-i18n="Analytics">Configuration</div>
                                 </a>
                             </li>
                         </ul>
