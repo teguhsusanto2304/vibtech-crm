@@ -145,7 +145,7 @@
                 <form class="row g-3" action="{{ route('v1.client-database.import') }}" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
-                        <p><label for="csv_file">Please download the <a href="/template/import_client.csv">template</a> nd enter the correct country name and industry name refer by the Country List and Industry List (you can see on Reference Data Tab)</label></p>
+                        <p><label for="csv_file">Please download the <a href="/template/import_client.csv">template</a> and enter the correct country name and industry name refer by the Country List and Industry List (you can see on Reference Data Tab)</label></p>
 
                         <label for="csv_file">Upload CSV File *</label>
                         <input type="file" name="csv_file" class="form-control" accept=".csv" required>
