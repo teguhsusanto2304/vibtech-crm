@@ -33,6 +33,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\WhistleblowningPolicyController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\GenerateFormController;
 
 Route::get('/', function () {
     return view('login');
@@ -253,10 +254,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
             Route::get('/create', 'create')->name('v1.client-database.create');
             Route::post('/store', 'store')->name('v1.client-database.store');
+            Route::post('/import', 'import')->name('v1.client-database.import');
             Route::post('/toggle-status','toggleStatus')->name('v1.client-database.toggle-status');
             Route::get('/{id}/edit', 'edit')->name('v1.client-database.edit');
             Route::put('/{id}/update', 'update')->name('v1.client-database.update');
             Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
+        });
+
+        // 🔹 Client Database Management Routes
+        Route::prefix('generate-form')->controller(GenerateFormController::class)->group(function () {
+            Route::get('/', 'index')->name('v1.generate-form');
         });
 
         Route::prefix('configuration')->controller(ConfigurationController::class)->group(function () {

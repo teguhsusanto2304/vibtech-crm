@@ -43,6 +43,29 @@
         @endif
         <div class="card">
             <div class="card-body">
+                <!-- Tabs Nav -->
+        <ul class="nav nav-tabs" id="inputTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual"
+                    type="button" role="tab" aria-controls="manual" aria-selected="true">
+                    Manual Input
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload"
+                    type="button" role="tab" aria-controls="upload" aria-selected="false">
+                    Upload CSV File
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reference-tab" data-bs-toggle="tab" data-bs-target="#reference" type="button" role="tab">Reference Data</button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content pt-3" id="inputTabsContent">
+            <!-- Manual Input Tab -->
+            <div class="tab-pane fade show active" id="manual" role="tabpanel" aria-labelledby="manual-tab">
                 <form class="row g-3" action="{{  route('v1.client-database.store') }}" method="post"
                     enctype="multipart/form-data">
                     @csrf
@@ -51,11 +74,6 @@
                     <div class="form-group">
                         <label for="name">Name *</label>
                         <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <!-- Position -->
-                    <div class="form-group col-6">
-                        <label for="position">Position</label>
-                        <input type="text" name="position" class="form-control">
                     </div>
 
                     <!-- Email -->
@@ -107,18 +125,7 @@
                         </select>
                     </div>
 
-                    <!-- Sales Person -->
-                    <div class="form-group">
-                        <label for="sales_person_id">Sales Person *</label>
-                        <select name="sales_person_id" class="form-control" required>
-                            @foreach ($salesPeople as $user)
-                                <option value="{{ $user->id }}" @if(auth()->user()->id === $user->id) selected @endif>
-                                    {{ $user->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Upload Image -->
+                                    <!-- Upload Image -->
                     <div class="form-group">
                         <label for="image_path">Upload Image</label>
                         <input type="file" name="image_path" class="form-control-file">
@@ -131,9 +138,70 @@
                     </div>
                 </form>
 
+</div>
 
+            <!-- Upload CSV Tab -->
+            <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+                <form class="row g-3" action="{{ route('v1.client-database.import') }}" method="post" enctype="multipart/form-data">
+                    @csrf
+                    <div class="form-group">
+                        <p><label for="csv_file">Please download the <a href="/template/import_client.csv">template</a> nd enter the correct country name and industry name refer by the Country List and Industry List (you can see on Reference Data Tab)</label></p>
+
+                        <label for="csv_file">Upload CSV File *</label>
+                        <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                        <small>Only CSV format. Max 2MB.</small>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">Import</button>
+                        <a href="{{ route('v1.client-database.list') }}" class="btn btn-warning">Cancel</a>
+                    </div>
+                </form>
             </div>
+ <!-- Reference Data Tab -->
+            <div class="tab-pane fade" id="reference" role="tabpanel" aria-labelledby="reference-tab">
+        <!-- Country Table -->
+        <div class="mt-5">
+            <h5>Available Countries</h5>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Country Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($countries as $country)
+                        <tr>
+                            <td>{{ $country->id }}</td>
+                            <td>{{ $country->name }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Industry Category Table -->
+        <div class="mt-5">
+            <h5>Available Industry Categories</h5>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Industry Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($industries as $industry)
+                        <tr>
+                            <td>{{ $industry->id }}</td>
+                            <td>{{ $industry->name }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
+        </div>
     </div>
+</div>
 @endsection

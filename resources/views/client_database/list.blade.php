@@ -39,9 +39,6 @@
     <div class="card">
         <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
             <div>  </div>
-            @can('create-client-database')
-            <a href="{{ route('v1.client-database.create')}}" class="btn btn-primary">Create New Client</a>
-            @endcan
             <!-- Department Filter Box -->
         </div>
         <div class="card-body" style="overflow-x: auto;">
@@ -51,7 +48,6 @@
                     <tr>
                         <th>Name</th>
                         <th>Company</th>
-                        <th>Position</th>
                         <th>Email</th>
                         <th>Office Number</th>
                         <th>Mobile Number</th>
@@ -61,6 +57,8 @@
                         <th>Sales Person</th>
                         <th>Image</th>
                         <th>Quotation</th>
+                         <th>Created On</th>
+                          <th>Updated On</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -101,7 +99,6 @@ $(function () {
         columns: [
             { data: 'name' },
             { data: 'company' },
-            { data: 'position' },
             { data: 'email' },
             { data: 'office_number' },
             { data: 'mobile_number' },
@@ -110,15 +107,32 @@ $(function () {
             { data: 'country', name: 'country.name' },
             { data: 'sales_person', name: 'salesPerson.name' },
             {
-                data: 'image_path',
+                data: 'image_path_img',
                 render: function(data, type, row) {
                     if (type === 'display') {
-                        return '<img src="' + data + '" alt="User Image" width="80" height="80" >'; // Data diasumsikan sudah berupa string HTML <img>
+                        if(data === null){
+                            return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
+                        } else {
+                            return `
+                    <img src="${data}"
+                         alt="User Image"
+                         width="80" height="80"
+                         class="img-thumbnail preview-image"
+                         data-bs-toggle="modal"
+                         data-bs-target="#imageModal"
+                         style="cursor:pointer"
+                         data-full="${data}">
+                    <p><a href="${data}" download><small>Download</small></a></p>
+                `;
+                        }
+
                     }
                     return data; // Untuk sorting, filtering, dll. tetap gunakan data asli
                 }
             },
             { data: 'quotation', name: 'quotation' },
+                        { data: 'created_on' },
+            { data: 'updated_on' },
             {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
@@ -156,8 +170,24 @@ $("#confirmBtn").on("click", function () {
             }
         });
     });
+
+    $(document).on('click', '.preview-image', function () {
+        const fullImg = $(this).data('full');
+        $('#modalImage').attr('src', fullImg);
+    });
 });
 </script>
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-body text-center">
+        <img src="" id="modalImage" class="img-fluid" alt="Full Size">
+      </div>
+    </div>
+  </div>
+</div>
+
 
 @endsection
 

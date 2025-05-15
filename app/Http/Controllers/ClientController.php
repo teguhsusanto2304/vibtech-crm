@@ -38,14 +38,14 @@ class ClientController extends Controller
     {
         $client = Client::findOrFail($id);
 
-    return view('client_database.edit', [
-        'client' => $client,
-        'industries' => IndustryCategory::all(),
-        'countries' => Country::all(),
-        'salesPeople' => User::all(),
-        'title' => 'Edit Client Database',
-        'breadcrumb' => ['Home', 'Marketing', 'Edit a Client Data'],
-    ]);
+        return view('client_database.edit', [
+            'client' => $client,
+            'industries' => IndustryCategory::all(),
+            'countries' => Country::all(),
+            'salesPeople' => User::all(),
+            'title' => 'Edit Client Database',
+            'breadcrumb' => ['Home', 'Marketing', 'Edit a Client Data'],
+        ]);
     }
 
     public function store(Request $request)
@@ -60,7 +60,7 @@ class ClientController extends Controller
             'job_title' => 'nullable|string|max:255',
             'industry_category_id' => 'required|exists:industry_categories,id',
             'country_id' => 'required|exists:countries,id',
-            'sales_person_id' => 'required|exists:users,id',
+            //'sales_person_id' => 'required|exists:users,id',
             'image_path' => 'nullable|image|max:2048', // Accept only image files
         ]);
 
@@ -77,7 +77,7 @@ class ClientController extends Controller
     }
 
 
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
         $client = Client::findOrFail($id);
         $validated = $request->validate([
@@ -90,7 +90,7 @@ class ClientController extends Controller
             'job_title' => 'nullable|string|max:255',
             'industry_category_id' => 'required|exists:industry_categories,id',
             'country_id' => 'required|exists:countries,id',
-            'sales_person_id' => 'required|exists:users,id',
+            //'sales_person_id' => 'required|exists:users,id',
             'image_path' => 'nullable|image|max:2048', // Accept only image files
         ]);
 
@@ -133,45 +133,89 @@ class ClientController extends Controller
     public function getClientsData()
     {
         $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-        ->where('data_status',1);
+            ->where('data_status', 1);
 
         return DataTables::of($clients)
             ->addIndexColumn()
             ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
             ->addColumn('country', fn($client) => $client->country->name ?? '-')
             ->addColumn('sales_person', fn($client) => $client->salesPerson->name ?? '-')
-            ->addColumn('image_path', function ($row) {
-                    if (!empty($row->image_path)) {
-
+            ->addColumn('image_path_img', function ($row) {
+                if (!empty($row->image_path)) {
                     return asset('storage/' . $row->image_path);
-                    } else {
-                        return asset('assets/img/photos/default.png');
-                    }
-                })
+                } else {
+                    return null;
+                    //return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
+                }
+            })
             ->addColumn('image_path1', function ($row) {
-                    if (!empty($row->image_path)) {
+                if (!empty($row->image_path)) {
 
-                    return '<img src="' . asset('storage/' . $row->image_path). '" alt="User Image" width="50" height="50" class="rounded-circle">';
-                    } else {
-                        return '<img src="' . asset('assets/img/photos/default.png') . '" alt="User Image" width="50" height="50" class="rounded-circle">';
-                    }
-                })
-                ->addColumn('action', function ($row) {
-                    $btn = '<a href="' . route('v1.client-database.edit', ['id' => $row->id]) . '" class="btn btn-primary btn-sm">Edit</a>';
+                    return '<img src="' . asset('storage/' . $row->image_path) . '" alt="User Image" width="50" height="50" class="rounded-circle">';
+                } else {
+                    return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
+                }
+            })
+            ->addColumn('action', function ($row) {
+                $btn = '<a href="' . route('v1.client-database.edit', ['id' => $row->id]) . '" class="btn btn-primary btn-sm">Edit</a>';
 
-                    if ($row->data_status != 0) {
-                        $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
+                if ($row->data_status != 0) {
+                    $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
                                 data-id="' . $row->id . '"
                                 data-action="deactivate">Delete</a>';
-                    } else {
-                        $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-success btn-sm"
+                } else {
+                    $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-success btn-sm"
                                 data-id="' . $row->id . '"
                                 data-action="activate">Activate</a>';
-                    }
+                }
 
-                    return $btn;
-                })
-                ->addColumn('quotation', fn($client) => 'Nil')
+                return $btn;
+            })
+            ->addColumn('quotation', fn($client) => 'Nil')
+            ->addColumn('created_on', fn($client) => $client->created_at->format('d M Y') ?? '-')
+            ->addColumn('updated_on', function ($client) {
+                if($client->created_at != $client->updated_at) {
+                    return $client->updated_at->format('d M Y');
+                } else {
+                    return '';
+                }
+            })
             ->make(true);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('csv_file');
+
+        // Open and read the CSV
+        if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
+            $header = fgetcsv($handle, 1000, ',');
+
+            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                $data = array_combine($header, $row);
+
+                // Store data
+                Client::create([
+                    'name' => $data['name'] ?? null,
+                    'position' => $data['position'] ?? null,
+                    'email' => $data['email'] ?? null,
+                    'office_number' => $data['office_number'] ?? null,
+                    'mobile_number' => $data['mobile_number'] ?? null,
+                    'job_title' => $data['job_title'] ?? null,
+                    'company' => $data['company'] ?? null,
+                    'industry_category_id' => IndustryCategory::where('name', $data['industry_category'])->value('id'),
+                    'country_id' => Country::where('name', $data['country'])->value('id'),
+                    'sales_person_id' => auth()->id(), // or $data['sales_person_id']
+                ]);
+            }
+
+            fclose($handle);
+        }
+
+        return redirect()->route('v1.client-database.list')->with('success', 'CSV imported successfully!');
     }
 }

@@ -53,12 +53,6 @@
                         <input type="text" name="name" class="form-control" value="{{ old('name', $client->name) }}" required>
                     </div>
 
-                    <!-- Position -->
-                    <div class="form-group col-6">
-                        <label for="position">Position</label>
-                        <input type="text" name="position" class="form-control" value="{{ old('position', $client->position) }}">
-                    </div>
-
                     <!-- Email -->
                     <div class="form-group col-6">
                         <label for="email">Email *</label>
