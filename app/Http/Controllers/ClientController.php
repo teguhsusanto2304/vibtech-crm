@@ -8,6 +8,7 @@ use App\Models\IndustryCategory;
 use App\Models\User;
 use App\Models\Country;
 use Yajra\DataTables\DataTables;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -51,18 +52,25 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'company' => 'required|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255',
-            'office_number' => 'required|numeric',
-            'mobile_number' => 'nullable|numeric',
-            'job_title' => 'nullable|string|max:255',
-            'industry_category_id' => 'required|exists:industry_categories,id',
-            'country_id' => 'required|exists:countries,id',
-            //'sales_person_id' => 'required|exists:users,id',
-            'image_path' => 'nullable|image|max:2048', // Accept only image files
-        ]);
+    'name' => [
+        'required',
+        'string',
+        'max:255',
+        Rule::unique('clients')->where(function ($query) use ($request) {
+            return $query->where('company', $request->company);
+        }),
+    ],
+    'company' => 'required|string|max:255',
+    'position' => 'nullable|string|max:255',
+    'email' => 'required|email|max:255|unique:clients',
+    'office_number' => 'required|numeric',
+    'mobile_number' => 'nullable|numeric',
+    'job_title' => 'nullable|string|max:255',
+    'industry_category_id' => 'required|exists:industry_categories,id',
+    'country_id' => 'required|exists:countries,id',
+    //'sales_person_id' => 'required|exists:users,id',
+    'image_path' => 'nullable|image|max:2048', // Accept only image files
+]);
 
         // Handle file upload if exists
         if ($request->hasFile('image_path')) {
