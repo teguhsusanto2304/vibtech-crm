@@ -57,9 +57,7 @@
                     Upload CSV File
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="reference-tab" data-bs-toggle="tab" data-bs-target="#reference" type="button" role="tab">Reference Data</button>
-            </li>
+
         </ul>
 
         <!-- Tabs Content -->
@@ -145,11 +143,10 @@
                 <form class="row g-3" action="{{ route('v1.client-database.import') }}" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
-                        <p><label for="csv_file">Please download the <a href="/template/import_client.csv">template</a> and enter the correct country name and industry name refer by the Country List and Industry List (you can see on Reference Data Tab)</label></p>
-
+                        <p>Please <a href="/template/import_client.csv">download</a> and use this excel template to upload</p>
                         <label for="csv_file">Upload CSV File *</label>
                         <input type="file" name="csv_file" class="form-control" accept=".csv" required>
-                        <small>Only CSV format. Max 2MB.</small>
+                        <small>CSV format only, Max 2MB file size</small>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Import</button>

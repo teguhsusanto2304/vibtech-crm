@@ -259,6 +259,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/edit', 'edit')->name('v1.client-database.edit');
             Route::put('/{id}/update', 'update')->name('v1.client-database.update');
             Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
+            Route::get('/{id}/detail',  'getClientDetail')->name('v1.client-database.detail');
+
         });
 
         // 🔹 Client Database Management Routes

@@ -34,12 +34,39 @@
     <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
+<!-- Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+
 
     <!-- Card -->
     <div class="card">
         <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
             <div>  </div>
             <!-- Department Filter Box -->
+            <form id="filters-form" class="d-flex gap-2 flex-wrap align-items-center">
+    <select id="filter-sales-person" class="form-select" style="width: 200px;">
+        <option value="">All Sales Persons</option>
+        @foreach ($salesPersons as $salesPerson)
+            <option value="{{ $salesPerson->name }}">{{ $salesPerson->name }}</option>
+        @endforeach
+    </select>
+
+    <select id="filter-industry" class="form-select" style="width: 200px;">
+        <option value="">All Industries</option>
+        @foreach ($industries as $industry)
+            <option value="{{ $industry->name }}">{{ $industry->name }}</option>
+        @endforeach
+    </select>
+
+    <select id="filter-country" class="form-select" style="width: 200px;">
+        <option value="">All Countries</option>
+        @foreach ($countries as $country)
+            <option value="{{ $country->name }}">{{ $country->name }}</option>
+        @endforeach
+    </select>
+</form>
+
         </div>
         <div class="card-body" style="overflow-x: auto;">
             <div class="table-responsive">
@@ -66,6 +93,20 @@
             </div>
             </div>
         </div>
+        <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="clientDetailModalLabel">Client Detail</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="client-detail-body">
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
         <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -88,14 +129,46 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
+<!-- Buttons JS + Dependencies -->
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script>
 $(function () {
-    $('#clients-table').DataTable({
+    let table = $('#clients-table').DataTable({
         processing: true,
         serverSide: true,
         scrollX: true, // Enable horizontal scrolling
         responsive: false,
-        ajax: '{{ route('v1.client-database.data') }}',
+        ajax: {
+        url: '{{ route('v1.client-database.data') }}',
+        data: function (d) {
+            d.sales_person = $('#filter-sales-person').val();
+            d.industry = $('#filter-industry').val();
+            d.country = $('#filter-country').val();
+        }
+    },
+    dom: 'Bfrtip', // Add buttons to top
+    buttons: [
+        {
+            extend: 'csvHtml5',
+            title: 'Client_List',
+            exportOptions: {
+                columns: ':not(:last-child):not(:nth-child(10))' // exclude Action and Image
+            }
+        },
+        {
+            extend: 'pdfHtml5',
+            title: 'Client_List',
+            orientation: 'landscape',
+            pageSize: 'A4',
+            exportOptions: {
+                columns: ':not(:last-child):not(:nth-child(10))' // exclude Action and Image
+            }
+        }
+    ],
         columns: [
             { data: 'name' },
             { data: 'company' },
@@ -136,6 +209,23 @@ $(function () {
             {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
+
+    $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
+    table.ajax.reload();
+});
+
+$(document).on('click', '.view-client', function () {
+    const clientId = $(this).data('id');
+    $('#client-detail-body').html('<p>Loading...</p>');
+    $('#clientDetailModal').modal('show');
+
+    $.get('/v1/client-database/' + clientId+'/detail', function (data) {
+        $('#client-detail-body').html(data);
+    }).fail(function () {
+        $('#client-detail-body').html('<p class="text-danger">Failed to load client data.</p>');
+    });
+});
+
 
     $(document).on("click", ".confirm-action", function () {
         userId = $(this).data("id");
