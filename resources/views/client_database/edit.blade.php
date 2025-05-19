@@ -43,12 +43,13 @@
         @endif
         <div class="card">
             <div class="card-body">
-                <form class="row g-3" action="{{ route('v1.client-database.update', $client->id) }}" method="post" enctype="multipart/form-data">
+                <form class="row g-3" action="{{ route('v1.client-database.update-request', $client->id) }}" method="post" enctype="multipart/form-data">
                     @csrf
-                    @method('PUT')
 
                     <!-- Name -->
                     <div class="form-group">
+                         <input type="hidden" name="client_id" value="{{ $client->id }}">
+                        <input type="hidden" name="status" value="edit">
                         <label for="name">Name *</label>
                         <input type="text" name="name" class="form-control" value="{{ old('name', $client->name) }}" required>
                     </div>

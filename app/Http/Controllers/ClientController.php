@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Models\ClientRequest;
 use App\Models\IndustryCategory;
 use App\Models\User;
 use App\Models\Country;
@@ -114,6 +115,20 @@ class ClientController extends Controller
         return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
     }
 
+    public function deleteRequest($id)
+    {
+        $client = Client::findOrFail($id);
+
+        return view('client_database.delete', [
+            'client' => $client,
+            'industries' => IndustryCategory::all(),
+            'countries' => Country::all(),
+            'salesPeople' => User::all(),
+            'title' => 'Edit Client Database',
+            'breadcrumb' => ['Home', 'Marketing', 'Edit a Client Data'],
+        ]);
+    }
+
     public function list()
     {
         return view('client_database.list', [
@@ -121,6 +136,16 @@ class ClientController extends Controller
             'countries' => Country::all(),
             'salesPersons' => User::all()
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
+
+    }
+
+    public function updateRequestList()
+    {
+        return view('client_database.request.list', [
+            'industries' => IndustryCategory::all(),
+            'countries' => Country::all(),
+            'salesPersons' => User::all()
+        ])->with('title', 'List of Edit/Delete Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Edit/Delete Request']);
 
     }
 
@@ -142,10 +167,32 @@ class ClientController extends Controller
         return response()->json(['success' => true, 'message' => 'Client deleted successfully']);
     }
 
+    public function deleteFromRequest(Request $request)
+    {
+        $clientRequest = ClientRequest::find($request->id);
+        $client = Client::find($clientRequest->client_id);
+
+        if (!$clientRequest) {
+            return response()->json(['success' => false, 'message' => 'User not found']);
+        }
+
+        $clientRequest->data_status = 4;
+        $clientRequest->save();
+
+        $client->data_status = 0;
+        $client->save();
+
+        return response()->json(['success' => true, 'message' => 'Client request deleted successfully']);
+    }
+
     public function getClientsData(Request $request)
     {
-        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->where('data_status', 1);
+        $clients = Client::leftJoin('industry_categories', 'clients.industry_category_id', '=', 'industry_categories.id')
+            ->leftJoin('countries', 'clients.country_id', '=', 'countries.id')
+            ->leftJoin('users', 'clients.sales_person_id', '=', 'users.id')
+            ->with(['industryCategory', 'country', 'salesPerson'])
+            ->where('clients.data_status', 1)
+            ->select('clients.*');
         if ($request->filled('sales_person')) {
             $clients->whereHas('salesPerson', function ($q) use ($request) {
                 $q->where('name', $request->sales_person);
@@ -191,9 +238,10 @@ class ClientController extends Controller
                 $btn .= '<a href="' . route('v1.client-database.edit', ['id' => $row->id]) . '" class="btn btn-primary btn-sm">Edit</a>';
 
                 if ($row->data_status != 0) {
-                    $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
+                    $btnDel = ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
                                 data-id="' . $row->id . '"
                                 data-action="deactivate">Delete</a></div>';
+                    $btn .= '<div class="btn-group" role="group" aria-label="Basic mixed styles example"><button class="btn btn-danger btn-sm view-client-delete" data-id="' . $row->id . '">Delete</button>';
                 } else {
                     $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-success btn-sm"
                                 data-id="' . $row->id . '"
@@ -211,6 +259,87 @@ class ClientController extends Controller
                     return '';
                 }
             })
+            ->make(true);
+    }
+
+    public function getClientRequestsData(Request $request)
+    {
+        $clients = ClientRequest::leftJoin('industry_categories', 'client_requests.industry_category_id', '=', 'industry_categories.id')
+            ->leftJoin('countries', 'client_requests.country_id', '=', 'countries.id')
+            ->leftJoin('users', 'client_requests.sales_person_id', '=', 'users.id')
+            ->with(['industryCategory', 'country', 'salesPerson'])
+            ->select('client_requests.*');
+        if ($request->filled('sales_person')) {
+            $clients->whereHas('salesPerson', function ($q) use ($request) {
+                $q->where('name', $request->sales_person);
+            });
+        }
+
+        if ($request->filled('industry')) {
+            $clients->whereHas('industryCategory', function ($q) use ($request) {
+                $q->where('name', $request->industry);
+            });
+        }
+
+        if ($request->filled('country')) {
+            $clients->whereHas('country', function ($q) use ($request) {
+                $q->where('name', $request->country);
+            });
+        }
+
+
+        return DataTables::of($clients)
+            ->addIndexColumn()
+            ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
+            ->addColumn('country', fn($client) => $client->country->name ?? '-')
+            ->addColumn('sales_person', fn($client) => $client->salesPerson->name ?? '-')
+            ->addColumn('image_path_img', function ($row) {
+                if (!empty($row->image_path)) {
+                    return asset('storage/' . $row->image_path);
+                } else {
+                    return null;
+                    //return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
+                }
+            })
+            ->addColumn('action', function ($row) {
+                $btn = '<div class="btn-group" role="group" aria-label="Basic mixed styles example"><button class="btn btn-info btn-sm view-client" data-id="' . $row->id . '">View</button>';
+
+                if ($row->data_status == 1) {
+                    $btn .= '<div class="btn-group" role="group" aria-label="Basic mixed styles example"><button class="btn btn-success btn-sm view-client" data-id="' . $row->id . '">Preview</button>';
+                } else  if ($row->data_status == 2) {
+                    $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
+                                data-id="' . $row->id . '"
+                                data-action="delete">Delete</a>';
+                }
+
+                return $btn;
+            })
+            ->addColumn('quotation', fn($client) => 'Nil')
+            ->addColumn('created_on', fn($client) => $client->created_at->format('d M Y') )
+            ->addColumn('created_by', function ($client) {
+                if ($client->created_at) {
+                    return $client->updated_at->format('d M Y').'<p><span class="badge bg-info"><small>'.$client->user->name.'</small></span>';
+                } else {
+                    return '';
+                }
+            })
+            ->addColumn('updated_on', function ($client) {
+                if ($client->created_at != $client->updated_at) {
+                    return $client->updated_at->format('d M Y');
+                } else {
+                    return '';
+                }
+            })
+            ->addColumn('request_status', function ($client) {
+                if ($client->data_status==1) {
+                    return '<span class="badge bg-success">Edit</span>';
+                } else if ($client->data_status==4) {
+                    return '<span class="badge bg-danger">Has Deleted</span>';
+                } else {
+                    return '<span class="badge bg-warning">Delete</span>';
+                }
+            })
+            ->escapeColumns([])
             ->make(true);
     }
 
@@ -238,9 +367,9 @@ class ClientController extends Controller
                     'mobile_number' => $data['mobile_number'] ?? null,
                     'job_title' => $data['job_title'] ?? null,
                     'company' => $data['company'] ?? null,
-                    'industry_category_id' => IndustryCategory::where('name', $data['industry_category'])->value('id'),
-                    'country_id' => Country::where('name', $data['country'])->value('id'),
-                    'sales_person_id' => auth()->id(), // or $data['sales_person_id']
+                    //\\'industry_category_id' => IndustryCategory::where('name', $data['industry_category'])->value('id'),
+                    //'country_id' => Country::where('name', $data['country'])->value('id'),
+                    //'sales_person_id' => auth()->id(), // or $data['sales_person_id']
                 ]);
             }
 
@@ -250,11 +379,79 @@ class ClientController extends Controller
         return redirect()->route('v1.client-database.list')->with('success', 'CSV imported successfully!');
     }
 
-    public function getClientDetail($id)
+    public function getClientDetail(Request $request,$id)
     {
         $client = Client::with(['industryCategory', 'country', 'salesPerson'])->findOrFail($id);
+        $delete = $request->query('delete');
 
-        return view('client_database.partials.detail', compact('client'));
+        return view('client_database.partials.detail', compact('client','delete'));
+    }
+
+    public function clientDataRequest(Request $request)
+    {
+        $client = Client::findOrFail($request->input('client_id'));
+        $msg = "";
+
+        if($request->input('status')==='delete')
+        {
+            $clientRequest = new ClientRequest();
+            $clientRequest->name = $client->name;
+            $clientRequest->company = $client->company;
+            $clientRequest->email = $client->email;
+            $clientRequest->office_number = $client->office_number;
+            $clientRequest->mobile_number = $client->mobile_number;
+            $clientRequest->job_title = $client->job_title;
+            $clientRequest->industry_category_id = $client->industry_category_id; // Assuming you have this
+            $clientRequest->country_id = $client->country_id;             // and this
+            $clientRequest->sales_person_id = $client->sales_person_id;
+            $clientRequest->client_id = $request->input('client_id');
+            $clientRequest->delete_reason = $request->input('delete_reason');
+            $clientRequest->data_status = 2;
+            $clientRequest->created_by = auth()->user()->id;
+            $clientRequest->save();
+            $msg = 'Client delete requested successfully!';
+        } else {
+            $validated = $request->validate([
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('clients')->where(function ($query) use ($request) {
+                        return $query->where('company', $request->company);
+                    }),
+                ],
+                'company' => 'required|string|max:255',
+                'position' => 'nullable|string|max:255',
+                'email' => [
+                    'required',
+                    'email',
+                    'max:255',
+                    Rule::unique('clients')->ignore($client->id), // Exclude current client's email
+                ],
+                'office_number' => 'required|numeric',
+                'mobile_number' => 'nullable|numeric',
+                'job_title' => 'nullable|string|max:255',
+                'industry_category_id' => 'required|exists:industry_categories,id',
+                'country_id' => 'required|exists:countries,id',
+                //'sales_person_id' => 'required|exists:users,id',
+                'image_path' => 'nullable|image|max:2048', // Accept only image files
+            ]);
+
+            // Handle file upload if exists
+            if ($request->hasFile('image_path')) {
+                $path = $request->file('image_path')->store('clients', 'public');
+                $validated['image_path'] = $path;
+            }
+
+            $validated['client_id'] = $request->input('client_id');
+            $validated['data_status'] = 1;
+            $validated['created_by'] = auth()->user()->id;
+
+            // Save the client
+            ClientRequest::create($validated);
+            $msg = 'Client edit requested successfully!';
+        }
+        return redirect()->route('v1.client-database.list')->with('success', $msg);
     }
 
 }

@@ -260,6 +260,10 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/update', 'update')->name('v1.client-database.update');
             Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
             Route::get('/{id}/detail',  'getClientDetail')->name('v1.client-database.detail');
+            Route::post('/update-request',  'clientDataRequest')->name('v1.client-database.update-request');
+            Route::get('/request-list', 'updateRequestList')->name('v1.client-database.request-list');
+            Route::get('/data-request', 'getClientRequestsData')->name('v1.client-database.data-request');
+            Route::post('/delete-request','deleteFromRequest')->name('v1.client-database.delete-request');
 
         });
 

@@ -84,8 +84,9 @@
                                 <th>Sales Person</th>
                                 <th>Image</th>
                                 <th>Quotation</th>
-                                <th>Created On</th>
+                                <th>Requested On</th>
                                 <th>Updated On</th>
+                                <th>Request</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -138,7 +139,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to <span id="actionText"></span> this user?
+                        Are you sure you want to <span id="actionText"></span> this client?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -166,7 +167,7 @@
                     scrollX: true, // Enable horizontal scrolling
                     responsive: false,
                     ajax: {
-                        url: '{{ route('v1.client-database.data') }}',
+                        url: '{{ route('v1.client-database.data-request') }}',
                         data: function (d) {
                             d.sales_person = $('#filter-sales-person').val();
                             d.industry = $('#filter-industry').val();
@@ -229,8 +230,9 @@
                             }
                         },
                         { data: 'quotation', name: 'quotation' },
-                        { data: 'created_on' },
+                        { data: 'created_by' },
                         { data: 'updated_on' },
+                        { data: 'request_status', name: 'request_status', orderable: false, searchable: false },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                     ]
                 });
@@ -269,19 +271,19 @@
                     actionType = $(this).data("action");
 
                     // Set action text in modal
-                    $("#actionText").text(actionType === "deactivate" ? "deactivate" : "activate");
+                    $("#actionText").text(actionType === "delete" ? "Delete" : "activate");
 
                     // Show modal
                     $("#confirmModal").modal("show");
                 });
                 $("#confirmBtn").on("click", function () {
                     $.ajax({
-                        url: "{{ route('v1.client-database.toggle-status') }}", // Your Laravel route
+                        url: "{{ route('v1.client-database.delete-request') }}", // Your Laravel route
                         type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
                             id: userId,
-                            action: actionType
+                            action: 3
                         },
                         success: function (response) {
                             $("#confirmModal").modal("hide"); // Close modal
