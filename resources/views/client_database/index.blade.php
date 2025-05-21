@@ -40,7 +40,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4 " style="display: none">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Customize</h5>
@@ -62,6 +62,16 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Manage Edit/Delete Request</h5>
                                 <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View Request</a>
+                            </div>
+                        </div>
+                    </div>
+                    @endcan
+                     @can('edit-client-database')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Manage Salesperson Assignment</h5>
+                                <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View Request</a>
                             </div>
                         </div>
                     </div>

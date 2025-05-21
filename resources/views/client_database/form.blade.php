@@ -98,13 +98,13 @@
                         <input type="text" name="job_title" class="form-control">
                     </div>
                     <!-- Company -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="company">Company *</label>
                         <input type="text" name="company" class="form-control" required>
                     </div>
 
                     <!-- Industry Category -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="industry_category_id">Industry *</label>
                         <select name="industry_category_id" class="form-control" required>
                             @foreach ($industries as $industry)
@@ -114,7 +114,7 @@
                     </div>
 
                     <!-- Country -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="country_id">Country *</label>
                         <select name="country_id" class="form-control" required>
                             @foreach ($countries as $country)
@@ -123,13 +123,24 @@
                         </select>
                     </div>
 
+                    <!-- Sales person -->
+                    <div class="form-group col-6">
+                        <label for="contact_for_id">Contact For (Salesperson) *</label>
+                        <select name="contact_for_id" class="form-control" required>
+                            @foreach ($salesPeople as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
                                     <!-- Upload Image -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="image_path">Upload Image</label>
-                        <input type="file" name="image_path" class="form-control-file">
-                        <br>
+                        <input type="file" name="image_path" class="form-control">
                         <small>Max 2 MB file size only</small>
                     </div>
+
+
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Submit</button>
                         <a href="{{ route('v1.client-database.list')}}" class="btn btn-warning">Cancel</a>
@@ -142,11 +153,22 @@
             <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
                 <form class="row g-3" action="{{ route('v1.client-database.import') }}" method="post" enctype="multipart/form-data">
                     @csrf
-                    <div class="form-group">
+                    <div class="form-group  col-12">
                         <p>Please <a href="/template/import_client.csv">download</a> and use this excel template to upload</p>
+                    </div>
+                    <div class="form-group  col-6">
                         <label for="csv_file">Upload CSV File *</label>
                         <input type="file" name="csv_file" class="form-control" accept=".csv" required>
                         <small>CSV format only, Max 2MB file size</small>
+                    </div>
+                    <!-- Sales person -->
+                    <div class="form-group col-6">
+                        <label for="country_id">Contact For (Sales Person) *</label>
+                        <select name="contact_for_id" class="form-control" required>
+                            @foreach ($salesPeople as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Import</button>

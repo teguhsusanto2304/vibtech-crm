@@ -1,4 +1,28 @@
 <div class="row">
+    @if($users)
+
+    <!-- Sales person -->
+                    <div class="form-group col-8">
+                        <input id="client_id" name="client_id" type="hidden">
+                        <label for="contact_for_id">Salesperson *</label>
+                        <select name="sales_person_id" class="form-control" required>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-4">
+                         <label for="contact_for_id mb-4">Allow Edit</label>
+                         <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="is_editable" name="is_editable">
+                            <label class="form-check-label" for="checkDefault">
+                                Yes
+                            </label>
+                        </div>
+                    </div>
+
+
+    @else
     {{-- Left: Image --}}
     <div class="col-md-4 text-center">
         @if ($client->image_path)
@@ -60,17 +84,29 @@
         <td>{{ $client->salesPerson->name ?? '-' }}</td>
       </tr>
       @if($delete)
+        @php
+            if($delete=='yes'){
+                $header = 'Are you sure you want to delete this client?';
+                $subheader = 'Reason for Deletion:';
+                $status = 'delete';
+            } else {
+                $header = 'Are you sure you want to edit this client?';
+                $subheader = 'Reason for Editing:';
+                $status = 'edit';
+            }
+        @endphp
       <tr>
-        <td colspan="2"><p>Are you sure you want to delete this client?</p>
-            <label for="deleteReason" class="form-label">Reason for Deletion:</label>
+        <td colspan="2"><p>{{ $header }}</p>
+            <label for="deleteReason" class="form-label">{{ $subheader }}</label>
             <input type="hidden" name="client_id" value="{{ $client->id }}">
-            <input type="hidden" name="status" value="delete">
-            <textarea class="form-control" id="deleteReason" name="delete_reason" rows="3" required></textarea>
+            <input type="hidden" name="status" value="{{ $status }}">
+            <textarea class="form-control" id="remark" name="remark" rows="3" required></textarea>
         </td>
       </tr>
       @endif
     </tbody>
   </table>
 </div>
+@endif
 
 </div>

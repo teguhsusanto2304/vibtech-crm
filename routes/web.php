@@ -250,6 +250,9 @@ Route::middleware('auth')->group(function () {
         Route::prefix('client-database')->controller(ClientController::class)->group(function () {
             Route::get('/', 'index')->name('v1.client-database');
             Route::get('/list', 'list')->name('v1.client-database.list');
+            Route::get('/assignment-salesperson/list', 'assignmentList')->name('v1.client-database.assignment-salesperson.list');
+            Route::get('/assignment-salesperson/data','getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
+            Route::put('/assignment-salesperson','assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
             Route::get('/data', 'getClientsData')->name('v1.client-database.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
             Route::get('/create', 'create')->name('v1.client-database.create');
@@ -257,14 +260,17 @@ Route::middleware('auth')->group(function () {
             Route::post('/import', 'import')->name('v1.client-database.import');
             Route::post('/toggle-status','toggleStatus')->name('v1.client-database.toggle-status');
             Route::get('/{id}/edit', 'edit')->name('v1.client-database.edit');
+            Route::get('/{id}/preview', 'preview')->name('v1.client-database.preview');
             Route::put('/{id}/update', 'update')->name('v1.client-database.update');
+            Route::put('/{id}/client-update-request', 'updateRequest')->name('v1.client-database.client-update-request');
             Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
             Route::get('/{id}/detail',  'getClientDetail')->name('v1.client-database.detail');
             Route::post('/update-request',  'clientDataRequest')->name('v1.client-database.update-request');
             Route::get('/request-list', 'updateRequestList')->name('v1.client-database.request-list');
             Route::get('/data-request', 'getClientRequestsData')->name('v1.client-database.data-request');
             Route::post('/delete-request','deleteFromRequest')->name('v1.client-database.delete-request');
-
+            Route::get('/export/csv', 'exportCsv')->name('v1.client-database.export.csv');
+            Route::get('/export/pdf', 'exportPdf')->name('v1.client-database.export.pdf');
         });
 
         // 🔹 Client Database Management Routes

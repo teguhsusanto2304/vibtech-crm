@@ -43,9 +43,8 @@
         @endif
         <div class="card">
             <div class="card-body">
-                <form class="row g-3" action="{{ route('v1.client-database.update-request', $client->id) }}" method="post" enctype="multipart/form-data">
+                <form class="row g-3" action="{{ route('v1.client-database.update-request') }}" method="post" enctype="multipart/form-data">
                     @csrf
-
                     <!-- Name -->
                     <div class="form-group">
                          <input type="hidden" name="client_id" value="{{ $client->id }}">

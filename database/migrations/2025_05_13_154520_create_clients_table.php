@@ -25,8 +25,13 @@ return new class extends Migration
             $table->foreignId('industry_category_id')->nullable()->constrained('industry_categories')->onDelete('cascade');
             $table->foreignId('country_id')->nullable()->constrained('countries')->onDelete('cascade');
             $table->foreignId('sales_person_id')->nullable()->constrained('users')->onDelete('cascade');
-
+            $table->foreignId('contact_for_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('created_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('updated_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('image_path')->nullable(); // Upload Image
+            $table->string('remark')->nullable();
+            $table->boolean('is_editable')->default(0);
+            $table->boolean('is_deletable')->default(0);
             $table->integer('data_status')->default(1);
             $table->timestamps();
         });

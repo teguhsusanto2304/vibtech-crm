@@ -100,11 +100,10 @@
                                 <th>Job Title</th>
                                 <th>Industry</th>
                                 <th>Country</th>
-                                <th>Sales Person</th>
                                 <th>Image</th>
-                                <th>Quotation</th>
-                                <th>Created On</th>
-                                <th>Updated On</th>
+                                <th>Contact Uploaded By</th>
+                                <th>Contact For</th>
+                                <th>Assign To</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -127,42 +126,23 @@
             </div>
         </div>
 
-        <div class="modal fade" id="clientDetailDeleteModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
+        <div class="modal fade" id="clientDetailAssignModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="clientDetailModalLabel">Client Detail Delete Request</h5>
+                        <h5 class="modal-title" id="clientDetailModalLabel">Salesperson Assignment</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="deleteClientForm" method="POST" action="{{ route('v1.client-database.update-request')}}">
+                    <form id="assignClientForm" method="POST" action="{{ route('v1.client-database.assignment-salesperson')}}">
                     @csrf
-                    <div class="modal-body" id="client-detail-delete-body">
+                    @METHOD('PUT')
+                    <div class="modal-body" id="client-detail-assign-body">
                         <p>Loading...</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Request to delete</button>
-                    </div>
-                </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="clientDetailEditModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="clientDetailModalLabel">Client Detail Edit Request</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="editClientForm" method="POST" action="{{ route('v1.client-database.update-request')}}">
-                    @csrf
-                    <div class="modal-body" id="client-detail-edit-body">
-                        <p>Loading...</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Request to edit</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Close">No</button>&nbsp;
+                        <button type="submit" class="btn btn-success">Yes</button>
                     </div>
                 </form>
                 </div>
@@ -229,7 +209,7 @@ $('#download-pdf').on('click', function () {
                     scrollX: true, // Enable horizontal scrolling
                     responsive: false,
                     ajax: {
-                        url: '{{ route('v1.client-database.data') }}',
+                        url: '{{ route('v1.client-database.assignment-salesperson.data') }}',
                         data: function (d) {
                             d.sales_person = $('#filter-sales-person').val();
                             d.industry = $('#filter-industry').val();
@@ -246,7 +226,6 @@ $('#download-pdf').on('click', function () {
                         { data: 'job_title' },
                         { data: 'industry', name: 'industryCategory.name' },
                         { data: 'country', name: 'country.name' },
-                        { data: 'sales_person', name: 'salesPerson.name' },
                         {
                             data: 'image_path_img',
                             render: function (data, type, row) {
@@ -271,9 +250,9 @@ $('#download-pdf').on('click', function () {
                                 return data; // Untuk sorting, filtering, dll. tetap gunakan data asli
                             }
                         },
-                        { data: 'quotation', name: 'quotation' },
                         { data: 'created_on' },
-                        { data: 'updated_on' },
+                        { data: 'contact_for' },
+                        { data: 'assign_to' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                     ]
                 });
@@ -294,35 +273,26 @@ $('#download-pdf').on('click', function () {
                     });
                 });
 
-                $(document).on('click', '.view-client-delete', function () {
+                $(document).on('click', '.view-client-assign', function () {
                     const clientId = $(this).data('id');
-                    $('#client-detail-delete-body').html('<p>Loading...</p>');
-                    $('#clientDetailDeleteModal').modal('show');
+                    $('#client-detail-assign-body').html('<p>Loading...</p>');
+                    $('#clientDetailAssignModal').modal('show');
 
-                    $.get('/v1/client-database/' + clientId + '/detail?delete=yes', function (data) {
-                        $('#client-detail-delete-body').html(data);
+                    $.get('/v1/client-database/' + clientId + '/detail?assign=yes', function (data) {
+                        $('#client-detail-assign-body').html(data);
+                        $('#client_id').val(clientId);
                     }).fail(function () {
-                        $('#client-detail-delete-body').html('<p class="text-danger">Failed to load client data.</p>');
-                    });
-                });
-
-                $(document).on('click', '.view-client-edit', function () {
-                    const clientId = $(this).data('id');
-                    $('#client-detail-edit-body').html('<p>Loading...</p>');
-                    $('#clientDetailEditModal').modal('show');
-
-                    $.get('/v1/client-database/' + clientId + '/detail?delete=no', function (data) {
-                        $('#client-detail-edit-body').html(data);
-                    }).fail(function () {
-                        $('#client-detail-edit-body').html('<p class="text-danger">Failed to load client data.</p>');
+                        $('#client-detail-assign-body').html('<p class="text-danger">Failed to load client data.</p>');
                     });
                 });
 
 
                 $(document).on("click", ".confirm-action", function () {
                     userId = $(this).data("id");
+                    actionType = $(this).data("action");
+
                     // Set action text in modal
-                    $("#actionText").text("delete");
+                    $("#actionText").text(actionType === "deactivate" ? "deactivate" : "activate");
 
                     // Show modal
                     $("#confirmModal").modal("show");
@@ -333,7 +303,8 @@ $('#download-pdf').on('click', function () {
                         type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
-                            id: userId
+                            id: userId,
+                            action: actionType
                         },
                         success: function (response) {
                             $("#confirmModal").modal("hide"); // Close modal

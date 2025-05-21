@@ -11,44 +11,31 @@ class ClientRequest extends Model
     use HasFactory;
     protected $fillable = [
         'client_id',
-        'name',
-        'company',
-        'position',
-        'email',
-        'office_number',
-        'mobile_number',
-        'job_title',
-        'industry_category_id',
-        'country_id',
-        'sales_person_id',
-        'image_path',
-        'delete_reason',
         'data_status',
-        'created_by'
+        'remark',
+        'created_by',
+        'updated_by',
+        'approved_by',
+        'approved_at'
     ];
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class,'client_id');
     }
 
-    public function industryCategory(): BelongsTo
-    {
-        return $this->belongsTo(IndustryCategory::class);
-    }
-
-    public function country(): BelongsTo
-    {
-        return $this->belongsTo(Country::class);
-    }
-
-    public function salesPerson(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'sales_person_id');
-    }
-
-    public function user(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+     public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+     public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }
