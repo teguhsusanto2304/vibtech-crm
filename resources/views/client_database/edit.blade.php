@@ -43,8 +43,9 @@
         @endif
         <div class="card">
             <div class="card-body">
-                <form class="row g-3" action="{{ route('v1.client-database.update-request') }}" method="post" enctype="multipart/form-data">
+                <form class="row g-3" action="{{ route('v1.client-database.client-update-request',$client->id) }}" method="post" enctype="multipart/form-data">
                     @csrf
+                    @method('PUT')
                     <!-- Name -->
                     <div class="form-group">
                          <input type="hidden" name="client_id" value="{{ $client->id }}">
@@ -78,13 +79,13 @@
                     </div>
 
                     <!-- Company -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="company">Company *</label>
                         <input type="text" name="company" class="form-control" value="{{ old('company', $client->company) }}" required>
                     </div>
 
                     <!-- Industry Category -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="industry_category_id">Industry *</label>
                         <select name="industry_category_id" class="form-control" required>
                             @foreach ($industries as $industry)
@@ -96,7 +97,7 @@
                     </div>
 
                     <!-- Country -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="country_id">Country *</label>
                         <select name="country_id" class="form-control" required>
                             @foreach ($countries as $country)
@@ -107,20 +108,10 @@
                         </select>
                     </div>
 
-                    <!-- Sales Person -->
-                    <div class="form-group">
-                        <label for="sales_person_id">Sales Person *</label>
-                        <select name="sales_person_id" class="form-control" required>
-                            @foreach ($salesPeople as $user)
-                                <option value="{{ $user->id }}" {{ $client->sales_person_id == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+
 
                     <!-- Upload Image -->
-                    <div class="form-group">
+                    <div class="form-group col-6">
                         <label for="image_path">Upload Image</label>
                         <input type="file" name="image_path" class="form-control-file">
                         @if ($client->image_path)

@@ -224,6 +224,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/edit', 'edit_memo')->name('v1.management-memo.edit');
             Route::put('/{id}/update', 'update_memo')->name('v1.management-memo.update');
             Route::put('/{id}/{status}/destroy','destroy_memo')->name('v1.management-memo.destroy');
+            Route::post('/{id}/toggle-read-status','toggleReadStatus')->name('v1.management-memo.toggle-read-status');
         });
 
         Route::prefix('employee-handbooks')->controller(PostController::class)->group(function () {

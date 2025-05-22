@@ -17,6 +17,12 @@ class Post extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function userRead()
+    {
+        return $this->hasMany(EventUserRead::class,'event_id');
+
+    }
+
     public function logs()
     {
         return $this->hasMany(PostUpdateLog::class);

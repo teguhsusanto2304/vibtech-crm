@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EventUserRead;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\PostUpdateLog;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
@@ -265,16 +267,22 @@ class PostController extends Controller
                 ->update(['read_at' => now()]);
         }
         $post = Post::findOrFail($id);
+        $userHasRead = false;
+        if (Auth::check()) {
+            $userHasRead = $post->userRead()->where('user_id', Auth::id())->exists();
+        }
+        $readUsers = EventUserRead::where('event_id',$id)->get();
+        $readUserIds = $readUsers->pluck('user_id')->toArray();
+        $allRelevantUsers = User::where('user_status', 1)->get();
+        $unreadUsers = $allRelevantUsers->filter(function ($user) use ($readUserIds) {
+            return !in_array($user->id, $readUserIds);
+        })->values();
         $logs = PostUpdateLog::with('user')
              ->where('post_id', $id)
              ->latest()
              ->get();
-        return view('post.show',compact('post','logs'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
+        return view('post.show',compact('post','logs','userHasRead','readUsers','unreadUsers'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
     }
-
-
-
-
 
     public function getPosts(Request $request)
     {
@@ -307,6 +315,30 @@ class PostController extends Controller
                 })
                 ->rawColumns(['action','card'])
                 ->make(true);
+        }
+    }
+
+    public function toggleReadStatus(Request $request, $id)
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $user = Auth::user();
+        $isRead = $request->boolean('is_read'); // Safely get boolean value
+
+        if ($isRead) {
+            // Mark as read: create a record if it doesn't exist
+            $read = new EventUserRead;
+            $read->user_id = auth()->user()->id;
+            $read->read_at = date('Y-m-d H:i:s');
+            $read->event_id = $id;
+            $read->save();
+            return response()->json(['success' => true, 'message' => 'Memo marked as read.']);
+        } else {
+            // Mark as unread: remove the record
+            $post->userRead()->detach($user->id);
+            return response()->json(['success' => true, 'message' => 'Memo marked as unread.']);
         }
     }
 }

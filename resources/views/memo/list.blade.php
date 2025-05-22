@@ -50,6 +50,8 @@
                     <thead class="table-light">
                         <tr>
                             <th width="60%">Title</th>
+                            <th width="5%">Read</th>
+                            <th width="5%">Unread</th>
                             <th width="20%">Created</th>
                             <th width="10%">Status</th>
                             <th>Actions</th>
@@ -60,6 +62,8 @@
                             @if((auth()->user()->can('view-management-memo') && $post->data_status==0) || $post->data_status==1)
                                 <tr>
                                     <td>{{ $post->title }}</td>
+                                    <td></td>
+                                    <td></td>
                                     <td><small>{{ $post->created_at->format('d M Y') }}</small>
                                     <br><small>{{ $post->user->name }}</small></td>
                                     <td>

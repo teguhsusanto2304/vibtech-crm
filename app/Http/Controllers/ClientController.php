@@ -12,6 +12,7 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 use function PHPUnit\Framework\isEmpty;
 
@@ -129,6 +130,11 @@ class ClientController extends Controller
         // Save the client
         $client->update($validated);
 
+
+        $clientReq = ClientRequest::where(['client_id'=>$id,'data_status'=>3])->first();
+        $clientReq->data_status = 1;
+        $clientReq->save();
+
         return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
     }
 
@@ -175,9 +181,10 @@ class ClientController extends Controller
     public function updateRequest(Request $request, $id)
     {
         DB::beginTransaction();
-        $clientReq = ClientRequest::findOrFail($id);
-        dd($clientReq);
+        $clientReq = ClientRequest::where(['client_id'=>$id,'data_status'=>1])->first();
         $clientReq->data_status = 3;
+        $clientReq->updated_at = date('Y-m-d H:i:s');
+        $clientReq->updated_by = auth()->user()->id;
         $clientReq->save();
 
         $client = Client::findOrFail($clientReq->client_id);
@@ -262,9 +269,9 @@ class ClientController extends Controller
 
     public function assignmentSalesperson(Request $request)
     {
-        DB::beginTransaction();
+        //DB::beginTransaction();
 
-        try {
+        //try {
             $client = Client::findOrFail($request->client_id);
 
             $validated = $request->validate([
@@ -275,43 +282,56 @@ class ClientController extends Controller
             $validated['updated_at'] = date('Y-m-d H:i:s');
             // Save the client
             $client->update($validated);
-            DB::commit();
+
+            $clientReq = new ClientRequest;
+            $clientReq->data_status = 1;
+            $clientReq->created_by = auth()->user()->id;
+            $clientReq->client_id = $request->client_id;
+             $clientReq->approved_by = auth()->user()->id;
+            $clientReq->remark = 'first time to client edit';
+            $clientReq->save();
+
+            //DB::commit();
             return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        //} catch (\Illuminate\Validation\ValidationException $e) {
             // Rollback transaction on validation error
-            DB::rollBack();
-            return redirect()->back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
+        //    DB::rollBack();
+        //    return redirect()->back()->withErrors($e->errors())->withInput();
+        //} catch (\Exception $e) {
             // Rollback transaction on any other exception
-            DB::rollBack();
+        //    DB::rollBack();
             // Log the error for debugging
             //\Log::error('Error updating client: ' . $e->getMessage(), ['exception' => $e]);
-            return redirect()->back()->with('error', 'Failed to update client. Please try again.')->withInput();
-        }
+        //    return redirect()->back()->with('error', 'Failed to update client. Please try again.')->withInput();
+        //}
     }
 
     public function deleteFromRequest(Request $request)
     {
         $clientRequest = ClientRequest::find($request->id);
-        $client = Client::find($clientRequest->client_id);
 
         if (!$clientRequest) {
             return response()->json(['success' => false, 'message' => 'User not found']);
         }
-
-        $clientRequest->data_status = 4;
+        if($request->action=='delete'){
+            $clientRequest->data_status = 4;
+            $msg = 'Request to delete client data has approved successfully';
+        } else if($request->action=='edit'){
+            $clientRequest->data_status = 3;
+            $msg = 'Request to edit client data has approved successfully';
+        }
+        $clientRequest->approved_by = auth()->user()->id;
+        $clientRequest->approved_at = date('Y-m-d H:i:s');
         $clientRequest->save();
 
-        $client->data_status = 0;
-        $client->save();
-
-        return response()->json(['success' => true, 'message' => 'Client request deleted successfully']);
+        return response()->json(['success' => true, 'message' => $msg]);
     }
 
     public function getClientsData(Request $request)
     {
-        $clients = Client::leftJoin('industry_categories', 'clients.industry_category_id', '=', 'industry_categories.id')
+        $clients = Client::distinct('clients.id')
+            ->leftJoin('industry_categories', 'clients.industry_category_id', '=', 'industry_categories.id')
             ->leftJoin('countries', 'clients.country_id', '=', 'countries.id')
             ->leftJoin('users', 'clients.sales_person_id', '=', 'users.id')
             ->join('users as created', 'clients.created_id', '=', 'created.id')
@@ -368,34 +388,35 @@ class ClientController extends Controller
                 $btnEdit = '';
                 if ($row->sales_person_id == auth()->user()->id) {
                     $delete = $row->clientRequests
-                        ->filter(function ($req) {
-                            return $req->data_status == 2;
-                        })
-                        ->sortByDesc('created_at') // Urutkan berdasarkan waktu pembuatan terbaru
-                        ->first();
+                            ->whereIn('data_status', [2, 4]) // Akan memfilter data_status 2 atau 4
+                            ->sortByDesc('created_at')
+                            ->first();
                         if (is_null($delete)) {
-                            $btnDelete .= '<button class="btn btn-danger btn-sm view-client-delete" data-id="' . $row->id . '">Request to Delete</button></div>';
+                            $btnDelete .= '<button class="btn btn-warning btn-sm view-client-delete" data-id="' . $row->id . '">Request to Delete</button></div>';
                         } else {
                             if (is_null($delete->approved_by)) {
                                 $btnDelete .= '<button class="btn btn-danger btn-sm" disabled>Waiting Response</button>';
                             } else {
-                                 $btnDelete .= '<button class="btn btn-danger btn-sm" disabled>Delete</button>';
+                                 $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="' . $row->id . '"
+                                                data-action="edit" >Open To Delete</button>';
                             }
                         }
 
-                        $edit = $row->clientRequests
-                        ->filter(function ($req) {
-                            return $req->data_status == 1;
-                        })
-                        ->sortByDesc('created_at') // Urutkan berdasarkan waktu pembuatan terbaru
-                        ->first();
+                        $edit  = $row->clientRequests
+                            ->whereIn('data_status', [1, 3]) // Akan memfilter data_status 2 atau 4
+                            ->sortByDesc('created_at')
+                            ->first();
                         if (is_null($edit)) {
-                            $btnEdit .= '<button class="btn btn-primary btn-sm view-client-delete" data-id="' . $row->id . '">Request to Edit</button>';
+                            $btnEdit .= '<button class="btn btn-primary btn-sm view-client-edit" data-id="' . $row->id . '">Request to Edit</button>';
                         } else {
                             if (is_null($edit->approved_by)) {
                                 $btnEdit .= '<button class="btn btn-primary btn-sm" disabled>Waiting Response</button>';
                             } else {
-                                 $btnEdit .= '<button class="btn btn-primary btn-sm" disabled>Edit</button>';
+                                if($edit->data_status==3){
+                                    $btnEdit .= '<button class="btn btn-primary btn-sm view-client-edit" data-id="' . $row->id . '">Request to Edit</button>';
+                                } else {
+                                    $btnEdit .= '<a class="btn btn-success btn-sm" href="'.route('v1.client-database.edit',$row->id).'">Open To Edit</a>';
+                                }
                             }
                         }
 
@@ -419,81 +440,134 @@ class ClientController extends Controller
 
     public function getClientRequestsData(Request $request)
     {
-        $clients = ClientRequest::leftJoin('industry_categories', 'client_requests.industry_category_id', '=', 'industry_categories.id')
-            ->leftJoin('countries', 'client_requests.country_id', '=', 'countries.id')
-            ->leftJoin('users', 'client_requests.sales_person_id', '=', 'users.id')
-            ->with(['industryCategory', 'country', 'salesPerson'])
-            ->select('client_requests.*');
+        $requestType = $request->input('request_type');
+        $clientReqs = ClientRequest::with([
+            'client', // Eager load the Client model
+            'client.industryCategory', // Nested eager load
+            'client.country',        // Nested eager load
+            'client.salesPerson',    // Nested eager load (Client's sales person)
+            'client.createdBy',      // Nested eager load (Client's creator)
+            'client.updatedBy',      // Nested eager load (Client's updater)
+            'createdBy',             // Eager load the User who created the ClientRequest (this is the 'created_by' from ClientRequest)
+            'approvedBy',            // Eager load the User who approved the ClientRequest
+        ]);
+        if ($requestType == 1) { // Edit Requested
+            $clientReqs->whereIn('data_status',[1,3]);
+        } elseif ($requestType == 2) { // Delete Requested
+            $clientReqs->whereIn('data_status', [2,4]);
+        } else {
+            // Default atau error handling jika request_type tidak valid
+            // Misalnya, kembalikan koleksi kosong atau throw error
+            $clientReqs->where('data_status', -1); // Pastikan tidak ada hasil
+        }
+
+        // Filters based on Client's relationships (correctly using whereHas with dot notation)
         if ($request->filled('sales_person')) {
-            $clients->whereHas('salesPerson', function ($q) use ($request) {
+            $clientReqs->whereHas('client.salesPerson', function ($q) use ($request) {
                 $q->where('name', $request->sales_person);
             });
         }
 
         if ($request->filled('industry')) {
-            $clients->whereHas('industryCategory', function ($q) use ($request) {
+            $clientReqs->whereHas('client.industryCategory', function ($q) use ($request) {
                 $q->where('name', $request->industry);
             });
         }
 
         if ($request->filled('country')) {
-            $clients->whereHas('country', function ($q) use ($request) {
+            $clientReqs->whereHas('client.country', function ($q) use ($request) {
                 $q->where('name', $request->country);
             });
         }
 
+        $data = $clientReqs->get();
 
-        return DataTables::of($clients)
+        return DataTables::of($data)
             ->addIndexColumn()
-            ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
-            ->addColumn('country', fn($client) => $client->country->name ?? '-')
-            ->addColumn('sales_person', fn($client) => $client->salesPerson->name ?? '-')
+            // Access client data through the 'client' relationship
+            ->addColumn('client_name', fn($row) => $row->client->name ?? '-')
+            ->addColumn('client_company', fn($row) => $row->client->company ?? '-')
+            ->addColumn('client_email', fn($row) => $row->client->email ?? '-')
+            ->addColumn('industry', fn($row) => $row->client->industryCategory->name ?? '-')
+            ->addColumn('country', fn($row) => $row->client->country->name ?? '-')
+            ->addColumn('sales_person', fn($row) => $row->client->salesPerson->name ?? '-') // Access via client relationship
             ->addColumn('image_path_img', function ($row) {
-                if (!empty($row->image_path)) {
-                    return asset('storage/' . $row->image_path);
+                // This refers to the image_path on the Client model
+                if (!empty($row->client->image_path)) {
+                    return asset('storage/' . $row->client->image_path);
                 } else {
                     return null;
-                    //return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
                 }
             })
             ->addColumn('action', function ($row) {
-                $btn = '<div class="btn-group" role="group" aria-label="Basic mixed styles example"><button class="btn btn-info btn-sm view-client" data-id="' . $row->id . '">View</button>';
+                $btn = '<div class="btn-group" role="group" aria-label="Basic mixed styles example">';
+                // Ensure $row->client exists before accessing its properties
+                $clientId = $row->id ?? null;
 
-                if ($row->data_status == 1) {
-                    $btn .= '<div class="btn-group" role="group" aria-label="Basic mixed styles example"><a class="btn btn-success btn-sm" href="' . route('v1.client-database.preview', $row->id) . '">Preview</button>';
-                } else if ($row->data_status == 2) {
-                    $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm">Delete</a>';
+                if ($clientId) { // Only show buttons if a related client exists
+                    $btn .= '<button class="btn btn-info btn-sm view-client" data-id="' . $row->client->id . '">View Client</button>';
+
+                    // Logic for ClientRequest specific actions (edit/delete request)
+                    // Assuming $row is a ClientRequest model instance
+                    if ($row->data_status == 1) { // This is the data_status of the ClientRequest
+                        if (is_null($row->approved_by)) {
+                            $btn .= '<button class="btn btn-primary btn-sm confirm-action" data-id="' . $clientId . '"
+                                                data-action="edit">Approve</button>';
+                        } else {
+                            // This button would typically lead to approving/reviewing the edit request
+                            if (is_null($row->updated_by)){
+                                $btn .= '<a class="btn btn-success btn-sm" disabled>Has Approved</a>';
+                            } else {
+                                $btn .= '<a class="btn btn-success btn-sm" disabled>Has Updated</a>';
+                            }
+                        }
+                    } else if ($row->data_status == 3) { // This is the data_status of the ClientRequest
+                        if (!is_null($row->approved_by)) {
+                            $btn .= '<button class="btn btn-success btn-sm" disabled>Has Approved</button>';
+                        }
+                    } else if ($row->data_status == 2) { // This is the data_status of the ClientRequest
+                        if (is_null($row->approved_by)) {
+                            $btn .= '<button class="btn btn-danger btn-sm confirm-action" data-id="' . $clientId . '"
+                                                data-action="delete">Approve</button>';
+                        }
+                    } else if ($row->data_status == 4) { // This is the data_status of the ClientRequest
+                        if (!is_null($row->approved_by)) {
+                            $btn .= '<button class="btn btn-danger btn-sm" disabled>Has Approved</button>';
+                        }
+                    }
+                } else {
+                    $btn .= '<span class="text-muted">No Client Linked</span>';
                 }
-
+                $btn .= '</div>'; // Close the btn-group
                 return $btn;
             })
-            ->addColumn('quotation', fn($client) => 'Nil')
-            ->addColumn('created_on', fn($client) => $client->created_at->format('d M Y'))
-            ->addColumn('created_by', function ($client) {
-                if ($client->created_at) {
-                    return $client->updated_at->format('d M Y') . '<p><span class="badge bg-info"><small>' . $client->user->name . '</small></span>';
-                } else {
-                    return '';
-                }
+            ->addColumn('name', fn($row) => $row->client->name ) // This would be from Client, not ClientRequest
+             ->addColumn('company', fn($row) => $row->client->company )
+             ->addColumn('email', fn($row) => $row->client->email )
+             ->addColumn('office_number', fn($row) => $row->client->office_number )
+             ->addColumn('mobile_number', fn($row) => $row->client->mobile_number )
+             ->addColumn('job_title', fn($row) => $row->client->job_title )
+            ->addColumn('created_on', fn($row) => $row->created_at->format('d M Y')) // created_at of ClientRequest
+            ->addColumn('created_by', function ($row) {
+                // Access the createdBy relationship on the ClientRequest model
+                return $row->created_at->format('d M Y') . ' <p><span class="badge bg-info"><small>' . ($row->createdBy->name ?? 'N/A') . '</small></span></p>';
             })
-            ->addColumn('updated_on', function ($client) {
-                if ($client->created_at != $client->updated_at) {
-                    return $client->updated_at->format('d M Y');
-                } else {
-                    return '';
+            // Added the remark column, accessing it directly from the ClientRequest model
+            ->addColumn('remark', fn($row) => $row->remark ?? '-')
+            ->addColumn('request_status', function ($row) {
+                // This refers to the data_status of the ClientRequest
+                if ($row->data_status == 1) {
+                    return '<span class="badge bg-primary">Edit Request</span>';
+                } else if ($row->data_status == 2) {
+                    return '<span class="badge bg-danger">Delete Request</span>';
+                } else if ($row->data_status == 3) {
+                    return '<span class="badge bg-success">Approved/Updated</span>'; // Assuming 3 means approved
+                } else if ($row->data_status == 4) {
+                    return '<span class="badge bg-warning">Deleted</span>'; // Assuming 4 means deleted
                 }
+                return '<span class="badge bg-secondary">Other Status</span>';
             })
-            ->addColumn('request_status', function ($client) {
-                if ($client->data_status == 1) {
-                    return '<span class="badge bg-primary">Edit</span>';
-                } else if ($client->data_status == 4) {
-                    return '<span class="badge bg-danger">Has Deleted</span>';
-                } else if ($client->data_status == 3) {
-                    return '<span class="badge bg-success">Has Updated</span>';
-                } else {
-                    return '<span class="badge bg-warning">Delete</span>';
-                }
-            })
+            // IMPORTANT: Specify which columns contain raw HTML to prevent escaping
             ->escapeColumns([])
             ->make(true);
     }

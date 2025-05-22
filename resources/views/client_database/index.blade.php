@@ -56,7 +56,7 @@
                             </div>
                         </div>
                     </div>
-                    @can('edit-client-database')
+                    @can('view-edit-delete-request')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
@@ -66,7 +66,7 @@
                         </div>
                     </div>
                     @endcan
-                     @can('edit-client-database')
+                     @can('view-salesperson-assignment')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">

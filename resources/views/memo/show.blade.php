@@ -84,6 +84,16 @@
                     <div class="post-content">
                         {!! $post->content !!}
                         <hr style="border: #666">
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="readMemoCheckbox"
+                                data-post-id="{{ $post->id }}"
+                                {{ $userHasRead ? 'checked' : '' }}>
+                            <label class="form-check-label" for="readMemoCheckbox">
+                                I have already Read this memo
+                            </label>
+                        </div>
+
                         @if($logs->count())
                             <div class="mt-4">
                                 <h4>Update Logs</h4>

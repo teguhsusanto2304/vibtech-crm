@@ -27,7 +27,7 @@
                 </div>
             @endif
         </div>
-        <div id="msg"></div>
+
         <!-- DataTable Dependencies -->
         <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -42,51 +42,49 @@
         <!-- Card -->
         <div class="card">
             <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
-        <div></div>
+                <div> </div>
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <form id="filters-form" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="filter-sales-person" class="form-label">Sales Person</label>
+                                <select id="filter-sales-person" class="form-select">
+                                    <option value="">All Sales Persons</option>
+                                    @foreach ($salesPersons as $salesPerson)
+                                        <option value="{{ $salesPerson->name }}">{{ $salesPerson->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filter-industry" class="form-label">Industry</label>
+                                <select id="filter-industry" class="form-select">
+                                    <option value="">All Industries</option>
+                                    @foreach ($industries as $industry)
+                                        <option value="{{ $industry->name }}">{{ $industry->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filter-country" class="form-label">Country</label>
+                                <select id="filter-country" class="form-select">
+                                    <option value="">All Countries</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country->name }}">{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
+                        <div class="btn-group" role="group">
+                            <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
+                            <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+                            <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
+                        </div>
+                    </div>
+                </div>
 
-
-        <div class="row mb-3">
-    <div class="col-md-8">
-        <form id="filters-form" class="row g-3">
-            <div class="col-md-4">
-                <label for="filter-sales-person" class="form-label">Sales Person</label>
-                <select id="filter-sales-person" class="form-select">
-                    <option value="">All Sales Persons</option>
-                    @foreach ($salesPersons as $salesPerson)
-                        <option value="{{ $salesPerson->name }}">{{ $salesPerson->name }}</option>
-                    @endforeach
-                </select>
             </div>
-            <div class="col-md-4">
-                <label for="filter-industry" class="form-label">Industry</label>
-                <select id="filter-industry" class="form-select">
-                    <option value="">All Industries</option>
-                    @foreach ($industries as $industry)
-                        <option value="{{ $industry->name }}">{{ $industry->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="filter-country" class="form-label">Country</label>
-                <select id="filter-country" class="form-select">
-                    <option value="">All Countries</option>
-                    @foreach ($countries as $country)
-                        <option value="{{ $country->name }}">{{ $country->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </form>
-    </div>
-    <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
-        <div class="btn-group" role="group">
-            <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
-            <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
-            <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
-        </div>
-    </div>
-</div>
-
-    </div>
             <div class="card-body" style="overflow-x: auto;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped nowrap w-100" id="clients-table">
@@ -102,9 +100,9 @@
                                 <th>Country</th>
                                 <th>Sales Person</th>
                                 <th>Image</th>
-                                <th>Quotation</th>
-                                <th>Created On</th>
-                                <th>Updated On</th>
+                                <th>Requested On</th>
+                                <th>Remark</th>
+                                <th>Request</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -136,35 +134,14 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="deleteClientForm" method="POST" action="{{ route('v1.client-database.update-request')}}">
-                    @csrf
-                    <div class="modal-body" id="client-detail-delete-body">
-                        <p>Loading...</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Request to delete</button>
-                    </div>
-                </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="clientDetailEditModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="clientDetailModalLabel">Client Detail Edit Request</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="editClientForm" method="POST" action="{{ route('v1.client-database.update-request')}}">
-                    @csrf
-                    <div class="modal-body" id="client-detail-edit-body">
-                        <p>Loading...</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger">Request to edit</button>
-                    </div>
-                </form>
+                        @csrf
+                        <div class="modal-body" id="client-detail-delete-body">
+                            <p>Loading...</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -178,7 +155,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to <span id="actionText"></span> this user?
+                        Are you sure you want to <span id="actionText"></span> this client?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -199,29 +176,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
         <script>
-            $('#reset-filters').on('click', function () {
-                $('#filter-sales-person').val('');
-                $('#filter-industry').val('');
-                $('#filter-country').val('');
-                $('#clients-table').DataTable().ajax.reload();
-            });
-            $('#download-csv').on('click', function () {
-    const params = new URLSearchParams({
-        sales_person: $('#filter-sales-person').val(),
-        industry: $('#filter-industry').val(),
-        country: $('#filter-country').val()
-    });
-    window.location.href = `/v1/client-database/export/csv?${params.toString()}`;
-});
-
-$('#download-pdf').on('click', function () {
-    const params = new URLSearchParams({
-        sales_person: $('#filter-sales-person').val(),
-        industry: $('#filter-industry').val(),
-        country: $('#filter-country').val()
-    });
-    window.location.href = `/v1/client-database/export/pdf?${params.toString()}`;
-});
             $(function () {
                 let table = $('#clients-table').DataTable({
                     processing: true,
@@ -229,23 +183,22 @@ $('#download-pdf').on('click', function () {
                     scrollX: true, // Enable horizontal scrolling
                     responsive: false,
                     ajax: {
-                        url: '{{ route('v1.client-database.data') }}',
+                        url: '{{ route('v1.client-database.data-request') }}',
                         data: function (d) {
                             d.sales_person = $('#filter-sales-person').val();
                             d.industry = $('#filter-industry').val();
                             d.country = $('#filter-country').val();
                         }
                     },
-
                     columns: [
-                        { data: 'name' },
+                        { data: 'name', name: 'name' },
                         { data: 'company' },
                         { data: 'email' },
                         { data: 'office_number' },
                         { data: 'mobile_number' },
                         { data: 'job_title' },
-                        { data: 'industry', name: 'industryCategory.name' },
-                        { data: 'country', name: 'country.name' },
+                        { data: 'industry', name: 'client.industryCategory.name' },
+                        { data: 'country', name: 'client.country.name' },
                         { data: 'sales_person', name: 'salesPerson.name' },
                         {
                             data: 'image_path_img',
@@ -255,25 +208,25 @@ $('#download-pdf').on('click', function () {
                                         return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
                                     } else {
                                         return `
-                        <img src="${data}"
-                             alt="User Image"
-                             width="80" height="80"
-                             class="img-thumbnail preview-image"
-                             data-bs-toggle="modal"
-                             data-bs-target="#imageModal"
-                             style="cursor:pointer"
-                             data-full="${data}">
-                        <p><a href="${data}" download><small>Download</small></a></p>
-                    `;
+                            <img src="${data}"
+                                 alt="User Image"
+                                 width="80" height="80"
+                                 class="img-thumbnail preview-image"
+                                 data-bs-toggle="modal"
+                                 data-bs-target="#imageModal"
+                                 style="cursor:pointer"
+                                 data-full="${data}">
+                            <p><a href="${data}" download><small>Download</small></a></p>
+                        `;
                                     }
 
                                 }
                                 return data; // Untuk sorting, filtering, dll. tetap gunakan data asli
                             }
                         },
-                        { data: 'quotation', name: 'quotation' },
-                        { data: 'created_on' },
-                        { data: 'updated_on' },
+                        { data: 'created_by' },
+                        { data: 'remark', name: 'remark' },
+                        { data: 'request_status', name: 'request_status', orderable: false, searchable: false },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                     ]
                 });
@@ -306,47 +259,31 @@ $('#download-pdf').on('click', function () {
                     });
                 });
 
-                $(document).on('click', '.view-client-edit', function () {
-                    const clientId = $(this).data('id');
-                    $('#client-detail-edit-body').html('<p>Loading...</p>');
-                    $('#clientDetailEditModal').modal('show');
-
-                    $.get('/v1/client-database/' + clientId + '/detail?delete=no', function (data) {
-                        $('#client-detail-edit-body').html(data);
-                    }).fail(function () {
-                        $('#client-detail-edit-body').html('<p class="text-danger">Failed to load client data.</p>');
-                    });
-                });
-
 
                 $(document).on("click", ".confirm-action", function () {
                     userId = $(this).data("id");
+                    actionType = $(this).data("action");
+
                     // Set action text in modal
-                    $("#actionText").text("delete");
+                    $("#actionText").text(actionType === "delete" ? "Delete" : "activate");
 
                     // Show modal
                     $("#confirmModal").modal("show");
                 });
                 $("#confirmBtn").on("click", function () {
                     $.ajax({
-                        url: "{{ route('v1.client-database.toggle-status') }}", // Your Laravel route
+                        url: "{{ route('v1.client-database.delete-request') }}", // Your Laravel route
                         type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
-                            id: userId
+                            id: userId,
+                            action: 3
                         },
                         success: function (response) {
                             $("#confirmModal").modal("hide"); // Close modal
                             if (response.success) {
-                                table.ajax.reload();
-                                     const alertContent = `
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                            <p>`+response.message+`</p>
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>`;
-
-                                    // Target the div with id="msg" and set its HTML content
-                                    $('#msg').html(alertContent);
+                                //alert("User " + actionType + "d successfully!");
+                                location.reload(); // Refresh DataTables
                             } else {
                                 alert("Failed to " + actionType + " user.");
                             }
@@ -373,6 +310,8 @@ $('#download-pdf').on('click', function () {
                 </div>
             </div>
         </div>
+
+
 @endsection
 
     @push('scripts')
