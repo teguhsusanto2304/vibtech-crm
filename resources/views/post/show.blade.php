@@ -25,6 +25,7 @@
 
             <div class="card">
                 <div class="card-body">
+
                     <style>
                         .post-content {
                             font-family: 'Segoe UI', sans-serif;
@@ -68,95 +69,94 @@
                             margin: 1rem 0;
                         }
                     </style>
-
-
-                    <div class="post-content">
-                        <div class="row">
-                            <div class="col-9">
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="post-content">
                                 {!! $post->content !!}
-                            </div>
-                            <div class="col-3">
-                                {{-- Daftar Pengguna yang Sudah Membaca --}}
-                                <div class="card mb-3">
-                                    <div class="card-header bg-success text-white">
-                                        <h5 class="mb-0">Users Have Read</h5>
+                                <hr style="border: #666">
+                                @auth {{-- Only show if user is logged in --}}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="readMemoCheckbox"
+                                data-post-id="{{ $post->id }}" {{ $userHasRead ? 'checked disabled' : '' }}>
+                            <label class="form-check-label" for="readMemoCheckbox">
+                                I have already read and acknowledge this memo
+                            </label>
+                        </div>
+                    @endauth
+                                @if($logs->count())
+                                    <div class="mt-4">
+                                        <h5>Update Logs</h5>
+                                        <ul class="list-group">
+                                            @foreach($logs as $log)
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <span>{{ $log->user->name ?? 'Unknown User' }}</span>
+                                                    <small class="text-muted">{{ $log->created_at->format('d M Y H:i') }}</small>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </div>
-                                    <ul class="list-group list-group-flush">
-                                        @forelse($readUsers as $reader)
-                                            <li class="list-group-item d-flex align-items-center ps-3">
-                                                @if($reader->user->path_image)
-                                                    <img src="{{ asset($reader->user->path_image) }}"
-                                                        alt="{{ $reader->user->name }}'s Avatar" class="rounded-circle me-2"
-                                                        width="30" height="30">
-                                                @else
-                                                    <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar"
-                                                        class="rounded-circle me-2" width="30" height="30">
-                                                @endif
-                                                <div>
-                                                    {{ $reader->user->name }}<br> {{-- Tambahkan <br> atau ganti dengan tag
-                                                    block seperti p jika nama tidak selalu di wrap --}}
-                                                    <small class="text-muted">Read at
-                                                        {{ $reader->read_at->format('d m Y H:i') }}</small>
-                                                </div>
-                                            </li>
-                                        @empty
-                                            <li class="list-group-item">No one has read this memo yet.</li>
-                                        @endforelse
-                                    </ul>
-                                </div>
-                                <!-- show user unread -->
-                                <div class="card mb-3">
-                                    <div class="card-header bg-warning text-white">
-                                        <h5 class="mb-0">Users Haven't Read</h5>
-                                    </div>
-                                    <ul class="list-group list-group-flush">
-                                        @forelse($unreadUsers as $reader)
-                                            <li class="list-group-item d-flex align-items-center ps-3">
-                                                @if($reader->path_image)
-                                                    <img src="{{ asset($reader->path_image) }}" alt="{{ $reader->name }}'s Avatar"
-                                                        class="rounded-circle me-2" width="30" height="30">
-                                                @else
-                                                    <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar"
-                                                        class="rounded-circle me-2" width="30" height="30">
-                                                @endif
-                                                {{ $reader->name }}
-                                            </li>
-                                        @empty
-                                            <li class="list-group-item">No one has read this memo yet.</li>
-                                        @endforelse
-                                    </ul>
-                                </div>
+                                @endif
                             </div>
                         </div>
-                        <hr style="border: #666">
-
-                        @auth {{-- Only show if user is logged in --}}
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" value="1" id="readMemoCheckbox"
-                                    data-post-id="{{ $post->id }}" {{ $userHasRead ? 'checked disabled' : '' }}>
-                                <label class="form-check-label" for="readMemoCheckbox">
-                                    I have already Read this memo
-                                </label>
-                            </div>
-                        @endauth
-                        @if($logs->count())
-                            <div class="mt-4">
-                                <h5>Update Logs</h5>
-                                <ul class="list-group">
-                                    @foreach($logs as $log)
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <span>{{ $log->user->name ?? 'Unknown User' }}</span>
-                                            <small class="text-muted">{{ $log->created_at->format('d M Y H:i') }}</small>
+                        <div class="col-3">
+                            {{-- Daftar Pengguna yang Sudah Membaca --}}
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">Read</h5>
+                                </div>
+                                <ul class="list-group list-group-flush">
+                                    @forelse($readUsers as $reader)
+                                        <li class="list-group-item d-flex align-items-center ps-3">
+                                            @if($reader->user->path_image)
+                                                <img src="{{ asset($reader->user->path_image) }}"
+                                                    alt="{{ $reader->user->name }}'s Avatar" class="rounded-circle me-2" width="30"
+                                                    height="30">
+                                            @else
+                                                <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar"
+                                                    class="rounded-circle me-2" width="30" height="30">
+                                            @endif
+                                            <div>
+                                                {{ $reader->user->name }}<br> {{-- Tambahkan <br> atau ganti dengan tag
+                                                block seperti p jika nama tidak selalu di wrap --}}
+                                                <small class="text-muted">Read at
+                                                    {{ $reader->read_at->format('d m Y H:i') }}</small>
+                                            </div>
                                         </li>
-                                    @endforeach
+                                    @empty
+                                        <li class="list-group-item">No one has read this memo yet.</li>
+                                    @endforelse
                                 </ul>
                             </div>
-                        @endif
+                            <!-- show user unread -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0">Unread</h5>
+                                </div>
+                                <ul class="list-group list-group-flush">
+                                    @forelse($unreadUsers as $reader)
+                                        <li class="list-group-item d-flex align-items-center ps-3">
+                                            @if($reader->path_image)
+                                                <img src="{{ asset($reader->path_image) }}" alt="{{ $reader->name }}'s Avatar"
+                                                    class="rounded-circle me-2" width="30" height="30">
+                                            @else
+                                                <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar"
+                                                    class="rounded-circle me-2" width="30" height="30">
+                                            @endif
+                                            {{ $reader->name }}
+                                        </li>
+                                    @empty
+                                        <li class="list-group-item">No one has read this memo yet.</li>
+                                    @endforelse
+                                </ul>
+                            </div>
+                        </div>
 
                     </div>
+
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <script>
         $(function () {

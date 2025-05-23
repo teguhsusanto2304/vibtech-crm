@@ -231,6 +231,8 @@ class PostController extends Controller
 
         $post->update($request->all());
 
+        EventUserRead::where('event_id',$id)->delete();
+
         return redirect()->route('v1.management-memo.list')->with('success', 'Management memo updated successfully.');
     }
 
