@@ -62,8 +62,8 @@
                             @if((auth()->user()->can('view-management-memo') && $post->data_status==0) || $post->data_status==1)
                                 <tr>
                                     <td>{{ $post->title }}</td>
-                                    <td></td>
-                                    <td></td>
+                                    <td>{{ $post->userRead->count() }}</td>
+                                    <td>{{ $totalRelevantUsersCount - $post->userRead->count() }} </td>
                                     <td><small>{{ $post->created_at->format('d M Y') }}</small>
                                     <br><small>{{ $post->user->name }}</small></td>
                                     <td>

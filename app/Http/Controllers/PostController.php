@@ -56,14 +56,18 @@ class PostController extends Controller
 
     public function memo(Request $request)
     {
+        $totalRelevantUsersCount = User::where('user_status', 1)->count();
+
         if(auth()->user()->can('create-management-memo')){
             $posts = Post::where('post_type', 2)
             ->whereNot('data_status', 3)
+            ->withCount('userRead')
             ->orderBy('created_at','desc')
             ->get();
         } else {
             $posts = Post::where('post_type', 2)
             ->where('data_status', 1)
+            ->withCount('userRead')
             ->orderBy('created_at','desc')
             ->get();
         }
@@ -74,7 +78,7 @@ class PostController extends Controller
             $selectedPost = Post::find($request->post_id);
         }
 
-        return view('memo.list',compact('posts','selectedPost'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
+        return view('memo.list',compact('posts','selectedPost','totalRelevantUsersCount'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
     }
 
 
