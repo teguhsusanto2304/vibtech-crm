@@ -763,19 +763,24 @@
     let socketMenu;
 
     function updateChatBadge() {
-        fetch(`{{ env('CHAT_URL') }}/unread-count/${userIdMenu}`)
-            .then(response => response.json())
-            .then(data => {
-                const badge = document.querySelector('.menu-link .badge');
-                if (data.count > 0) {
-                    badge.textContent = data.count;
-                    badge.style.display = "inline-block";
-                } else {
-                    badge.style.display = "none";
-                }
-            })
-            .catch(err => console.error("Error fetching unread count:", err));
-    }
+    fetch(`{{ env('CHAT_URL') }}/unread-count/${userIdMenu}`)
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.menu-link .badge');
+            const baseTitle = "Staff Portall"; // 👈 Replace with your default page title
+
+            if (data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = "inline-block";
+                document.title = `(${data.count}) ${baseTitle}`;
+            } else {
+                badge.style.display = "none";
+                document.title = baseTitle;
+            }
+        })
+        .catch(err => console.error("Error fetching unread count:", err));
+}
+
 
     // Function to start WebSocket connection
     function startWebSocketMenu() {
