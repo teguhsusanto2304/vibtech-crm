@@ -176,8 +176,7 @@
                     },
                     success: function (response) {
                         console.log(response.message);
-                        // Optionally, show a temporary success message to the user
-                        // e.g., using Bootstrap's alert or a toast notification
+                        location.reload();
                     },
                     error: function (xhr) {
                         console.error('Error updating read status:', xhr.responseText);
