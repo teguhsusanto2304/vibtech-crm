@@ -7,6 +7,7 @@ use Illuminate\View\Component;
 class Breadcrumb extends Component
 {
     public $breadcrumb;
+
     public $title;
 
     public function __construct($breadcrumb = [], $title = '')

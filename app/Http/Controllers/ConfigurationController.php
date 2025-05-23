@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Helpers\GlobalConfig;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 
 class ConfigurationController extends Controller
 {
@@ -22,36 +20,36 @@ class ConfigurationController extends Controller
 
         foreach ($config as $key => $value) {
             $parts = explode('_', $key, 2);
-            if($parts[0]=='site'){
+            if ($parts[0] == 'site') {
                 $category = $parts[0]; // e.g., 'site', 'contact'
                 $grouped[$category][$key] = $value;
             }
         }
 
-        return view('configuration.index',['groupedConfig' => $grouped])->with('title', 'Configuration')->with('breadcrumb', ['Home', 'Master Data', 'Configuration']);
+        return view('configuration.index', ['groupedConfig' => $grouped])->with('title', 'Configuration')->with('breadcrumb', ['Home', 'Master Data', 'Configuration']);
     }
 
     public function update(Request $request)
     {
         $path = config_path('global.json');
-    $settings = json_decode(file_get_contents($path), true);
+        $settings = json_decode(file_get_contents($path), true);
 
-    // Handle text input
-    if ($request->has('site_login_title')) {
-        $settings['site_login_title']['value'] = $request->input('site_login_title');
-    }
+        // Handle text input
+        if ($request->has('site_login_title')) {
+            $settings['site_login_title']['value'] = $request->input('site_login_title');
+        }
 
-    // Handle file input
-    if ($request->hasFile('site_login_image')) {
-        $file = $request->file('site_login_image');
-        $filename = uniqid() . $file->getClientOriginalName();
-        $file->move(public_path('assets/img'), $filename);
-        $settings['site_login_image']['value'] = "assets/img/" . $filename;
-    }
+        // Handle file input
+        if ($request->hasFile('site_login_image')) {
+            $file = $request->file('site_login_image');
+            $filename = uniqid().$file->getClientOriginalName();
+            $file->move(public_path('assets/img'), $filename);
+            $settings['site_login_image']['value'] = 'assets/img/'.$filename;
+        }
 
-    file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT));
+        file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT));
 
-    return back()->with('success', 'Settings updated successfully.');
+        return back()->with('success', 'Settings updated successfully.');
     }
 
     protected function findConfigDefinition($key)
@@ -61,6 +59,7 @@ class ConfigurationController extends Controller
                 return $settings[$key];
             }
         }
+
         return null;
     }
 
@@ -80,7 +79,7 @@ class ConfigurationController extends Controller
             }
         }
 
-        $content = "<?php\n\nreturn " . var_export($configArray, true) . ";\n";
+        $content = "<?php\n\nreturn ".var_export($configArray, true).";\n";
         file_put_contents($path, $content);
         Artisan::call('config:clear'); // Clear cache agar perubahan diterapkan
 

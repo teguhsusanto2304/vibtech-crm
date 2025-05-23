@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\NewPasswordController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,27 +12,27 @@ use Illuminate\Http\Request;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\ChatGroupController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\GenerateFormController;
 use App\Http\Controllers\JobAssignmentController;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PositionLevelController;
-use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleBookingController;
 use App\Http\Controllers\VehicleController;
-use App\Http\Controllers\ChatGroupController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\NewPasswordController;
-use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\WhistleblowningPolicyController;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\GenerateFormController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('login');
@@ -76,9 +75,9 @@ Route::get('/clear-cache', function () {
     Artisan::call('route:clear');
     Artisan::call('event:clear');
     Artisan::call('package:discover --ansi');
-    return "Cache cleared successfully!";
-});
 
+    return 'Cache cleared successfully!';
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
@@ -92,7 +91,6 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('login');
 
     })->name('logout');
-
 
     Route::prefix('v1')->group(function () {
 
@@ -111,8 +109,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/{emp_id}/edit', 'edit')->name('v1.users.edit');
             Route::put('/{id}', 'update')->name('v1.users.update');
             Route::get('/data', 'getUsers')->name('v1.users.data');
-            Route::post('/toggle-status','toggleStatus')->name('v1.users.toggle-status');
-            Route::get('/offline-user','getOfflineUsers');
+            Route::post('/toggle-status', 'toggleStatus')->name('v1.users.toggle-status');
+            Route::get('/offline-user', 'getOfflineUsers');
         });
 
         // Group routes for JobAssignmentController
@@ -127,12 +125,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/job-list-user', 'getJobsAssignmentsByUser')->name('v1.job-assignment-form.job-list-user');
             Route::get('/invited-staff/{user_id}/{job_id}', 'invitedStaff')->name('v1.job-assignment-form.job.invited-staff');
             Route::get('/history', 'history')->name('v1.job-assignment-form.history');
-            Route::get('/job-list/history','getJobsAssignmentHistories')->name('v1.job-assignment-form.history.data');
-            Route::post('/update-status','updateJobAssignmentStatus')->name('v1.job-assignment-form.history.update-status');
-            Route::post('/update-vehicle-require','updateJobAssignmentVehicleRequire')->name('v1.job-assignment-form.update-vehicle-require');
-            Route::get('/{id}/edit','edit')->name('v1.job-assignment-form.edit');
-            Route::put('{id}',  'update')->name('v1.job-assignment-form.update');
-            Route::get('/send-email','sendBookingEmail')->name('v1.job-assignment-form.send-email');
+            Route::get('/job-list/history', 'getJobsAssignmentHistories')->name('v1.job-assignment-form.history.data');
+            Route::post('/update-status', 'updateJobAssignmentStatus')->name('v1.job-assignment-form.history.update-status');
+            Route::post('/update-vehicle-require', 'updateJobAssignmentVehicleRequire')->name('v1.job-assignment-form.update-vehicle-require');
+            Route::get('/{id}/edit', 'edit')->name('v1.job-assignment-form.edit');
+            Route::put('{id}', 'update')->name('v1.job-assignment-form.update');
+            Route::get('/send-email', 'sendBookingEmail')->name('v1.job-assignment-form.send-email');
             Route::post('/assign-vehicle-booker', 'assignVehicleBooker')->name('v1.job-assignment-form.assign-vehicle-booker');
         });
 
@@ -183,11 +181,11 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/cancel', 'cancel')->name('v1.vehicle-bookings.cancel');
             Route::get('/list', 'list')->name('v1.vehicle-bookings.list');
             Route::get('/histories', 'history')->name('v1.vehicle-bookings.histories');
-            Route::get('/data','getData')->name('v1.vehicle-bookings.data');
-            Route::get('/histories-data','getHistoryData')->name('v1.vehicle-bookings.histories-data');
-            Route::get('/{id}/detail','show')->name('v1.vehicle-bookings.detail');
+            Route::get('/data', 'getData')->name('v1.vehicle-bookings.data');
+            Route::get('/histories-data', 'getHistoryData')->name('v1.vehicle-bookings.histories-data');
+            Route::get('/{id}/detail', 'show')->name('v1.vehicle-bookings.detail');
             Route::get('/{id}/modal', 'commonShow')->name('v1.vehicle-bookings.modal');
-            Route::get('/available-vehicles','getAvailableVehicles')->name('v1.vehicle-bookings.available-vehicles');
+            Route::get('/available-vehicles', 'getAvailableVehicles')->name('v1.vehicle-bookings.available-vehicles');
         });
 
         // 🔹 Vehicles Routes
@@ -199,7 +197,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/update', 'update')->name('v1.vehicles.update');
             Route::get('/list', 'list')->name('v1.vehicles.list');
             Route::get('/car-image', 'getCarImages')->name('v1.vehicles.car-image');
-            Route::get('/data','getData')->name('v1.vehicle.data');
+            Route::get('/data', 'getData')->name('v1.vehicle.data');
 
         });
 
@@ -223,28 +221,28 @@ Route::middleware('auth')->group(function () {
             Route::post('/store', 'store_memo')->name('v1.management-memo.store');
             Route::get('/{id}/edit', 'edit_memo')->name('v1.management-memo.edit');
             Route::put('/{id}/update', 'update_memo')->name('v1.management-memo.update');
-            Route::put('/{id}/{status}/destroy','destroy_memo')->name('v1.management-memo.destroy');
-            Route::post('/{id}/toggle-read-status','toggleReadStatus')->name('v1.management-memo.toggle-read-status');
+            Route::put('/{id}/{status}/destroy', 'destroy_memo')->name('v1.management-memo.destroy');
+            Route::post('/{id}/toggle-read-status', 'toggleReadStatus')->name('v1.management-memo.toggle-read-status');
         });
 
         Route::prefix('employee-handbooks')->controller(PostController::class)->group(function () {
             Route::get('/list', 'handbook')->name('v1.employee-handbooks.list');
             Route::get('/create', 'create_handbook')->name('v1.employee-handbooks.create');
             Route::post('/store', 'store_handbook')->name('v1.employee-handbooks.store');
-            Route::get('/{id}/edit','edit_handbook')->name('v1.employee-handbooks.edit');
-            Route::get('/{id}/read','read_handbook')->name('v1.employee-handbooks.read');
-            Route::put('/{id}/update','update_handbook')->name('v1.employee-handbooks.update');
-            Route::put('/{id}/{status}/destroy','destroy_handbook')->name('v1.employee-handbooks.destroy');
+            Route::get('/{id}/edit', 'edit_handbook')->name('v1.employee-handbooks.edit');
+            Route::get('/{id}/read', 'read_handbook')->name('v1.employee-handbooks.read');
+            Route::put('/{id}/update', 'update_handbook')->name('v1.employee-handbooks.update');
+            Route::put('/{id}/{status}/destroy', 'destroy_handbook')->name('v1.employee-handbooks.destroy');
         });
 
         Route::prefix('whistleblowing-policy')->controller(WhistleblowningPolicyController::class)->group(function () {
             Route::get('/', 'index')->name('v1.whistleblowing-policy');
             Route::get('/create', 'create')->name('v1.whistleblowing-policy.create');
-            Route::get('/edit','edit')->name('v1.whistleblowing-policy.edit');
-            Route::get('/read','read')->name('v1.whistleblowing-policy.read');
-            Route::post('/update','update')->name('v1.whistleblowing-policy.update');
-            Route::post('/report','report')->name('v1.whistleblowing-policy.report');
-            Route::delete('/destroy','destroy')->name('v1.whistleblowing-policy.destroy');
+            Route::get('/edit', 'edit')->name('v1.whistleblowing-policy.edit');
+            Route::get('/read', 'read')->name('v1.whistleblowing-policy.read');
+            Route::post('/update', 'update')->name('v1.whistleblowing-policy.update');
+            Route::post('/report', 'report')->name('v1.whistleblowing-policy.report');
+            Route::delete('/destroy', 'destroy')->name('v1.whistleblowing-policy.destroy');
         });
 
         // 🔹 Client Database Management Routes
@@ -252,24 +250,24 @@ Route::middleware('auth')->group(function () {
             Route::get('/', 'index')->name('v1.client-database');
             Route::get('/list', 'list')->name('v1.client-database.list');
             Route::get('/assignment-salesperson/list', 'assignmentList')->name('v1.client-database.assignment-salesperson.list');
-            Route::get('/assignment-salesperson/data','getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
-            Route::put('/assignment-salesperson','assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
+            Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
+            Route::put('/assignment-salesperson', 'assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
             Route::get('/data', 'getClientsData')->name('v1.client-database.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
             Route::get('/create', 'create')->name('v1.client-database.create');
             Route::post('/store', 'store')->name('v1.client-database.store');
             Route::post('/import', 'import')->name('v1.client-database.import');
-            Route::post('/toggle-status','toggleStatus')->name('v1.client-database.toggle-status');
+            Route::post('/toggle-status', 'toggleStatus')->name('v1.client-database.toggle-status');
             Route::get('/{id}/edit', 'edit')->name('v1.client-database.edit');
             Route::get('/{id}/preview', 'preview')->name('v1.client-database.preview');
             Route::put('/{id}/update', 'update')->name('v1.client-database.update');
             Route::put('/{id}/client-update-request', 'updateRequest')->name('v1.client-database.client-update-request');
-            Route::put('/{id}/{status}/destroy','destroy')->name('v1.client-database.destroy');
-            Route::get('/{id}/detail',  'getClientDetail')->name('v1.client-database.detail');
-            Route::post('/update-request',  'clientDataRequest')->name('v1.client-database.update-request');
+            Route::put('/{id}/{status}/destroy', 'destroy')->name('v1.client-database.destroy');
+            Route::get('/{id}/detail', 'getClientDetail')->name('v1.client-database.detail');
+            Route::post('/update-request', 'clientDataRequest')->name('v1.client-database.update-request');
             Route::get('/request-list', 'updateRequestList')->name('v1.client-database.request-list');
             Route::get('/data-request', 'getClientRequestsData')->name('v1.client-database.data-request');
-            Route::post('/delete-request','deleteFromRequest')->name('v1.client-database.delete-request');
+            Route::post('/delete-request', 'deleteFromRequest')->name('v1.client-database.delete-request');
             Route::get('/export/csv', 'exportCsv')->name('v1.client-database.export.csv');
             Route::get('/export/pdf', 'exportPdf')->name('v1.client-database.export.pdf');
         });
@@ -281,14 +279,10 @@ Route::middleware('auth')->group(function () {
 
         Route::prefix('configuration')->controller(ConfigurationController::class)->group(function () {
             Route::get('/', 'index')->name('v1.configuration');
-            Route::post('/update','update')->name('v1.configuration.update');
+            Route::post('/update', 'update')->name('v1.configuration.update');
         });
 
     });
-
-
-
-
 
 });
 
@@ -298,21 +292,27 @@ Route::post('/dologin', function (Request $request) {
 
     if ($email == 'marketing@vib-tech.com.sg') {
         $request->session()->put('role', 'marketing');
+
         return redirect()->intended(route('dashboard'));
-    } else if ($email == 'sales@vib-tech.com.sg') {
+    } elseif ($email == 'sales@vib-tech.com.sg') {
         $request->session()->put('role', 'sales');
+
         return redirect()->intended(route('dashboard'));
-    } else if ($email == 'operations@vib-tech.com.sg') {
+    } elseif ($email == 'operations@vib-tech.com.sg') {
         $request->session()->put('role', 'operations');
+
         return redirect()->intended(route('dashboard'));
-    } else if ($email == 'project@vib-tech.com.sg') {
+    } elseif ($email == 'project@vib-tech.com.sg') {
         $request->session()->put('role', 'project');
+
         return redirect()->intended(route('dashboard'));
-    } else if ($email == 'it@vib-tech.com.sg') {
+    } elseif ($email == 'it@vib-tech.com.sg') {
         $request->session()->put('role', 'it');
+
         return redirect()->intended(route('dashboard'));
-    } else if ($email == 'admin@vib-tech.com.sg') {
+    } elseif ($email == 'admin@vib-tech.com.sg') {
         $request->session()->put('role', 'admin');
+
         return redirect()->intended(route('dashboard'));
     } else {
 
@@ -321,8 +321,6 @@ Route::post('/dologin', function (Request $request) {
         ]);
     }
 })->name('dologin');
-
-
 
 Route::get('/dashboard', function () {
     return view('dashboard', ['title' => 'Dashboard', 'breadcrumb' => ['Home', 'Dashboard']]);
@@ -390,6 +388,7 @@ Route::get('/whistleblowing-policy', function () {
 
 Route::get('/profile', function () {
     $user = auth()->user();
+
     return view('profile', ['title' => 'My Profile', 'breadcrumb' => ['Home', 'My Profile'], 'user' => $user]);
 })->name('profile');
 
@@ -433,10 +432,9 @@ Route::get('/chat-groups/{id}/edit', [ChatGroupController::class, 'edit'])->name
 Route::put('/chat-groups/{id}/{type}/destroy', [ChatGroupController::class, 'destroy'])->name('chat-groups.destroy');
 Route::put('/chat-groups/{id}/update', [ChatGroupController::class, 'update'])->name('chat-groups.update');
 
-
 Route::get('/chat-groups/{group}', [MessageController::class, 'index'])->name('chat-group.messages');
 Route::get('/chat-groups/{groupId}/members', [ChatGroupController::class, 'getMembers'])->name('chat-group.members');
-Route::delete('/chat-groups/{groupId}/members/{userId}',    [ChatGroupController::class, 'removeMember'])->name('chat-groups.members.remove');
+Route::delete('/chat-groups/{groupId}/members/{userId}', [ChatGroupController::class, 'removeMember'])->name('chat-groups.members.remove');
 Route::get('/chat-groups/{id}/messages', [ChatGroupController::class, 'getMessages']);
 Route::post('/chat-groups/send-message', [ChatGroupController::class, 'sendMessage'])->name('chat-group.send-message');
 Route::post('/chat-groups/{group}/messages', [MessageController::class, 'store']);
@@ -448,9 +446,9 @@ Route::post('/ckeditor/upload', [App\Http\Controllers\CKEditorController::class,
 Route::get('/link-storage', function () {
     if (app()->environment('local')) { // Hanya izinkan di lingkungan lokal
         $output = shell_exec('php ../artisan storage:link');
-        return '<pre>' . $output . '</pre>';
+
+        return '<pre>'.$output.'</pre>';
     } else {
         return 'Aksi ini tidak diizinkan di lingkungan produksi.';
     }
 });
-

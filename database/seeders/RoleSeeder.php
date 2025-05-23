@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
@@ -13,10 +12,10 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        //Role::create(['name' => 'Super Admin']);
+        // Role::create(['name' => 'Super Admin']);
         $admin = Role::create(['name' => 'Super Admin']);
-        //$productManager = Role::create(['name' => 'Product Manager']);
-        //$user = Role::create(['name' => 'User']);
+        // $productManager = Role::create(['name' => 'Product Manager']);
+        // $user = Role::create(['name' => 'User']);
 
         $admin->givePermissionTo([
             'create-user',
@@ -27,7 +26,7 @@ class RoleSeeder extends Seeder
             'delete-role',
             'create-permission',
             'edit-permission',
-            'delete-permission'
+            'delete-permission',
         ]);
 
         /*$productManager->givePermissionTo([

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->unsignedBigInteger('position_level_id')->nullable();
             $table->unsignedBigInteger('department_id')->nullable();
 
-    // Re-add the foreign key constraint
+            // Re-add the foreign key constraint
 
-            //$table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
+            // $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
         });
     }
 

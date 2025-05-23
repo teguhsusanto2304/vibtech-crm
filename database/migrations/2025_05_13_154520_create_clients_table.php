@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('name',150);
-            $table->string('company',150);
-            $table->string('position',100)->nullable();
+            $table->string('name', 150);
+            $table->string('company', 150);
+            $table->string('position', 100)->nullable();
             $table->string('email')->unique();
-            $table->string('office_number',20);
-            $table->string('mobile_number',20)->nullable();
-            $table->string('job_title',100)->nullable();
+            $table->string('office_number', 20);
+            $table->string('mobile_number', 20)->nullable();
+            $table->string('job_title', 100)->nullable();
 
             // Relations
             $table->foreignId('industry_category_id')->nullable()->constrained('industry_categories')->onDelete('cascade');

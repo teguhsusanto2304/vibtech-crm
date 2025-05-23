@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('event_user_reads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->tinyInteger('event_type')->default(1); //1. memo
+            $table->tinyInteger('event_type')->default(1); // 1. memo
             $table->bigInteger('event_id');
             $table->timestamp('read_at');
             $table->timestamps();

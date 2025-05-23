@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class ChatGroup extends Model
 {
     use HasFactory;
-    protected $fillable = ['name','data_status'];
+
+    protected $fillable = ['name', 'data_status'];
 
     public function messages()
     {
@@ -23,7 +24,7 @@ class ChatGroup extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'chat_group_members', 'chat_group_id', 'user_id')
-                    ->withTimestamps(); // optional if you're tracking timestamps
+            ->withTimestamps(); // optional if you're tracking timestamps
     }
 
     public function members()

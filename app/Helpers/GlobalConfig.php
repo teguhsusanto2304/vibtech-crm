@@ -23,6 +23,7 @@ class GlobalConfig
         $data[$key] = $value;
 
         File::put(base_path(self::$path), json_encode($data, JSON_PRETTY_PRINT));
+
         return true;
     }
 }

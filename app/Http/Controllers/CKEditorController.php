@@ -10,14 +10,14 @@ class CKEditorController extends Controller
     {
         if ($request->hasFile('upload')) {
             $file = $request->file('upload');
-            $filename = time() . '_' . $file->getClientOriginalName();
+            $filename = time().'_'.$file->getClientOriginalName();
             $file->move(public_path('uploads'), $filename);
-            $url = asset('uploads/' . $filename);
+            $url = asset('uploads/'.$filename);
 
             return response()->json([
                 'uploaded' => 1,
                 'fileName' => $filename,
-                'url' => $url
+                'url' => $url,
             ]);
         }
     }

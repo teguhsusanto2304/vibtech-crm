@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class JobAssignmentPersonnel extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'job_assignment_id',
         'assignment_status',
         'reason',
-        'purpose_at'
+        'purpose_at',
     ];
 
     public function user()

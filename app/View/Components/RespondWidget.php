@@ -9,12 +9,15 @@ use Illuminate\View\Component;
 class RespondWidget extends Component
 {
     public $personnels;
+
     public $respond;
+
     public $job;
+
     /**
      * Create a new component instance.
      */
-    public function __construct($personnels,$respond,$job)
+    public function __construct($personnels, $respond, $job)
     {
         $this->personnels = $personnels;
         $this->respond = $respond;

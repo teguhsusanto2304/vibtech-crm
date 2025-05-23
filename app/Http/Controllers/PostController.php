@@ -3,39 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\EventUserRead;
-use Illuminate\Http\Request;
 use App\Models\Post;
-use App\Models\User;
 use App\Models\PostUpdateLog;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Str;
+use App\Models\User;
 use Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class PostController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:view-getting-started|create-getting-started|edit-getting-started|delete-getting-started', ['only' => ['index','show']]);
-        $this->middleware('permission:create-getting-started', ['only' => ['create','store']]);
-        $this->middleware('permission:edit-getting-started', ['only' => ['edit','update']]);
+        $this->middleware('permission:view-getting-started|create-getting-started|edit-getting-started|delete-getting-started', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create-getting-started', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit-getting-started', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-getting-started', ['only' => ['destroy']]);
         $this->middleware('permission:view-employee-handbook', ['only' => ['handbook']]);
     }
+
     public function index()
     {
         $posts = Post::latest()->paginate(20);
-        return view('post.list',compact('posts'))->with('title', 'Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
+
+        return view('post.list', compact('posts'))->with('title', 'Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
     public function handbook(Request $request)
     {
-        if(auth()->user()->can('create-employee-handbook')){
+        if (auth()->user()->can('create-employee-handbook')) {
             $posts = Post::where('post_type', 1)
-            ->whereNot('data_status', 3)->latest()->paginate(20);
+                ->whereNot('data_status', 3)->latest()->paginate(20);
         } else {
             $posts = Post::where('post_type', 1)
-            ->where('data_status', 1)->latest()->paginate(20);
+                ->where('data_status', 1)->latest()->paginate(20);
         }
 
         $selectedPost = null;
@@ -51,37 +53,34 @@ class PostController extends Controller
             }
         }
 
-        return view('handbook.list',compact('posts','selectedPost'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
+        return view('handbook.list', compact('posts', 'selectedPost'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
     public function memo(Request $request)
     {
         $totalRelevantUsersCount = User::where('user_status', 1)->count();
 
-        if(auth()->user()->can('create-management-memo')){
+        if (auth()->user()->can('create-management-memo')) {
             $posts = Post::where('post_type', 2)
-            ->whereNot('data_status', 3)
-            ->withCount('userRead')
-            ->orderBy('created_at','desc')
-            ->get();
+                ->whereNot('data_status', 3)
+                ->withCount('userRead')
+                ->orderBy('created_at', 'desc')
+                ->get();
         } else {
             $posts = Post::where('post_type', 2)
-            ->where('data_status', 1)
-            ->withCount('userRead')
-            ->orderBy('created_at','desc')
-            ->get();
+                ->where('data_status', 1)
+                ->withCount('userRead')
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
-
 
         $selectedPost = null;
         if ($request->has('post_id')) {
             $selectedPost = Post::find($request->post_id);
         }
 
-        return view('memo.list',compact('posts','selectedPost','totalRelevantUsersCount'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
+        return view('memo.list', compact('posts', 'selectedPost', 'totalRelevantUsersCount'))->with('title', 'Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo']);
     }
-
-
 
     public function create()
     {
@@ -96,7 +95,8 @@ class PostController extends Controller
     public function read_handbook($id)
     {
         $post = Post::findOrFail($id);
-        return view('handbook.read',compact('post'))->with('title', 'Read Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Read Employee Handbook']);
+
+        return view('handbook.read', compact('post'))->with('title', 'Read Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Read Employee Handbook']);
     }
 
     public function create_memo()
@@ -116,7 +116,7 @@ class PostController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'content' => $request->content,
-            'created_by' => auth()->user()->id
+            'created_by' => auth()->user()->id,
         ]);
 
         return redirect()->route('v1.getting-started.index')->with('success', 'Post created successfully.');
@@ -125,27 +125,27 @@ class PostController extends Controller
     public function store_handbook(Request $request)
     {
         $data = $request->validate([
-          'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-          'pdf'   => 'nullable|file|mimes:pdf|max:5120', // max 5MB
+            'pdf' => 'nullable|file|mimes:pdf|max:5120', // max 5MB
         ]);
         $data['content'] = $request->input('title');
-          $data['post_type'] = 1;
-          $data['data_status'] = 1;
-          $data['created_by'] = auth()->user()->id;
+        $data['post_type'] = 1;
+        $data['data_status'] = 1;
+        $data['created_by'] = auth()->user()->id;
 
         if ($request->hasFile('path_file')) {
-          $file = $request->file('path_file');
-          $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-          //$path = $file->storeAs('public/pdfs', $filename);
-          $file->move(public_path('pdfs'), $filename);
-          $data['path_file'] = 'pdfs/' . $filename;
+            $file = $request->file('path_file');
+            $filename = Str::random(20).'.'.$file->getClientOriginalExtension();
+            // $path = $file->storeAs('public/pdfs', $filename);
+            $file->move(public_path('pdfs'), $filename);
+            $data['path_file'] = 'pdfs/'.$filename;
         }
 
         Post::create($data);
 
         return redirect()->route('v1.employee-handbooks.list')
-                         ->with('success','Employee handbook has created!');
+            ->with('success', 'Employee handbook has created!');
     }
 
     public function store_memo(Request $request)
@@ -160,8 +160,8 @@ class PostController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'content' => $request->content,
-            'post_type'=>2,
-            'created_by' => auth()->user()->id
+            'post_type' => 2,
+            'created_by' => auth()->user()->id,
         ]);
 
         return redirect()->route('v1.management-memo.list')->with('success', 'Management Memo created successfully.');
@@ -170,19 +170,22 @@ class PostController extends Controller
     public function edit(string $id)
     {
         $post = Post::findOrFail($id);
-        return view('post.edit',compact('post'))->with('title', 'Edit Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Edit a Getting Started']);
+
+        return view('post.edit', compact('post'))->with('title', 'Edit Getting Started')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Edit a Getting Started']);
     }
 
     public function edit_handbook($id)
     {
         $handbook = Post::findOrFail($id);
-        return view('handbook.edit',compact('handbook'))->with('title', 'Edit Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbooks', 'Edit a Employee Handbook']);
+
+        return view('handbook.edit', compact('handbook'))->with('title', 'Edit Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbooks', 'Edit a Employee Handbook']);
     }
 
     public function edit_memo(string $id)
     {
         $post = Post::findOrFail($id);
-        return view('memo.edit',compact('post'))->with('title', 'Edit Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo', 'Edit a Management Memo']);
+
+        return view('memo.edit', compact('post'))->with('title', 'Edit Management Memo')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Management Memo', 'Edit a Management Memo']);
     }
 
     public function update(Request $request, $id)
@@ -199,24 +202,25 @@ class PostController extends Controller
         return redirect()->route('v1.getting-started')->with('success', 'Post updated successfully.');
     }
 
-    public function update_handbook(Request $request,$id)
+    public function update_handbook(Request $request, $id)
     {
         $post = Post::findOrFail($id);
         $data = $request->validate([
             'title' => 'required|string|max:255',
-              'description' => 'nullable|string|max:500',
-            'pdf'   => 'nullable|file|mimes:pdf|max:5120', // max 5MB
-          ]);
+            'description' => 'nullable|string|max:500',
+            'pdf' => 'nullable|file|mimes:pdf|max:5120', // max 5MB
+        ]);
 
-          if ($request->hasFile('path_file')) {
+        if ($request->hasFile('path_file')) {
             $file = $request->file('path_file');
-            $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-            //$path = $file->storeAs('public/pdfs', $filename);
+            $filename = Str::random(20).'.'.$file->getClientOriginalExtension();
+            // $path = $file->storeAs('public/pdfs', $filename);
             $file->move(public_path('pdfs'), $filename);
-            $data['path_file'] = 'pdfs/' . $filename;
-            //$request->merge($data);
-          }
-          $post->update($data);
+            $data['path_file'] = 'pdfs/'.$filename;
+            // $request->merge($data);
+        }
+        $post->update($data);
+
         return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
     }
 
@@ -231,7 +235,7 @@ class PostController extends Controller
 
         $post->update($request->all());
 
-        EventUserRead::where('event_id',$id)->delete();
+        EventUserRead::where('event_id', $id)->delete();
 
         return redirect()->route('v1.management-memo.list')->with('success', 'Management memo updated successfully.');
     }
@@ -245,7 +249,7 @@ class PostController extends Controller
         return redirect()->route('v1.getting-started')->with('success', 'Post updated successfully.');
     }
 
-    public function destroy_handbook($id,$status)
+    public function destroy_handbook($id, $status)
     {
         $post = Post::findOrFail($id);
         $post->data_status = $status;
@@ -254,7 +258,7 @@ class PostController extends Controller
         return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
     }
 
-    public function destroy_memo($id,$status)
+    public function destroy_memo($id, $status)
     {
         $post = Post::findOrFail($id);
         $post->data_status = $status;
@@ -277,28 +281,31 @@ class PostController extends Controller
         if (Auth::check()) {
             $userHasRead = $post->userRead()->where('user_id', Auth::id())->exists();
         }
-        $readUsers = EventUserRead::where('event_id',$id)->get();
+        $readUsers = EventUserRead::where('event_id', $id)->get();
         $readUserIds = $readUsers->pluck('user_id')->toArray();
         $allRelevantUsers = User::where('user_status', 1)->get();
         $unreadUsers = $allRelevantUsers->filter(function ($user) use ($readUserIds) {
-            return !in_array($user->id, $readUserIds);
+            return ! in_array($user->id, $readUserIds);
         })->values();
         $logs = PostUpdateLog::with('user')
-             ->where('post_id', $id)
-             ->latest()
-             ->get();
-        return view('post.show',compact('post','logs','userHasRead','readUsers','unreadUsers'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
+            ->where('post_id', $id)
+            ->latest()
+            ->get();
+
+        return view('post.show', compact('post', 'logs', 'userHasRead', 'readUsers', 'unreadUsers'))->with('title', $post->title)->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started', 'Read Getting Started']);
     }
 
     public function getPosts(Request $request)
     {
         if ($request->ajax()) {
             $data = Post::select('*');
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('v1.roles.edit',['id'=>$row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
-                    $btn .= ' <a href="'.route('v1.roles.show',['id'=>$row->id]).'" class="edit btn btn-info btn-sm">Permission</a>';
+                    $btn = '<a href="'.route('v1.roles.edit', ['id' => $row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+                    $btn .= ' <a href="'.route('v1.roles.show', ['id' => $row->id]).'" class="edit btn btn-info btn-sm">Permission</a>';
+
                     return $btn;
                 })
                 ->addColumn('card', function ($post) {
@@ -310,23 +317,23 @@ class PostController extends Controller
                         </div>
                         <div class="col-md-8">
                             <div class="card-body">
-                                <h5 class="card-title">' . e($post->title) . '</h5>
-                                <p class="card-text">' . e(Str::limit($post->content, 100)) . '</p>
-                                <p class="card-text"><small class="text-muted">' . $post->created_at->diffForHumans() . '</small></p>
+                                <h5 class="card-title">'.e($post->title).'</h5>
+                                <p class="card-text">'.e(Str::limit($post->content, 100)).'</p>
+                                <p class="card-text"><small class="text-muted">'.$post->created_at->diffForHumans().'</small></p>
                             </div>
                         </div>
                     </div>
                 </div>
                     ';
                 })
-                ->rawColumns(['action','card'])
+                ->rawColumns(['action', 'card'])
                 ->make(true);
         }
     }
 
     public function toggleReadStatus(Request $request, $id)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
@@ -340,10 +347,12 @@ class PostController extends Controller
             $read->read_at = date('Y-m-d H:i:s');
             $read->event_id = $id;
             $read->save();
+
             return response()->json(['success' => true, 'message' => 'Memo marked as read.']);
         } else {
             // Mark as unread: remove the record
             $post->userRead()->detach($user->id);
+
             return response()->json(['success' => true, 'message' => 'Memo marked as unread.']);
         }
     }

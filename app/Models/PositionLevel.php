@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class PositionLevel extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'name'
+        'name',
     ];
 }

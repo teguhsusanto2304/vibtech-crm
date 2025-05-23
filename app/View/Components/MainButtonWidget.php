@@ -9,6 +9,7 @@ use Illuminate\View\Component;
 class MainButtonWidget extends Component
 {
     public string $title;
+
     public string $routeName;
 
     /**

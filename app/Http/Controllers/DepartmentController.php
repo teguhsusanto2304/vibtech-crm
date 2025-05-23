@@ -11,17 +11,18 @@ class DepartmentController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:create-department|edit-department|delete-department', ['only' => ['index','show']]);
-        $this->middleware('permission:create-department', ['only' => ['create','store']]);
-        $this->middleware('permission:edit-department', ['only' => ['edit','update']]);
+        $this->middleware('permission:create-department|edit-department|delete-department', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create-department', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit-department', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-department', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('department.list', ['departments' => Department::orderBy('id', 'DESC')->paginate(3)
+        return view('department.list', ['departments' => Department::orderBy('id', 'DESC')->paginate(3),
         ])->with('title', 'Department')->with('breadcrumb', ['Home', 'Master Data', 'Department']);
     }
 
@@ -39,11 +40,11 @@ class DepartmentController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255',
         ]);
         Department::create($validatedData);
 
-            // Return response
+        // Return response
         return redirect()->route('v1.departments')->with('success', 'Department created successfully.');
     }
 
@@ -83,10 +84,12 @@ class DepartmentController extends Controller
     {
         if ($request->ajax()) {
             $data = Department::select('*');
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('v1.users.edit',['emp_id'=>$row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+                    $btn = '<a href="'.route('v1.users.edit', ['emp_id' => $row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+
                     return $btn;
                 })
                 ->rawColumns(['action'])

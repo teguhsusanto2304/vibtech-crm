@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Vehicle;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class VehicleSeeder extends Seeder
@@ -17,10 +16,10 @@ class VehicleSeeder extends Seeder
             'GBL5343R',
             'GBK2108D',
             'GBE8427A',
-            'SKV8915L'
+            'SKV8915L',
         ];
-        foreach($data as $item):
-            Vehicle::create(['name'=>$item,'path_image'=>'-']);
-        endforeach;
+        foreach ($data as $item) {
+            Vehicle::create(['name' => $item, 'path_image' => '-']);
+        }
     }
 }

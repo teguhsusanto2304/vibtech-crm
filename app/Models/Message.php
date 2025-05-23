@@ -24,7 +24,6 @@ class Message extends Model
     public function readers()
     {
         return $this->belongsToMany(User::class, 'message_reads')
-                    ->withPivot('read_at');
+            ->withPivot('read_at');
     }
-
 }

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DefaultUserSeeder extends Seeder
@@ -17,7 +16,7 @@ class DefaultUserSeeder extends Seeder
         $superAdmin = User::create([
             'name' => 'Super Administrator',
             'email' => 'sa@vib-tech.com.sg',
-            'password' => Hash::make('password')
+            'password' => Hash::make('password'),
         ]);
         $superAdmin->assignRole('Super Admin');
     }

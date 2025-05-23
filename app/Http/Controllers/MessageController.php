@@ -19,16 +19,17 @@ class MessageController extends Controller
 
         // Mark all unread messages as read for the current user
         foreach ($messages as $message) {
-            if (!$message->readers->contains($user->id)) {
+            if (! $message->readers->contains($user->id)) {
                 $message->readers()->attach($user->id, ['read_at' => now()]);
             }
         }
         $members = DB::table('chat_group_members')
-        ->join('users', 'chat_group_members.user_id', '=', 'users.id')
-        ->where('chat_group_members.chat_group_id', $group->id)
-        ->select('users.id', 'users.name')
-        ->get(); // Fetch group members
-        return view('chat.messages', compact('group', 'messages','members'));
+            ->join('users', 'chat_group_members.user_id', '=', 'users.id')
+            ->where('chat_group_members.chat_group_id', $group->id)
+            ->select('users.id', 'users.name')
+            ->get(); // Fetch group members
+
+        return view('chat.messages', compact('group', 'messages', 'members'));
     }
 
     public function store(Request $request, ChatGroup $group)
@@ -43,9 +44,9 @@ class MessageController extends Controller
 
         // Get all other members in the group (exclude sender)
         $otherMembers = DB::table('chat_group_members')
-        ->where('chat_group_id', $group->id)
-        ->where('user_id', '!=', Auth::id())
-        ->pluck('user_id');
+            ->where('chat_group_id', $group->id)
+            ->where('user_id', '!=', Auth::id())
+            ->pluck('user_id');
 
         // Insert entries into message_reads for each member
         $reads = [];
@@ -55,7 +56,7 @@ class MessageController extends Controller
                 'user_id' => $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'read_at' => null // Unread by default
+                'read_at' => null, // Unread by default
             ];
         }
 
@@ -64,5 +65,3 @@ class MessageController extends Controller
         return redirect()->route('chat-group.messages', $group->id);
     }
 }
-
-

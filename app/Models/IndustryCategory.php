@@ -8,5 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class IndustryCategory extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'description','data_status'];
+
+    protected $fillable = ['name', 'description', 'data_status'];
 }

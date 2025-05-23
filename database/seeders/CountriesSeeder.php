@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +17,7 @@ class CountriesSeeder extends Seeder
         foreach ($countries as $country) {
             DB::table('countries')->insert([
                 'name' => $country['name'],
-                'iso_code' => $country['iso2']
+                'iso_code' => $country['iso2'],
             ]);
         }
     }

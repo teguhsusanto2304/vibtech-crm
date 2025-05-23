@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
 use App\Models\PositionLevel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -12,11 +11,12 @@ class PositionLevelController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:create-department|edit-department|delete-department', ['only' => ['index','show']]);
-        $this->middleware('permission:create-department', ['only' => ['create','store']]);
-        $this->middleware('permission:edit-department', ['only' => ['edit','update']]);
+        $this->middleware('permission:create-department|edit-department|delete-department', ['only' => ['index', 'show']]);
+        $this->middleware('permission:create-department', ['only' => ['create', 'store']]);
+        $this->middleware('permission:edit-department', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-department', ['only' => ['destroy']]);
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -39,11 +39,11 @@ class PositionLevelController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255',
         ]);
         PositionLevel::create($validatedData);
 
-            // Return response
+        // Return response
         return redirect()->route('v1.position-levels')->with('success', 'Position Level created successfully.');
     }
 
@@ -83,10 +83,12 @@ class PositionLevelController extends Controller
     {
         if ($request->ajax()) {
             $data = PositionLevel::select('*');
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('v1.users.edit',['emp_id'=>$row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+                    $btn = '<a href="'.route('v1.users.edit', ['emp_id' => $row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+
                     return $btn;
                 })
                 ->rawColumns(['action'])

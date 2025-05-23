@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -34,7 +34,7 @@ class User extends Authenticatable
         'department_id',
         'nick_name',
         '2nd_department_id',
-        'user_status'
+        'user_status',
     ];
 
     /**
@@ -67,7 +67,6 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class, '2nd_department_id', 'id');
     }
 
-
     public function assignedJobs()
     {
         return $this->belongsToMany(JobAssignment::class, 'job_assignment_personnels', 'user_id', 'job_assignment_id');
@@ -81,6 +80,6 @@ class User extends Authenticatable
     public function chatGroups()
     {
         return $this->belongsToMany(ChatGroup::class, 'chat_group_members', 'user_id', 'chat_group_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 }

@@ -12,13 +12,15 @@ class PersonnalInvolvedWidget extends Component
      * Create a new component instance.
      */
     public $personnels;
+
     public $job;
+
     public $staff;
 
     /**
      * Create a new component instance.
      */
-    public function __construct($personnels,$job,$staff)
+    public function __construct($personnels, $job, $staff)
     {
         $this->personnels = $personnels;
         $this->job = $job;

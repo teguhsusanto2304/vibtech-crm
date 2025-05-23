@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ClientRequest extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'client_id',
         'data_status',
@@ -16,12 +17,12 @@ class ClientRequest extends Model
         'created_by',
         'updated_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
     ];
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class,'client_id');
+        return $this->belongsTo(Client::class, 'client_id');
     }
 
     public function createdBy(): BelongsTo
@@ -29,12 +30,12 @@ class ClientRequest extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-     public function updatedBy(): BelongsTo
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-     public function approvedBy(): BelongsTo
+    public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }

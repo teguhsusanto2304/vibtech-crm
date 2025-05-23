@@ -9,7 +9,7 @@ class VehicleBooking extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['vehicle_id', 'start_at', 'end_at', 'purposes', 'job_assignment_id', 'created_by','is_booker'];
+    protected $fillable = ['vehicle_id', 'start_at', 'end_at', 'purposes', 'job_assignment_id', 'created_by', 'is_booker'];
 
     public function vehicle1()
     {

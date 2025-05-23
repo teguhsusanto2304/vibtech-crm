@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ResetPasswordMail;
+use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Password;
-use App\Mail\ResetPasswordMail;
-use Illuminate\Support\Facades\Mail;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
-use Illuminate\Auth\Events\PasswordReset;
 
 class LoginController extends Controller
 {
@@ -43,18 +43,20 @@ class LoginController extends Controller
             'email' => $user->getEmailForPasswordReset(),
         ], false));
         $data = [
-            'name'=>$user->name,
-            'resetLink' => $resetUrl
+            'name' => $user->name,
+            'resetLink' => $resetUrl,
         ];
 
         Mail::to($request->email)->send(new ResetPasswordMail($data));
-        return back()->with('status', "Please check your inbox, we have sent you an email");
+
+        return back()->with('status', 'Please check your inbox, we have sent you an email');
     }
 
-    public function createNewPassword(Request $request,$token)
+    public function createNewPassword(Request $request, $token)
     {
         $email = $request->input('email');
-        return view('reset',compact('email','token'));
+
+        return view('reset', compact('email', 'token'));
     }
 
     public function saveNewPassword(Request $request)
@@ -86,7 +88,7 @@ class LoginController extends Controller
         if ($status == Password::PASSWORD_RESET) {
             return redirect()->route('v1.login')->with('status', __($status));
         } else {
-            return back()->with('status', "your token has expired");
+            return back()->with('status', 'your token has expired');
         }
     }
 
@@ -95,7 +97,7 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials)) {
-            if (Auth::user()->user_status ==1){
+            if (Auth::user()->user_status == 1) {
                 // Custom logic after successful login
                 return redirect()->intended('/v1/dashboard')->with('success', 'Welcome back!');
             } else {
@@ -110,6 +112,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
+
         return redirect('/login');
     }
 }

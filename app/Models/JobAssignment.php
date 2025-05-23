@@ -22,7 +22,7 @@ class JobAssignment extends Model
         'is_vehicle_require',
         'user_id',
         'job_status',
-        'is_publish'
+        'is_publish',
     ];
 
     public function jobType()
@@ -46,7 +46,7 @@ class JobAssignment extends Model
     }
 
     public function vehicleBookings()
-{
-    return $this->hasMany(VehicleBooking::class, 'job_assignment_id');
-}
+    {
+        return $this->hasMany(VehicleBooking::class, 'job_assignment_id');
+    }
 }

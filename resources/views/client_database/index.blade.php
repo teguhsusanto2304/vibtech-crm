@@ -56,7 +56,7 @@
                             </div>
                         </div>
                     </div>
-                    @can('view-edit-delete-request')
+                    @can('view-edit-request')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">

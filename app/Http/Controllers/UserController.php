@@ -4,15 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\PositionLevel;
-use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use app\Models\User;
-use Illuminate\Support\Facades\Storage;
-use Spatie\Permission\Models\Role;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
+use Yajra\DataTables\DataTables;
 
 class UserController extends Controller
 {
@@ -26,6 +25,7 @@ class UserController extends Controller
         $roles = Role::all();
         $departments = Department::all();
         $position_levels = PositionLevel::all();
+
         return view('user.form', compact('roles', 'departments', 'position_levels'))->with('title', 'Create a New User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Creat a New User']);
     }
 
@@ -43,16 +43,16 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email|max:255',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
             'role_id' => 'required',
-            'position_level_id' => 'required'
+            'position_level_id' => 'required',
         ]);
 
         $validatedData['password'] = 'password';
         try {
             if ($request->hasFile('path_image')) {
                 $image = $request->file('path_image');
-                $imageName = time() . '_' . $image->getClientOriginalName(); // Unique image name
-                $imagePath = 'assets/img/photos/' . $imageName; //dev  Define the path
-                //$imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
+                $imageName = time().'_'.$image->getClientOriginalName(); // Unique image name
+                $imagePath = 'assets/img/photos/'.$imageName; // dev  Define the path
+                // $imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
 
                 // Move the image to the public folder
                 $image->move(public_path('assets/img/photos'), $imageName);
@@ -69,7 +69,7 @@ class UserController extends Controller
             // Return response
             return redirect()->route('v1.users')->with('success', 'User created successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create user: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to create user: '.$e->getMessage());
         }
     }
 
@@ -79,6 +79,7 @@ class UserController extends Controller
         $roles = Role::all();
         $departments = Department::all();
         $position_levels = PositionLevel::all();
+
         return view('user.edit', compact('emp', 'roles', 'departments', 'position_levels'))->with('title', 'Edit a User')->with('breadcrumb', ['Home', 'Master Data', 'User Management', 'Edit a User']);
     }
 
@@ -109,7 +110,7 @@ class UserController extends Controller
             'dob' => 'nullable|date',
             'phone_number' => 'nullable|string|max:20',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
-            'role_id' => 'required'
+            'role_id' => 'required',
         ]);
 
         // Handle Image Upload
@@ -119,8 +120,8 @@ class UserController extends Controller
             }
 
             $image = $request->file('path_image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $imagePath = 'assets/img/photos/' . $imageName;
+            $imageName = time().'_'.$image->getClientOriginalName();
+            $imagePath = 'assets/img/photos/'.$imageName;
             $image->move(public_path('assets/img/photos'), $imageName);
             $validatedData['path_image'] = $imagePath;
         }
@@ -133,18 +134,17 @@ class UserController extends Controller
                 ->where('model_id', $id)
                 ->where('model_type', 'App\Models\User')
                 ->delete(); // Remove old role
-                DB::table('model_has_roles')->insert([
-                    'role_id' => $request->input('role_id'),
-                    'model_id' => $id,
-                    'model_type' => 'App\Models\User'
-                ]); // Set new role
+            DB::table('model_has_roles')->insert([
+                'role_id' => $request->input('role_id'),
+                'model_id' => $id,
+                'model_type' => 'App\Models\User',
+            ]); // Set new role
             Artisan::call('cache:clear');
             Artisan::call('config:clear');
             Artisan::call('permission:cache-reset');
         } else {
             return back()->with('error', 'Invalid role selected.');
         }
-
 
         return redirect()->route('v1.users')->with('success', 'User updated successfully.');
     }
@@ -157,40 +157,40 @@ class UserController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('path_image', function ($row) {
-                    //$profileUrl = asset('assets/images/default.png'); // Default image
+                    // $profileUrl = asset('assets/images/default.png'); // Default image
 
-                    //if (!empty($row->profile_picture)) {
-                        //$profileUrl = asset('storage/' . $row->path_image); // If stored in `storage/app/public/`
-                    //}
-                    if (!empty($row->path_image)) {
+                    // if (!empty($row->profile_picture)) {
+                    // $profileUrl = asset('storage/' . $row->path_image); // If stored in `storage/app/public/`
+                    // }
+                    if (! empty($row->path_image)) {
 
-                    return '<img src="' . asset($row->path_image) . '" alt="User Image" width="50" height="50" class="rounded-circle">';
+                        return '<img src="'.asset($row->path_image).'" alt="User Image" width="50" height="50" class="rounded-circle">';
                     } else {
-                        return '<img src="' . asset('assets/img/photos/default.png') . '" alt="User Image" width="50" height="50" class="rounded-circle">';
+                        return '<img src="'.asset('assets/img/photos/default.png').'" alt="User Image" width="50" height="50" class="rounded-circle">';
                     }
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="' . route('v1.users.edit', ['emp_id' => $row->id]) . '" class="edit btn btn-primary btn-sm">Edit</a>';
-
+                    $btn = '<a href="'.route('v1.users.edit', ['emp_id' => $row->id]).'" class="edit btn btn-primary btn-sm">Edit</a>';
 
                     if ($row->user_status != 0) {
                         $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
-                                data-id="' . $row->id . '"
+                                data-id="'.$row->id.'"
                                 data-action="deactivate">Deactivate</a>';
                     } else {
                         $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-success btn-sm"
-                                data-id="' . $row->id . '"
+                                data-id="'.$row->id.'"
                                 data-action="activate">Activate</a>';
                     }
 
                     return $btn;
                 })
                 ->addColumn('dept', function ($row) {
-                    if (!empty($row->dept) && !empty($row->secondDept)) {
-                        $result = $row->dept->name . ' / ' . $row->secondDept->name;
+                    if (! empty($row->dept) && ! empty($row->secondDept)) {
+                        $result = $row->dept->name.' / '.$row->secondDept->name;
                     } else {
                         $result = $row->dept->name ?? $row->secondDept->name ?? 'No Department';
                     }
+
                     return $result;
                 })
                 ->rawColumns(['path_image', 'action', 'dept'])
@@ -198,12 +198,11 @@ class UserController extends Controller
         }
     }
 
-
     public function toggleStatus(Request $request)
     {
         $user = User::find($request->id);
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['success' => false, 'message' => 'User not found']);
         }
 
@@ -220,9 +219,8 @@ class UserController extends Controller
 
     public function getOfflineUsers(Request $request)
     {
-            $data = User::select('name')->get();
-            return response()->json($data);
+        $data = User::select('name')->get();
+
+        return response()->json($data);
     }
-
-
 }

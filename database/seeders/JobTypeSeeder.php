@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\JobType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class JobTypeSeeder extends Seeder
@@ -23,12 +22,12 @@ class JobTypeSeeder extends Seeder
             'Project Service',
             'Delivery Pickup',
             'Logistics',
-            'IT/Technical Support'
-         ];
+            'IT/Technical Support',
+        ];
 
-          // Looping and Inserting Array's Permissions into Permission Table
-         foreach ($permissions as $permission) {
+        // Looping and Inserting Array's Permissions into Permission Table
+        foreach ($permissions as $permission) {
             JobType::create(['name' => $permission]);
-          }
+        }
     }
 }

@@ -3,7 +3,6 @@
 namespace App\View\Components;
 
 use Illuminate\View\Component;
-use Carbon\Carbon;
 
 class FormatDate extends Component
 {

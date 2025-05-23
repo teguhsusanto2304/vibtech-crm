@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ChatGroup;
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\UserNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\JsonResponse;
-use App\Notifications\UserNotification;
-use Illuminate\Support\Facades\Auth;
 
 class ChatGroupController extends Controller
 {
@@ -33,12 +32,13 @@ class ChatGroupController extends Controller
         return response()->json([
             'group' => [
                 'id' => $group->id,
-                'name' => $group->name
+                'name' => $group->name,
             ],
             'users' => $users,
-            'invited_users' => $invitedUsers
+            'invited_users' => $invitedUsers,
         ]);
     }
+
     public function index()
     {
         $userId = auth()->user()->id;
@@ -53,14 +53,14 @@ class ChatGroupController extends Controller
             ->paginate(20);
             **/
 
-            $groups = DB::table('chat_groups')
+        $groups = DB::table('chat_groups')
             ->join('chat_group_members', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
             ->join('users', 'chat_group_members.user_id', '=', 'users.id')
             ->leftJoin('messages', 'chat_groups.id', '=', 'messages.chat_group_id')
             ->leftJoin('message_reads', function ($join) use ($userId) {
                 $join->on('messages.id', '=', 'message_reads.message_id')
-                     ->where('message_reads.user_id', '=', $userId)
-                     ->whereNull('message_reads.read_at');
+                    ->where('message_reads.user_id', '=', $userId)
+                    ->whereNull('message_reads.read_at');
             })
             ->where('chat_group_members.user_id', $userId)
             ->where('chat_groups.data_status', 1)
@@ -74,8 +74,7 @@ class ChatGroupController extends Controller
             ->orderByDesc('chat_groups.created_at')
             ->paginate(20);
 
-
-            $del_groups = DB::table('chat_groups')
+        $del_groups = DB::table('chat_groups')
             ->join('chat_group_members', 'chat_groups.id', '=', 'chat_group_members.chat_group_id')
             ->join('users', 'chat_group_members.user_id', '=', 'users.id') // Join with users to get names
             ->where('chat_group_members.user_id', $userId) // Only fetch groups the user is in
@@ -85,8 +84,7 @@ class ChatGroupController extends Controller
             ->latest('chat_groups.created_at')
             ->paginate(20);
 
-
-        return view('chat.groups', compact('groups','del_groups'))->with('title', 'Chat Group')->with('breadcrumb', ['Home', 'Chat', 'Chat Group']);
+        return view('chat.groups', compact('groups', 'del_groups'))->with('title', 'Chat Group')->with('breadcrumb', ['Home', 'Chat', 'Chat Group']);
     }
 
     public function store(Request $request)
@@ -98,8 +96,9 @@ class ChatGroupController extends Controller
             'user_id' => auth()->user()->id,
             'is_creator' => 1,
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
+
         return redirect()->route('chat-groups');
     }
 
@@ -121,7 +120,7 @@ class ChatGroupController extends Controller
         $usersToAdd = array_diff($newInvitedUserIds, $currentMembers);
 
         // Remove unselected users from the group
-        if (!empty($usersToRemove)) {
+        if (! empty($usersToRemove)) {
             DB::table('chat_group_members')
                 ->where('chat_group_id', $groupId)
                 ->whereIn('user_id', $usersToRemove)
@@ -135,7 +134,7 @@ class ChatGroupController extends Controller
             foreach ($members as $member) {
                 if (auth()->user()->name != $member->name) {
                     $member->notify(new UserNotification(
-                        auth()->user()->name . ' <strong>Removed</strong> you from Chat Group ' . $group->name,
+                        auth()->user()->name.' <strong>Removed</strong> you from Chat Group '.$group->name,
                         'danger',
                         route('chat-groups')
                     ));
@@ -149,21 +148,21 @@ class ChatGroupController extends Controller
                 'chat_group_id' => $groupId,
                 'user_id' => $userId,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
 
         $existsMebers = DB::table('chat_group_members')
-            ->where('chat_group_id',$groupId)
+            ->where('chat_group_id', $groupId)
             ->get();
-            foreach($existsMebers as $existsMeber){
-                $member = User::find($existsMeber->user_id);
-                $member->notify(new UserNotification(
-                    auth()->user()->name . ' has <strong>added</strong> new user to Chat Group ' . $group->name,
-                    'success',
-                    route('chat-groups')
-                ));
-            }
+        foreach ($existsMebers as $existsMeber) {
+            $member = User::find($existsMeber->user_id);
+            $member->notify(new UserNotification(
+                auth()->user()->name.' has <strong>added</strong> new user to Chat Group '.$group->name,
+                'success',
+                route('chat-groups')
+            ));
+        }
 
         return back()->with('success', 'Users updated successfully!');
     }
@@ -171,6 +170,7 @@ class ChatGroupController extends Controller
     public function getMembers1($groupId)
     {
         $group = ChatGroup::with(['users', 'members'])->findOrFail($groupId); // assuming 'members' is the relation
+
         return response()->json($group->users);
     }
 
@@ -187,6 +187,7 @@ class ChatGroupController extends Controller
                 'chat_group_members.is_creator as is_creator'
             )
             ->get();
+
         return response()->json($data);
     }
 
@@ -195,12 +196,13 @@ class ChatGroupController extends Controller
         $group = ChatGroup::findOrFail($id);
         // Adjust 'messages' to match your actual relationship/method name
         $messages = $group->messages()->with('user')->orderBy('created_at')->get();
-        foreach($messages as $message){
+        foreach ($messages as $message) {
             DB::table('message_reads')
-            ->where('message_id', $message->id)
-            ->where('user_id', auth()->user()->id)
-            ->update(['read_at' => now()]);
+                ->where('message_id', $message->id)
+                ->where('user_id', auth()->user()->id)
+                ->update(['read_at' => now()]);
         }
+
         return response()->json($messages);
     }
 
@@ -219,9 +221,9 @@ class ChatGroupController extends Controller
 
         // Get all other members in the group (exclude sender)
         $otherMembers = DB::table('chat_group_members')
-        ->where('chat_group_id', $request->group_id)
-        ->where('user_id', '!=', auth()->user()->id)
-        ->pluck('user_id');
+            ->where('chat_group_id', $request->group_id)
+            ->where('user_id', '!=', auth()->user()->id)
+            ->pluck('user_id');
 
         // Insert entries into message_reads for each member
         $reads = [];
@@ -231,7 +233,7 @@ class ChatGroupController extends Controller
                 'user_id' => $userId,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'read_at' => null // Unread by default
+                'read_at' => null, // Unread by default
             ];
         }
 
@@ -244,30 +246,30 @@ class ChatGroupController extends Controller
         ]);
     }
 
-
     public function edit($id)
     {
         $data = ChatGroup::findOrFail($id);
+
         return response()->json($data);
     }
 
-    public function destroy($id,$type)
+    public function destroy($id, $type)
     {
         $group = ChatGroup::findOrFail($id);
-        if($type=='archive'){
+        if ($type == 'archive') {
             $group->update(['data_status' => 0]);
-        } else if($type=='restore'){
+        } elseif ($type == 'restore') {
             $group->update(['data_status' => 1]);
         } else {
             $group->update(['data_status' => 3]);
         }
         // Adjust 'messages' to match your actual relationship/method name
         $messages = $group->messages()->with('user')->orderBy('created_at')->get();
-        foreach($messages as $message){
+        foreach ($messages as $message) {
             DB::table('message_reads')
-            ->where('message_id', $message->id)
-            ->where('user_id', auth()->user()->id)
-            ->update(['read_at' => now()]);
+                ->where('message_id', $message->id)
+                ->where('user_id', auth()->user()->id)
+                ->update(['read_at' => now()]);
         }
 
         return redirect()->back()->with('success', 'Group destroyed successfully.');
@@ -280,8 +282,6 @@ class ChatGroupController extends Controller
         ]);
 
         $group = ChatGroup::findOrFail($id);
-
-
 
         $group->update(['name' => $request->name]);
 
@@ -326,14 +326,14 @@ class ChatGroupController extends Controller
             ->where('user_id', $currentUser)
             ->value('is_creator');
 
-        if ($isCreator==1) {
+        if ($isCreator == 1) {
             return response()->json(['message' => 'Forbidden '], 403);
         }
 
         // Prevent creator from removing themselves
-        //if ($userId == $currentUser) {
-            //return response()->json(['message' => 'Cannot remove yourself'], 400);
-        //}
+        // if ($userId == $currentUser) {
+        // return response()->json(['message' => 'Cannot remove yourself'], 400);
+        // }
 
         DB::table('chat_group_members')
             ->where('chat_group_id', $groupId)
@@ -341,31 +341,26 @@ class ChatGroupController extends Controller
             ->delete();
 
         $creator = DB::table('chat_group_members')
-        ->where('chat_group_id', $groupId)
-        ->where('is_creator',1)
-        ->first();
+            ->where('chat_group_id', $groupId)
+            ->where('is_creator', 1)
+            ->first();
         $group = ChatGroup::find($groupId);
-        if($currentUser == $userId){
+        if ($currentUser == $userId) {
             $member = User::find($creator->user_id);
             $member->notify(new UserNotification(
-                auth()->user()->name . ' has <strong>Left</strong> the group chat ' . $group->name,
+                auth()->user()->name.' has <strong>Left</strong> the group chat '.$group->name,
                 'danger',
                 route('chat-groups')
             ));
         } else {
             $member = User::find($userId);
             $member->notify(new UserNotification(
-                auth()->user()->name . ' has <strong>Removed</strong> you from Chat Group ' . $group->name,
+                auth()->user()->name.' has <strong>Removed</strong> you from Chat Group '.$group->name,
                 'danger',
                 route('chat-groups')
             ));
         }
 
-
         return response()->json(['message' => 'Member removed']);
     }
-
-
-
 }
-

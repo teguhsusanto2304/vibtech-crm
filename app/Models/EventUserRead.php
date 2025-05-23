@@ -12,6 +12,7 @@ class EventUserRead extends Model
     protected $casts = [
         'read_at' => 'datetime', // <-- Tambahkan baris ini
     ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

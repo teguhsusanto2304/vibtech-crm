@@ -6,10 +6,10 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
@@ -70,7 +70,7 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         // Check if the current password is correct
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             throw ValidationException::withMessages(['current_password' => 'Current password is incorrect']);
         }
 
