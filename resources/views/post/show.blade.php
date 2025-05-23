@@ -80,9 +80,17 @@
             </div>
             <ul class="list-group list-group-flush">
                 @forelse($readUsers as $reader)
-                    {{ $reader->user->name }}<br>
-                        {{-- Tampilkan waktu baca dari pivot table --}}
-                        <small class="text-muted">Read at {{ $reader->read_at }}</small>
+                    <li class="list-group-item d-flex align-items-center pl-0 ml-0">
+                        @if($reader->user->path_image)
+                 <img src="{{ asset($reader->user->path_image) }}" alt="{{ $reader->user->name }}'s Avatar" class="rounded-circle mr-2" width="30" height="30">
+             @else
+                 <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar" class="rounded-circle mr-2" width="30" height="30">
+             @endif
+                        <div>
+        {{ $reader->user->name }}<br> {{-- Tambahkan <br> atau ganti dengan tag block seperti p jika nama tidak selalu di wrap --}}
+        <small class="text-muted">Read at {{ $reader->read_at->format('d M Y H:i') }}</small>
+    </div>
+                    </li>
                 @empty
                     <li class="list-group-item">No one has read this memo yet.</li>
                 @endforelse
@@ -95,7 +103,13 @@
             </div>
             <ul class="list-group list-group-flush">
                 @forelse($unreadUsers as $reader)
-                    <p>{{ $reader->name }}</p>
+                    <li class="list-group-item d-flex align-items-center  pl-0 ml-0">
+                        @if($reader->path_image)
+                 <img src="{{ asset($reader->path_image) }}" alt="{{ $reader->name }}'s Avatar" class="rounded-circle mr-3" width="30" height="30">
+             @else
+                 <img src="{{ asset('assets/img/photos/default.png') }}" alt="Default Avatar" class="rounded-circle mr-3" width="30" height="30">
+             @endif
+                        {{ $reader->name }}</li>
                 @empty
                     <li class="list-group-item">No one has read this memo yet.</li>
                 @endforelse
