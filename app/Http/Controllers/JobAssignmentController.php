@@ -208,7 +208,7 @@ class JobAssignmentController extends Controller
             'scope_of_work' => $validated['scope_of_work'],
             'start_at' => $validated['start_at'],
             'end_at' => $validated['end_at'],
-            'is_vehicle_require' => $validated['is_vehicle_require'] ?? 0,
+            'is_vehicle_require' => $request->is_vehicle_require ? 1: 0,
             'user_id' => Auth()->user()->id,
             'job_status' => $request->has('job_status') ? 1 : 0,
         ]);

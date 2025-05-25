@@ -253,6 +253,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
             Route::put('/assignment-salesperson', 'assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
             Route::get('/data', 'getClientsData')->name('v1.client-database.data');
+            Route::get('/recycle-bin/data', 'getClientHasRemovedData')->name('v1.client-database.recycle-bin.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
             Route::get('/create', 'create')->name('v1.client-database.create');
             Route::post('/store', 'store')->name('v1.client-database.store');
@@ -266,6 +267,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/detail', 'getClientDetail')->name('v1.client-database.detail');
             Route::post('/update-request', 'clientDataRequest')->name('v1.client-database.update-request');
             Route::get('/request-list', 'updateRequestList')->name('v1.client-database.request-list');
+            Route::get('/recycle-bin/list', 'recycleBinList')->name('v1.client-database.recycle-bin.list');
             Route::get('/data-request', 'getClientRequestsData')->name('v1.client-database.data-request');
             Route::post('/delete-request', 'deleteFromRequest')->name('v1.client-database.delete-request');
             Route::get('/export/csv', 'exportCsv')->name('v1.client-database.export.csv');

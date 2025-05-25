@@ -118,14 +118,14 @@
                         <label for="country_id">Country *</label>
                         <select name="country_id" class="form-control" required>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                <option value="{{ $country->id }}" @if($country->name == 'Singapore') selected @endif>{{ $country->name }}</option>
                             @endforeach
                         </select>
                     </div>
 
                     <!-- Sales person -->
                     <div class="form-group col-6">
-                        <label for="contact_for_id">Contact For (Salesperson) *</label>
+                        <label for="contact_for_id">Recommended For (Salesperson) *</label>
                         <select name="contact_for_id" class="form-control" required>
                             @foreach ($salesPeople as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -163,10 +163,10 @@
                     </div>
                     <!-- Sales person -->
                     <div class="form-group col-6">
-                        <label for="country_id">Contact For (Sales Person) *</label>
+                        <label for="country_id">Recommended For (Sales Person) *</label>
                         <select name="contact_for_id" class="form-control" required>
                             @foreach ($salesPeople as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                <option value="{{ $user->id }}" >{{ $user->name }}</option>
                             @endforeach
                         </select>
                     </div>

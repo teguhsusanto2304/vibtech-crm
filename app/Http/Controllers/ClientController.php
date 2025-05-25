@@ -27,7 +27,7 @@ class ClientController extends Controller
 
     public function index()
     {
-        return view('client_database.index')->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Marketing', 'Client Database']);
+        return view('client_database.index')->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
     }
 
     public function create()
@@ -36,7 +36,7 @@ class ClientController extends Controller
             'industries' => IndustryCategory::all(),
             'countries' => Country::all(),
             'salesPeople' => User::all(),
-        ])->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Marketing', 'Create a Client Data']);
+        ])->with('title', 'Create Client Database')->with('breadcrumb', ['Home', 'Client Database', 'Create a Client Data']);
     }
 
     public function edit($id)
@@ -49,7 +49,7 @@ class ClientController extends Controller
             'countries' => Country::all(),
             'salesPeople' => User::all(),
             'title' => 'Edit Client Database',
-            'breadcrumb' => ['Home', 'Marketing', 'Edit a Client Data'],
+            'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
         ]);
     }
 
@@ -62,7 +62,7 @@ class ClientController extends Controller
             'client' => $client,
             'clientRequest' => $clientRequest,
             'title' => 'Preview Edit Request Client Database',
-            'breadcrumb' => ['Home', 'Marketing', 'Preview a Client Data'],
+            'breadcrumb' => ['Home', 'Client Database', 'Preview a Client Data'],
         ]);
     }
 
@@ -178,11 +178,12 @@ class ClientController extends Controller
     public function updateRequest(Request $request, $id)
     {
         DB::beginTransaction();
-        $clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 1])->first();
-        $clientReq->data_status = 3;
-        $clientReq->updated_at = date('Y-m-d H:i:s');
-        $clientReq->updated_by = auth()->user()->id;
-        $clientReq->save();
+        $clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 3])->first();
+        $clientReq->delete();
+        //$clientReq->data_status = 5;
+        //$clientReq->updated_at = date('Y-m-d H:i:s');
+        //$clientReq->updated_by = auth()->user()->id;
+        //$clientReq->save();
 
         $client = Client::findOrFail($clientReq->client_id);
         $validated = $request->validate([
@@ -203,7 +204,7 @@ class ClientController extends Controller
 
         DB::commit();
 
-        return redirect()->route('v1.client-database.request-list')->with('success', 'Client updated successfully.');
+        return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
     }
 
     public function deleteRequest($id)
@@ -216,7 +217,7 @@ class ClientController extends Controller
             'countries' => Country::all(),
             'salesPeople' => User::all(),
             'title' => 'Edit Client Database',
-            'breadcrumb' => ['Home', 'Marketing', 'Edit a Client Data'],
+            'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
         ]);
     }
 
@@ -240,13 +241,23 @@ class ClientController extends Controller
 
     }
 
+    public function recycleBinlist()
+    {
+        return view('client_database.recycle_bin.list', [
+            'industries' => IndustryCategory::all(),
+            'countries' => Country::all(),
+            'salesPersons' => User::all(),
+        ])->with('title', 'List of Client Database Recycle Bin')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database Recycle Bin']);
+
+    }
+
     public function updateRequestList()
     {
         return view('client_database.request.list', [
             'industries' => IndustryCategory::all(),
             'countries' => Country::all(),
             'salesPersons' => User::all(),
-        ])->with('title', 'List of Edit/Delete Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Edit/Delete Request']);
+        ])->with('title', 'List of Edit Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Edit Request']);
 
     }
 
@@ -259,8 +270,14 @@ class ClientController extends Controller
         }
 
         $user->data_status = 0;
-
         $user->save();
+
+        $clientReq = new ClientRequest;
+        $clientReq->client_id = $request->id;
+        $clientReq->data_status = 4;
+        $clientReq->created_by = auth()->user()->id;
+        $clientReq->remark = 'N/A';
+        $clientReq->save();
 
         return response()->json(['success' => true, 'message' => 'Client deleted successfully']);
     }
@@ -281,16 +298,22 @@ class ClientController extends Controller
         // Save the client
         $client->update($validated);
 
-        $clientReq = new ClientRequest;
-        $clientReq->data_status = 1;
-        $clientReq->created_by = auth()->user()->id;
-        $clientReq->client_id = $request->client_id;
-        $clientReq->approved_by = auth()->user()->id;
-        $clientReq->remark = 'first time to client edit';
-        $clientReq->save();
+        if($validated['is_editable']==1){
+            $clientReq = new ClientRequest;
+            $clientReq->data_status = 1;
+            $clientReq->created_by = auth()->user()->id;
+            $clientReq->client_id = $request->client_id;
+            $clientReq->approved_by = auth()->user()->id;
+            $clientReq->remark = 'first time to client edit';
+            $clientReq->save();
+        }
 
         // DB::commit();
-        return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
+        if($request->query('main')){
+            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has assigned successfully.');
+        } else {
+            return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
+        }
 
         // } catch (\Illuminate\Validation\ValidationException $e) {
         // Rollback transaction on validation error
@@ -310,7 +333,38 @@ class ClientController extends Controller
         $clientRequest = ClientRequest::find($request->id);
 
         if (! $clientRequest) {
-            return response()->json(['success' => false, 'message' => 'User not found']);
+            $clientRequest = ClientRequest::where(['client_id'=>$request->id,'data_status'=>4])->first();
+            if ($request->action == 'delete') {
+            $clientRequest->data_status = 4;
+            $msg = 'Request to delete client data has approved successfully';
+        } elseif ($request->action == 'edit') {
+            $clientRequest->data_status = 3;
+            $msg = 'Request to edit client data has approved successfully';
+        } elseif ($request->action == 'restore') {
+            $clientRequest->data_status = 1;
+            $msg = 'client data has restored successfully';
+        } elseif ($request->action == 'permanent_delete') {
+            $clientRequest->data_status = 0;
+            $msg = 'client data has permanent deleted successfully';
+        }
+        $clientRequest->approved_by = auth()->user()->id;
+        $clientRequest->approved_at = date('Y-m-d H:i:s');
+        $clientRequest->save();
+        if($clientRequest->data_status==1){
+            $client = Client::findOrFail($request->id);
+            $client->data_status = 1;
+            $client->save();
+        }
+
+        if($clientRequest->data_status==1 || $clientRequest->data_status==0){
+            $clientRequestDel = ClientRequest::find($clientRequest->id);
+            $clientRequestDel->delete();
+        }
+
+        return response()->json(['success' => true, 'message' => $msg]);
+            if (! $clientRequest) {
+                return response()->json(['success' => false, 'message' => 'User not found']);
+            }
         }
         if ($request->action == 'delete') {
             $clientRequest->data_status = 4;
@@ -318,6 +372,12 @@ class ClientController extends Controller
         } elseif ($request->action == 'edit') {
             $clientRequest->data_status = 3;
             $msg = 'Request to edit client data has approved successfully';
+        } elseif ($request->action == 'restore') {
+            $clientRequest->data_status = 1;
+            $msg = 'client data has restored successfully';
+        } elseif ($request->action == 'permanent_delete') {
+            $clientRequest->data_status = 0;
+            $msg = 'client data has permanent deleted successfully';
         }
         $clientRequest->approved_by = auth()->user()->id;
         $clientRequest->approved_at = date('Y-m-d H:i:s');
@@ -337,11 +397,16 @@ class ClientController extends Controller
             ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
             ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy'])
             ->where('clients.data_status', 1)
+            ->whereNot('clients.data_status', 0)
             ->select('clients.*');
         if ($request->filled('sales_person')) {
-            $clients->whereHas('salesPerson', function ($q) use ($request) {
-                $q->where('name', $request->sales_person);
-            });
+            if($request->filled('sales_person')=='-'){
+                    $clients->whereNull('sales_person_id');
+            } else {
+                $clients->whereHas('salesPerson', function ($q) use ($request) {
+                    $q->where('name', $request->sales_person);
+                });
+            }
         }
 
         if ($request->filled('industry')) {
@@ -360,7 +425,19 @@ class ClientController extends Controller
             ->addIndexColumn()
             ->addColumn('industry', fn ($client) => $client->industryCategory->name ?? '-')
             ->addColumn('country', fn ($client) => $client->country->name ?? '-')
-            ->addColumn('sales_person', fn ($client) => $client->salesPerson->name ?? '-')
+            ->addColumn('sales_person', function ($client) {
+                $btn = '';
+                $btnReasign = '';
+                $btn .=  $client->salesPerson->name ?? '-';
+                if(!is_null($client->salesPerson->name ?? null)){
+                    if(auth()->user()->can('edit-reasign-salesperson')){
+                        $btnReasign .= '<button class="btn btn-success btn-sm view-client-assign" data-id="'.$client->id.'"
+                                                data-action="restore" >Reassign</button>';
+                    }
+                }
+
+                return '<p>'.$btn.'</p>'.$btnReasign;
+            })
             ->addColumn('image_path_img', function ($row) {
                 if (! empty($row->image_path)) {
                     return asset('storage/'.$row->image_path);
@@ -381,6 +458,7 @@ class ClientController extends Controller
                 $btnEdit = '';
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example"><button class="btn btn-info btn-sm view-client" data-id="'.$row->id.'">View</button>';
 
+                $btnDelete1 = '';
                 $btnDelete = '';
                 $btnEdit = '';
                 if ($row->sales_person_id == auth()->user()->id) {
@@ -389,12 +467,12 @@ class ClientController extends Controller
                         ->sortByDesc('created_at')
                         ->first();
                     if (is_null($delete)) {
-                        $btnDelete .= '<button class="btn btn-warning btn-sm view-client-delete" data-id="'.$row->id.'">Request to Delete</button></div>';
+                        $btnDelete1 .= '<button class="btn btn-warning btn-sm view-client-delete" data-id="'.$row->id.'">Request to Delete</button></div>';
                     } else {
                         if (is_null($delete->approved_by)) {
-                            $btnDelete .= '<button class="btn btn-danger btn-sm" disabled>Waiting Response</button>';
+                            $btnDelete1 .= '<button class="btn btn-danger btn-sm" disabled>Waiting Response</button>';
                         } else {
-                            $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="'.$row->id.'"
+                            $btnDelete1 .= '<button class="btn btn-danger btn-sm confirm-action" data-id="'.$row->id.'"
                                                 data-action="edit" >Open To Delete</button>';
                         }
                     }
@@ -410,13 +488,17 @@ class ClientController extends Controller
                             $btnEdit .= '<button class="btn btn-primary btn-sm" disabled>Waiting Response</button>';
                         } else {
                             if ($edit->data_status == 3) {
-                                $btnEdit .= '<button class="btn btn-primary btn-sm view-client-edit" data-id="'.$row->id.'">Request to Edit</button>';
+                                $btnEdit .= '<a class="btn btn-success btn-sm" href="'.route('v1.client-database.edit', $row->id).'">Open To Edit</a>';
                             } else {
                                 $btnEdit .= '<a class="btn btn-success btn-sm" href="'.route('v1.client-database.edit', $row->id).'">Open To Edit</a>';
                             }
                         }
                     }
 
+                }
+                if(auth()->user()->can('delete-client-database')){
+                        $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="'.$row->id.'"
+                                                data-action="edit" >Delete</button>';
                 }
 
                 return $btn.$btnEdit.$btnDelete;
@@ -450,7 +532,8 @@ class ClientController extends Controller
             'approvedBy',            // Eager load the User who approved the ClientRequest
         ]);
         if ($requestType == 1) { // Edit Requested
-            $clientReqs->whereIn('data_status', [1, 3]);
+            $clientReqs->where('data_status', 1);
+            $clientReqs->WhereNull('approved_by');
         } elseif ($requestType == 2) { // Delete Requested
             $clientReqs->whereIn('data_status', [2, 4]);
         } else {
@@ -461,9 +544,13 @@ class ClientController extends Controller
 
         // Filters based on Client's relationships (correctly using whereHas with dot notation)
         if ($request->filled('sales_person')) {
-            $clientReqs->whereHas('client.salesPerson', function ($q) use ($request) {
-                $q->where('name', $request->sales_person);
-            });
+            if($request->filled('sales_person')=='-'){
+                    $clientReqs->whereNull('sales_person_id');
+            } else {
+                $clientReqs->whereHas('salesPerson', function ($q) use ($request) {
+                    $q->where('name', $request->sales_person);
+                });
+            }
         }
 
         if ($request->filled('industry')) {
@@ -581,12 +668,8 @@ class ClientController extends Controller
             ->join('users as created', 'clients.created_id', '=', 'created.id')
             ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'contactFor'])
             ->where('clients.data_status', 1)
+            ->whereNull('clients.sales_person_id')
             ->select('clients.*');
-        if ($request->filled('sales_person')) {
-            $clients->whereHas('salesPerson', function ($q) use ($request) {
-                $q->where('name', $request->sales_person);
-            });
-        }
 
         if ($request->filled('industry')) {
             $clients->whereHas('industryCategory', function ($q) use ($request) {
@@ -656,6 +739,86 @@ class ClientController extends Controller
             ->addColumn('updated_on', function ($client) {
                 if ($client->created_at != $client->updated_at) {
                     return $client->updated_at->format('d M Y');
+                } else {
+                    return '';
+                }
+            })
+            ->escapeColumns([])
+            ->make(true);
+    }
+
+    public function getClientHasRemovedData(Request $request)
+    {
+        $clients = Client::distinct('clients.id')
+            ->leftJoin('industry_categories', 'clients.industry_category_id', '=', 'industry_categories.id')
+            ->leftJoin('countries', 'clients.country_id', '=', 'countries.id')
+            ->leftJoin('users', 'clients.sales_person_id', '=', 'users.id')
+            ->join('users as created', 'clients.created_id', '=', 'created.id')
+            ->leftJoin('users as updated', 'clients.updated_id', '=', 'updated.id')
+            ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
+            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy'])
+            ->where('client_requests.data_status', 4)
+            ->select('clients.*');
+
+        if ($request->filled('sales_person')) {
+            if($request->filled('sales_person')=='-'){
+                    $clients->whereNull('sales_person_id');
+            } else {
+                $clients->whereHas('salesPerson', function ($q) use ($request) {
+                    $q->where('name', $request->sales_person);
+                });
+            }
+        }
+
+        if ($request->filled('industry')) {
+            $clients->whereHas('industryCategory', function ($q) use ($request) {
+                $q->where('name', $request->industry);
+            });
+        }
+
+        if ($request->filled('country')) {
+            $clients->whereHas('country', function ($q) use ($request) {
+                $q->where('name', $request->country);
+            });
+        }
+
+        return DataTables::of($clients)
+            ->addIndexColumn()
+            ->addColumn('industry', fn ($client) => $client->industryCategory->name ?? '-')
+            ->addColumn('country', fn ($client) => $client->country->name ?? '-')
+            ->addColumn('sales_person', fn ($client) => $client->salesPerson->name ?? '-')
+            ->addColumn('image_path_img', function ($row) {
+                if (! empty($row->image_path)) {
+                    return asset('storage/'.$row->image_path);
+                } else {
+                    return null;
+                    // return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
+                }
+            })
+            ->addColumn('action', function ($row) {
+                $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example"><button class="btn btn-info btn-sm view-client" data-id="'.$row->id.'">View</button>';
+
+                $btnDelete = '';
+                if(auth()->user()->can('delete-client-database')){
+                        $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="'.$row->id.'"
+                                                data-action="permanent delete" >Delete</button>';
+                }
+
+                $btnRestore = '';
+                if(auth()->user()->can('restore-client-database')){
+                        $btnRestore .= '<button class="btn btn-success btn-sm confirm-action" data-id="'.$row->id.'"
+                                                data-action="restore" >Restore</button>';
+                }
+
+                return $btn.$btnDelete.$btnRestore;
+            })
+            ->addColumn('quotation', fn ($client) => 'Nil')
+            ->addColumn('created_on', function ($client) {
+                return $client->created_at->format('d M Y H:i').'<br><small>'.$client->createdBy->name.'</small>';
+            })
+            ->addColumn('updated_on', function ($client) {
+                if ($client->created_at != $client->updated_at) {
+                    return $client->updated_at->format('d M Y h:i').'<br><small></small>';
                 } else {
                     return '';
                 }

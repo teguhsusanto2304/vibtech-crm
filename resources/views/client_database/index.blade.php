@@ -60,7 +60,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Manage Edit/Delete Request</h5>
+                                <h5 class="card-title">Manage Edit Request</h5>
                                 <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View Request</a>
                             </div>
                         </div>
@@ -72,6 +72,16 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Manage Salesperson Assignment</h5>
                                 <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View Request</a>
+                            </div>
+                        </div>
+                    </div>
+                    @endcan
+                    @can('view-client-recycle')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Recycle Bin</h5>
+                                <a href="{{ route('v1.client-database.recycle-bin.list')}}" class="btn btn_primary mt-auto">View Request</a>
                             </div>
                         </div>
                     </div>

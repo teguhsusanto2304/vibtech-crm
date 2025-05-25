@@ -41,13 +41,70 @@
 
         <!-- Card -->
         <div class="card">
-            {{-- Call your new component here --}}
-                <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" />
+            <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+                <div> </div>
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <form id="filters-form" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="filter-sales-person" class="form-label">Sales Person</label>
+                                <select id="filter-sales-person" class="form-select">
+                                    <option value="">All Sales Persons</option>
+                                    @foreach ($salesPersons as $salesPerson)
+                                        <option value="{{ $salesPerson->name }}">{{ $salesPerson->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filter-industry" class="form-label">Industry</label>
+                                <select id="filter-industry" class="form-select">
+                                    <option value="">All Industries</option>
+                                    @foreach ($industries as $industry)
+                                        <option value="{{ $industry->name }}">{{ $industry->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filter-country" class="form-label">Country</label>
+                                <select id="filter-country" class="form-select">
+                                    <option value="">All Countries</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country->name }}">{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
+                        <div class="btn-group" role="group">
+                            <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
+                            <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+                            <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="msg"></div>
             <div class="card-body" style="overflow-x: auto;">
+                <ul class="nav nav-tabs mb-3" id="clientRequestTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="edit-requests-tab" data-bs-toggle="tab"
+                            data-bs-target="#edit-requests-pane" type="button" role="tab" aria-controls="edit-requests-pane"
+                            aria-selected="true">Edit Request</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="delete-requests-tab" data-bs-toggle="tab"
+                            data-bs-target="#delete-requests-pane" type="button" role="tab"
+                            aria-controls="delete-requests-pane" aria-selected="false">Delete Request</button>
+                    </li>
+                </ul>
 
-
-                <table class="table table-bordered table-striped nowrap w-100" id="edit-requests-table">
+                <div class="tab-content" id="clientRequestTabContent">
+                    <div class="tab-pane fade show active" id="edit-requests-pane" role="tabpanel"
+                        aria-labelledby="edit-requests-tab" tabindex="0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped nowrap w-100" id="edit-requests-table">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -68,6 +125,36 @@
                                 <tbody>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="delete-requests-pane" role="tabpanel"
+                        aria-labelledby="delete-requests-tab" tabindex="0">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped nowrap w-100" id="delete-requests-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Company</th>
+                                        <th>Email</th>
+                                        <th>Office Number</th>
+                                        <th>Mobile Number</th>
+                                        <th>Job Title</th>
+                                        <th>Industry</th>
+                                        <th>Country</th>
+                                        <th>Sales Person</th>
+                                        <th>Image</th>
+                                        <th>Requested On</th>
+                                        <th>Remark</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
@@ -209,6 +296,21 @@
                     }
 
                     initializeDataTable('#edit-requests-table', 1);
+                    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                        const targetPaneId = $(e.target).attr('data-bs-target'); // e.g., #delete-requests-pane
+                        if (targetPaneId === '#edit-requests-pane') {
+                            initializeDataTable('#edit-requests-table', 1);
+                        } else if (targetPaneId === '#delete-requests-pane') {
+                            initializeDataTable('#delete-requests-table', 2); // 2 for Delete Requested
+                        }
+                    });
+                        $('#reset-filters').on('click', function () {
+                        $('#filter-sales-person').val('');
+                        $('#filter-industry').val('');
+                        $('#filter-country').val('');
+                        table.ajax.reload();
+                    });
+
 
                     $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
                         table.ajax.reload();
