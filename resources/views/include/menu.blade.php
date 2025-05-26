@@ -238,7 +238,7 @@
                 </a>
             </li>
         @endcan
-        @if(auth()->user()->can('view-mass-emailer') || auth()->user()->can('view-client-database') || auth()->user()->can('view-social-media-scheduler') || auth()->user()->can('view-event-generation'))
+        @if(auth()->user()->can('view-mass-emailer')  || auth()->user()->can('view-social-media-scheduler') || auth()->user()->can('view-event-generation'))
             <li class="menu-item">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
                     <i class="menu-icon">
