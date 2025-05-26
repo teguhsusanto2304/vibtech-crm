@@ -29,7 +29,7 @@
         <select id="filter-country" class="form-select">
             <option value="">All Countries</option>
             @foreach ($countries as $country)
-                <option value="{{ $country->name }}" @if($country->name == 'Singapore') selected @endif>{{ $country->name }}</option>
+                <option value="{{ $country->name }}">{{ $country->name }}</option>
             @endforeach
         </select>
     </div>
