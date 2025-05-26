@@ -300,10 +300,11 @@ class ClientController extends Controller
 
         if($validated['is_editable']==1){
             $clientReq = new ClientRequest;
-            $clientReq->data_status = 1;
+            $clientReq->data_status = 3;
             $clientReq->created_by = auth()->user()->id;
             $clientReq->client_id = $request->client_id;
             $clientReq->approved_by = auth()->user()->id;
+            $clientReq->approved_at = date('Y-m-d H:i:s');
             $clientReq->remark = 'first time to client edit';
             $clientReq->save();
         }

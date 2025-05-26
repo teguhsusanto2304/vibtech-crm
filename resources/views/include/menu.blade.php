@@ -807,7 +807,7 @@
             .then(response => response.json())
             .then(data => {
                 const badge = document.querySelector('.menu-link .badge');
-                const baseTitle = "Vibtech Genesis Staff Portall"; // 👈 Replace with your default page title
+                const baseTitle = "Vibtech Genesis Staff Portal"; // 👈 Replace with your default page title
 
                 if (data.count > 0) {
                     badge.textContent = data.count;
