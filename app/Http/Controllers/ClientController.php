@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Storage;
 
 class ClientController extends Controller
 {
@@ -121,16 +122,23 @@ class ClientController extends Controller
 
         // Handle file upload if exists
         if ($request->hasFile('image_path')) {
-            $path = $request->file('image_path')->store('clients', 'public');
-            $validated['image_path'] = $path;
+            // Delete old image if exists
+            if ($client->image_path && Storage::disk('public')->exists($client->image_path)) {
+                Storage::disk('public')->delete($client->image_path);
+            }
+
+            // Store new image
+            $imagePath = $request->file('image_path')->store('clients', 'public');
+            dd($imagePath);
+            $validated['image_path'] = $imagePath;
         }
 
         // Save the client
-        $client->update($validated);
+        //$client->update($validated);
 
-        $clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 3])->first();
-        $clientReq->data_status = 1;
-        $clientReq->save();
+        //$clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 3])->first();
+        //$clientReq->data_status = 1;
+        //$clientReq->save();
 
         return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
     }
@@ -199,6 +207,11 @@ class ClientController extends Controller
             'sales_person_id' => 'nullable',
             'image_path' => 'nullable', // Accept only image files
         ]);
+
+        if ($request->hasFile('image_path')) {
+            $path = $request->file('image_path')->store('clients', 'public');
+            $validated['image_path'] = $path;
+        }
         // Save the client
         $client->update($validated);
 

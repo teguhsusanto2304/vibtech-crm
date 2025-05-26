@@ -98,10 +98,17 @@
 
                     <!-- Country -->
                     <div class="form-group col-6">
-                        <label for="country_id">Country *</label>
+                        <label for="country_id">Country * {{$client->country_id}}</label>
                         <select name="country_id" class="form-control" required>
                             @foreach ($countries as $country)
-                                <option value="{{ $country->id }}" {{ $client->country_id == $country->id ? 'selected' : '' }}>
+                                <option value="{{ $country->id }}"
+                                    @if(empty($client->country_id) && $country->name == 'Singapore')
+                                        selected
+                                    @else
+                                        @if($client->country_id==$country->id)
+                                            selected
+                                        @endif
+                                    @endif>
                                     {{ $country->name }}
                                 </option>
                             @endforeach
@@ -113,7 +120,7 @@
                     <!-- Upload Image -->
                     <div class="form-group col-6">
                         <label for="image_path">Upload Image</label>
-                        <input type="file" name="image_path" class="form-control-file">
+                        <input type="file" name="image_path" class="form-control">
                         @if ($client->image_path)
                             <p class="mt-2">Current Image: <br>
                                 <img src="{{ asset('storage/' . $client->image_path) }}" alt="Client Image" width="100">
