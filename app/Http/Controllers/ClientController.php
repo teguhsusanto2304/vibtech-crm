@@ -401,7 +401,7 @@ class ClientController extends Controller
             ->whereNot('clients.data_status', 0)
             ->select('clients.*');
         if ($request->filled('sales_person')) {
-            if($request->filled('sales_person')=='-'){
+            if($request->sales_person=='-'){
                     $clients->whereNull('sales_person_id');
             } else {
                 $clients->whereHas('salesPerson', function ($q) use ($request) {
@@ -545,7 +545,7 @@ class ClientController extends Controller
 
         // Filters based on Client's relationships (correctly using whereHas with dot notation)
         if ($request->filled('sales_person')) {
-            if($request->filled('sales_person')=='-'){
+            if($request->sales_person=='-'){
                     $clientReqs->whereNull('sales_person_id');
             } else {
                 $clientReqs->whereHas('salesPerson', function ($q) use ($request) {
@@ -762,7 +762,7 @@ class ClientController extends Controller
             ->select('clients.*');
 
         if ($request->filled('sales_person')) {
-            if($request->filled('sales_person')=='-'){
+            if($request->sales_person=='-'){
                     $clients->whereNull('sales_person_id');
             } else {
                 $clients->whereHas('salesPerson', function ($q) use ($request) {
