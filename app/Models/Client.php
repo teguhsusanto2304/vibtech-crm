@@ -29,6 +29,11 @@ class Client extends Model
         'data_status',
     ];
 
+    public function activityLogs()
+    {
+        return $this->hasMany(ClientActivityLog::class)->orderBy('created_at', 'desc');;
+    }
+
     public function industryCategory(): BelongsTo
     {
         return $this->belongsTo(IndustryCategory::class);

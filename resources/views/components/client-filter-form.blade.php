@@ -2,7 +2,7 @@
 
 @props(['salesPersons', 'industries', 'countries', 'formId' => 'filters-form'])
 
-<form id="{{ $formId }}" class="row g-3">
+<div id="{{ $formId }}" class="row g-3">
     @if($salesPersons)
         <div class="col-md-4">
             <label for="filter-sales-person" class="form-label">Sales Person</label>
@@ -40,4 +40,4 @@
             <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
         </div>
     </div>
-</form>
+</div>

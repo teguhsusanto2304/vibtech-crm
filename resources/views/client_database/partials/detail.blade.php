@@ -83,6 +83,20 @@
         <th>Sales Person</th>
         <td>{{ $client->salesPerson->name ?? '-' }}</td>
       </tr>
+      @if(!$delete)
+      <tr>
+        <th>Activity Logs</th>
+        <td>
+            <div style="max-height: 100px; overflow-y: auto; border: 1px solid #eee; padding: 5px;">
+            <ul>
+                @foreach($client->activityLogs as $log)
+                    <li><small>{{ $log->activity }}</small></li>
+                @endforeach
+            </ul>
+        </div>
+        </td>
+      </tr>
+      @endif
       @if($delete)
         @php
             if($delete=='yes'){

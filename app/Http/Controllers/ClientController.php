@@ -7,9 +7,9 @@ use App\Models\ClientRequest;
 use App\Models\Country;
 use App\Models\IndustryCategory;
 use App\Models\User;
+use App\Models\ClientActivityLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
@@ -204,10 +204,6 @@ class ClientController extends Controller
         DB::beginTransaction();
         $clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 3])->first();
         $clientReq->delete();
-        //$clientReq->data_status = 5;
-        //$clientReq->updated_at = date('Y-m-d H:i:s');
-        //$clientReq->updated_by = auth()->user()->id;
-        //$clientReq->save();
 
         $client = Client::findOrFail($clientReq->client_id);
         $validated = $request->validate([
@@ -230,6 +226,12 @@ class ClientController extends Controller
         }
         // Save the client
         $client->update($validated);
+
+        ClientActivityLog::create([
+            'client_id' => $client->id,
+            'action'=>'update',
+            'activity' => "Client Information updated on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+        ]);
 
         DB::commit();
 
@@ -308,6 +310,12 @@ class ClientController extends Controller
         $clientReq->remark = 'N/A';
         $clientReq->save();
 
+        ClientActivityLog::create([
+            'client_id' => $request->id,
+            'action'=>'delete',
+            'activity' => "Client Information delete on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Client deleted successfully']);
     }
 
@@ -317,6 +325,7 @@ class ClientController extends Controller
 
         // try {
         $client = Client::findOrFail($request->client_id);
+        $oldSalespersonId = $client->sales_person_id;
 
         $validated = $request->validate([
             'sales_person_id' => 'required',
@@ -336,6 +345,17 @@ class ClientController extends Controller
             $clientReq->approved_at = date('Y-m-d H:i:s');
             $clientReq->remark = 'first time to client edit';
             $clientReq->save();
+        }
+
+        if ($oldSalespersonId != $validated['sales_person_id']) {
+            $oldName = User::find($oldSalespersonId)?->name ?? 'N/A';
+            $newName = User::find($validated['sales_person_id'])?->name ?? 'N/A';
+
+            ClientActivityLog::create([
+                'client_id' => $client->id,
+                'action'=>'change',
+                'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+            ]);
         }
 
         // DB::commit();
@@ -373,6 +393,11 @@ class ClientController extends Controller
             } elseif ($request->action == 'restore') {
                 $clientRequest->data_status = 1;
                 $msg = 'client data has restored successfully';
+                ClientActivityLog::create([
+                    'client_id' => $clientRequest->client_id,
+                    'action'=>'restore',
+                    'activity' => "Customer Data restored on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+                ]);
             } elseif ($request->action == 'permanent_delete') {
                 $clientRequest->data_status = 0;
                 $msg = 'client data has permanent deleted successfully';
@@ -881,6 +906,21 @@ class ClientController extends Controller
         $client_req->created_by = auth()->user()->id;
         $client_req->save();
         $msg = $request->input('status') == 'delete' ? 'Client delete requested successfully!' : 'Client edit requested successfully!';
+        if($request->input('status') == 'delete'){
+            $msg = 'Client delete requested successfully!';
+            ClientActivityLog::create([
+                'client_id' => $client_req->client_id,
+                'action'=>'delete',
+                'activity' => "Customer Data deleted on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+            ]);
+        } else {
+            $msg = 'Client update requested successfully!';
+            ClientActivityLog::create([
+                'client_id' => $client_req->client_id,
+                'action'=>'update',
+                'activity' => "Customer Data deleted on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+            ]);
+        }
 
         return redirect()->route('v1.client-database.list')->with('success', $msg);
     }

@@ -34,7 +34,7 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
 
 
 
@@ -161,13 +161,42 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        Are you sure you want to <span id="actionText"></span> this user?
+                        Are you sure you want to <span id="actionText"></span> this client?
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-danger" id="confirmBtn">Confirm</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div class="modal fade" id="loginConfirmModal" tabindex="-1" aria-labelledby="loginConfirmLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="loginConfirmForm">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Your Identity</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="loginEmail" name="email"
+                                    value="{{ auth()->user()->email }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" name="password" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Confirm</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -241,16 +270,16 @@
                                         return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
                                     } else {
                                         return `
-                            <img src="${data}"
-                                 alt="User Image"
-                                 width="80" height="80"
-                                 class="img-thumbnail preview-image"
-                                 data-bs-toggle="modal"
-                                 data-bs-target="#imageModal"
-                                 style="cursor:pointer"
-                                 data-full="${data}">
-                            <p><a href="${data}" download><small>Download</small></a></p>
-                        `;
+                                    <img src="${data}"
+                                         alt="User Image"
+                                         width="80" height="80"
+                                         class="img-thumbnail preview-image"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#imageModal"
+                                         style="cursor:pointer"
+                                         data-full="${data}">
+                                    <p><a href="${data}" download><small>Download</small></a></p>
+                                `;
                                     }
 
                                 }
@@ -314,7 +343,65 @@
                     $("#confirmModal").modal("show");
                 });
 
+                let userIdToToggle = null;
+
                 $("#confirmBtn").on("click", function () {
+                    userIdToToggle = userId; // Save userId globally
+                    $("#confirmModal").modal("hide");
+                    $("#loginPassword").val('');
+                    $("#loginConfirmModal").modal("show"); // Show login modal first
+                });
+
+                $("#loginConfirmForm").on("submit", function (e) {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: "{{ route('v1.login.verify') }}", // Create this route to check credentials
+                        type: "POST",
+                        data: $(this).serialize(),
+                        success: function (res) {
+                            if (res.success) {
+                                $("#loginConfirmModal").modal("hide");
+
+                                // Proceed with toggle status
+                                $.ajax({
+                                    url: "{{ route('v1.client-database.toggle-status') }}",
+                                    type: "POST",
+                                    data: {
+                                        _token: "{{ csrf_token() }}",
+                                        id: userIdToToggle
+                                    },
+                                    success: function (response) {
+                                        if (response.success) {
+                                            $('#confirmModal').modal('hide');
+                                            table.ajax.reload();
+                                            $('#msg').html(`
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
+                                        } else {
+                                            alert("Failed to " + actionType + " user.");
+                                        }
+                                    },
+                                    error: function () {
+                                        alert("An error occurred.");
+                                    }
+                                });
+
+                            } else {
+                                alert("Login failed. Please check your credentials.");
+                            }
+                        },
+                        error: function () {
+                            alert("Login verification failed.");
+                        }
+                    });
+                });
+
+
+                $("#confirmBtn1").on("click", function () {
                     $.ajax({
                         url: "{{ route('v1.client-database.toggle-status') }}", // Your Laravel route
                         type: "POST",
@@ -327,10 +414,10 @@
                             if (response.success) {
                                 table.ajax.reload();
                                 const alertContent = `
-                                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                                <p>`+ response.message + `</p>
-                                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                            </div>`;
+                                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                                        <p>`+ response.message + `</p>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>`;
 
                                 // Target the div with id="msg" and set its HTML content
                                 $('#msg').html(alertContent);

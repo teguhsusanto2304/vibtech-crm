@@ -115,4 +115,15 @@ class LoginController extends Controller
 
         return redirect('/login');
     }
+
+    public function verifyLogin(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::validate($credentials)) {
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false]);
+        }
+    }
 }

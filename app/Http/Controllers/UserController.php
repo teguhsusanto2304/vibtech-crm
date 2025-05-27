@@ -50,8 +50,8 @@ class UserController extends Controller
         try {
             if ($request->hasFile('path_image')) {
                 $image = $request->file('path_image');
-                $imageName = time().'_'.$image->getClientOriginalName(); // Unique image name
-                $imagePath = 'assets/img/photos/'.$imageName; // dev  Define the path
+                $imageName = time() . '_' . $image->getClientOriginalName(); // Unique image name
+                $imagePath = 'assets/img/photos/' . $imageName; // dev  Define the path
                 // $imagePath = 'public_html/crm/assets/img/photos/' . $imageName; //dev  Define the path
 
                 // Move the image to the public folder
@@ -69,7 +69,7 @@ class UserController extends Controller
             // Return response
             return redirect()->route('v1.users')->with('success', 'User created successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create user: '.$e->getMessage());
+            return redirect()->back()->with('error', 'Failed to create user: ' . $e->getMessage());
         }
     }
 
@@ -120,8 +120,8 @@ class UserController extends Controller
             }
 
             $image = $request->file('path_image');
-            $imageName = time().'_'.$image->getClientOriginalName();
-            $imagePath = 'assets/img/photos/'.$imageName;
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imagePath = 'assets/img/photos/' . $imageName;
             $image->move(public_path('assets/img/photos'), $imageName);
             $validatedData['path_image'] = $imagePath;
         }
@@ -162,31 +162,31 @@ class UserController extends Controller
                     // if (!empty($row->profile_picture)) {
                     // $profileUrl = asset('storage/' . $row->path_image); // If stored in `storage/app/public/`
                     // }
-                    if (! empty($row->path_image)) {
+                    if (!empty($row->path_image)) {
 
-                        return '<img src="'.asset($row->path_image).'" alt="User Image" width="50" height="50" class="rounded-circle">';
+                        return '<img src="' . asset($row->path_image) . '" alt="User Image" width="50" height="50" class="rounded-circle">';
                     } else {
-                        return '<img src="'.asset('assets/img/photos/default.png').'" alt="User Image" width="50" height="50" class="rounded-circle">';
+                        return '<img src="' . asset('assets/img/photos/default.png') . '" alt="User Image" width="50" height="50" class="rounded-circle">';
                     }
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('v1.users.edit', ['emp_id' => $row->id]).'" class="edit btn btn-primary btn-sm">Edit</a>';
+                    $btn = '<a href="' . route('v1.users.edit', ['emp_id' => $row->id]) . '" class="edit btn btn-primary btn-sm">Edit</a>';
 
                     if ($row->user_status != 0) {
                         $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-danger btn-sm"
-                                data-id="'.$row->id.'"
+                                data-id="' . $row->id . '"
                                 data-action="deactivate">Deactivate</a>';
                     } else {
                         $btn .= ' <a href="javascript:void(0)" class="confirm-action btn btn-success btn-sm"
-                                data-id="'.$row->id.'"
+                                data-id="' . $row->id . '"
                                 data-action="activate">Activate</a>';
                     }
 
                     return $btn;
                 })
                 ->addColumn('dept', function ($row) {
-                    if (! empty($row->dept) && ! empty($row->secondDept)) {
-                        $result = $row->dept->name.' / '.$row->secondDept->name;
+                    if (!empty($row->dept) && !empty($row->secondDept)) {
+                        $result = $row->dept->name . ' / ' . $row->secondDept->name;
                     } else {
                         $result = $row->dept->name ?? $row->secondDept->name ?? 'No Department';
                     }
@@ -202,7 +202,7 @@ class UserController extends Controller
     {
         $user = User::find($request->id);
 
-        if (! $user) {
+        if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found']);
         }
 
@@ -223,4 +223,5 @@ class UserController extends Controller
 
         return response()->json($data);
     }
+
 }

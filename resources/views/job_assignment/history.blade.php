@@ -22,9 +22,10 @@
         </nav>
 
         <h3>{{ $title }}</h3>
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+            <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+            <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
         <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
 
     <!-- Card -->
@@ -73,7 +74,7 @@
         <!-- Table -->
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped nowrap w-100" id="job_datatable">
+                <table class="table table-bordered table-striped" id="job_datatable">
                     <thead>
                         <tr>
                             <th>Job Record ID</th>

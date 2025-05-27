@@ -59,6 +59,7 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::get('/v1/login', [LoginController::class, 'showLoginForm'])->name('v1.login');
+Route::post('/v1/login/verify', [LoginController::class, 'verifyLogin'])->name('v1.login.verify');
 Route::post('/v1/login', [LoginController::class, 'login'])->name('v1.login');
 
 Route::get('/v1/password/forgot', [LoginController::class, 'forgot'])->name('v1.password.forgot');
