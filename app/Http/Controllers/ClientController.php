@@ -107,7 +107,7 @@ class ClientController extends Controller
                     $user->notify(new UserNotification(
                                 'There are 1 new client data inserted, please assign salesperson/s to the data/s',
                                 'accept',
-                                route('v1.assignment-salesperson.list')
+                                route('v1.client-database.assignment-salesperson.list')
                             ));
                 }
 
