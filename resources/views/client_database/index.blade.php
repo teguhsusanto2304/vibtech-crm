@@ -52,7 +52,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">View</h5>
-                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Client Database</a>
+                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Client Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>
@@ -71,7 +71,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Manage Salesperson Assignment</h5>
-                                <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View Request</a>
+                                <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View Request &nbsp; @if($salesPersonNotifications > 0)  <span class="badge bg-danger">{{ $salesPersonNotifications }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Recycle Bin</h5>
-                                <a href="{{ route('v1.client-database.recycle-bin.list')}}" class="btn btn_primary mt-auto">View Request</a>
+                                <a href="{{ route('v1.client-database.recycle-bin.list')}}" class="btn btn_primary mt-auto">View Request  &nbsp; @if($recycleBinNotification > 0)  <span class="badge bg-danger">{{ $recycleBinNotification }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>
