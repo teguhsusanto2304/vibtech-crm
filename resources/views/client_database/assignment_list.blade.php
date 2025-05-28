@@ -138,8 +138,70 @@
                 </div>
             </div>
         </div>
+
+        <!-- Login Modal -->
+        <div class="modal fade" id="loginConfirmModal" tabindex="-1" aria-labelledby="loginConfirmLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="loginConfirmForm">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Your Identity</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="loginEmail" name="email"
+                                    value="{{ auth()->user()->email }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" name="password" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Confirm</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <script>
-            $('#reset-filters').on('click', function () {
+            let assignForm;
+
+                $(document).on("submit", "#assignClientForm", function (e) {
+                    e.preventDefault(); // Stop normal form submission
+                    assignForm = this; // Save form reference
+                    $('#clientDetailAssignModal').modal('hide');
+                    $("#loginConfirmModal").modal("show"); // Show the login modal
+                });
+                $("#loginConfirmForm").on("submit", function (e) {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: "{{ route('v1.login.verify') }}", // Adjust to your login check route
+                        method: "POST",
+                        data: $(this).serialize(),
+                        success: function (res) {
+                            if (res.success) {
+                                $("#loginConfirmModal").modal("hide");
+
+                                // Submit the original form after login verified
+                                assignForm.submit();
+                            } else {
+                                alert("Login failed. Please try again.");
+                            }
+                        },
+                        error: function () {
+                            alert("An error occurred while verifying login.");
+                        }
+                    });
+                });
+
+
+                $('#reset-filters').on('click', function () {
                 $('#filter-sales-person').val('');
                 $('#filter-industry').val('');
                 $('#filter-country').val('');

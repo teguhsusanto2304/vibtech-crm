@@ -28,6 +28,8 @@ return new class extends Migration
             $table->foreignId('contact_for_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('created_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('updated_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('deleted_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->timestamp('deleted_at')->nullable();
             $table->string('image_path')->nullable(); // Upload Image
             $table->string('remark')->nullable();
             $table->boolean('is_editable')->default(0);

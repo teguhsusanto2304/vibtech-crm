@@ -63,6 +63,7 @@
                                 <th>Created On</th>
                                 <th>Updated On</th>
                                 <th>Action</th>
+                                <th>Deleted On</th>
                                 <th>Quotation</th>
                             </tr>
                         </thead>
@@ -222,7 +223,9 @@ $('#download-pdf').on('click', function () {
                         { data: 'created_on' },
                         { data: 'updated_on' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
-                        { data: 'quotation', name: 'quotation' },
+                        { data: 'deleted_on' },
+                        { data: 'quotation', name: 'quotation' }
+
                     ]
                 });
 

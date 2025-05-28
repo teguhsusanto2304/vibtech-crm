@@ -22,11 +22,19 @@ class Client extends Model
         'contact_for_id',
         'created_id',
         'updated_id',
+        'deleted_id',
+        'deleted_at',
         'image_path',
         'remark',
         'is_editable',
         'is_deletable',
         'data_status',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function activityLogs()
@@ -64,8 +72,20 @@ class Client extends Model
         return $this->belongsTo(User::class, 'updated_id');
     }
 
+        public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_id');
+    }
+
     public function clientRequests(): HasMany
     {
         return $this->hasMany(ClientRequest::class, 'client_id');
+    }
+
+    protected static function booted()
+    {
+        //static::created(function ($client) {
+
+        //});
     }
 }

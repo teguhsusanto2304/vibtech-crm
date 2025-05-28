@@ -111,7 +111,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            Are you sure you want to approve <span id="actionText"></span> request this client?
+                            Are you sure you want to <span id="actionText"></span> edit request this client?
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -239,9 +239,10 @@
                     $(document).on("click", ".confirm-action", function () {
                         userId = $(this).data("id");
                         actionType = $(this).data("action");
+                        actionText = $(this).data("text");
 
                         // Set action text in modal
-                        $("#actionText").text(actionType);
+                        $("#actionText").text(actionText);
 
                         // Show modal
                         $("#confirmModal").modal("show");

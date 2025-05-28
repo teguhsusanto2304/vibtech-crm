@@ -60,6 +60,9 @@
                                 <th>Industry</th>
                                 <th>Country</th>
                                 <th>Sales Person</th>
+                                @can('edit-reasign-salesperson')
+                                <th>Reassign Sales Person</th>
+                                @endcan
                                 <th>Image</th>
                                 <th>Created On</th>
                                 <th>Updated On</th>
@@ -201,6 +204,36 @@
         </div>
 
         <script>
+            let assignForm;
+
+                $(document).on("submit", "#assignClientForm", function (e) {
+                    e.preventDefault(); // Stop normal form submission
+                    assignForm = this; // Save form reference
+                    $('#clientDetailAssignModal').modal('hide');
+                    $("#loginConfirmModal").modal("show"); // Show the login modal
+                });
+                $("#loginConfirmForm").on("submit", function (e) {
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: "{{ route('v1.login.verify') }}", // Adjust to your login check route
+                        method: "POST",
+                        data: $(this).serialize(),
+                        success: function (res) {
+                            if (res.success) {
+                                $("#loginConfirmModal").modal("hide");
+
+                                // Submit the original form after login verified
+                                assignForm.submit();
+                            } else {
+                                alert("Login failed. Please try again.");
+                            }
+                        },
+                        error: function () {
+                            alert("An error occurred while verifying login.");
+                        }
+                    });
+                });
             $('#reset-filters').on('click', function () {
                 $('#filter-sales-person').val('');
                 $('#filter-industry').val('');
@@ -261,7 +294,10 @@
                         { data: 'job_title' },
                         { data: 'industry', name: 'industryCategory.name' },
                         { data: 'country', name: 'country.name' },
-                        { data: 'sales_person', name: 'salesPerson.name' },
+                        { data: 'salesPerson', name: 'salesPerson.name' },
+                        @can('edit-reasign-salesperson')
+                        { data: 'sales_person_btn' },
+                        @endcan
                         {
                             data: 'image_path_img',
                             render: function (data, type, row) {

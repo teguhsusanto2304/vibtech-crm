@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\UserNotification;
 
 class ClientController extends Controller
 {
@@ -99,6 +100,16 @@ class ClientController extends Controller
 
         // Save the client
         Client::create($validated);
+            $users = \App\Models\User::permission('view-salesperson-assignment')
+                    ->permission('view-salesperson-assignment') // Spatie magic filter
+                    ->get(); // example
+            foreach ($users as $user) {
+                    $user->notify(new UserNotification(
+                                'There are 1 new client data inserted, please assign salesperson/s to the data/s',
+                                'accept',
+                                route('v1.assignment-salesperson.list')
+                            ));
+                }
 
         return redirect()->route('v1.client-database.list')->with('success', 'Client created successfully.');
     }
@@ -145,6 +156,8 @@ class ClientController extends Controller
 
     public function import(Request $request)
     {
+
+        $i = 0;
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt|max:2048',
             'contact_for_id' => 'required|exists:users,id',
@@ -169,6 +182,7 @@ class ClientController extends Controller
                     }
 
                     // Store data
+                    $i++;
                     Client::create([
                         'name' => $data['name'] ?? null,
                         'position' => $data['position'] ?? null,
@@ -192,6 +206,16 @@ class ClientController extends Controller
                 ->route('v1.client-database.create')
                 ->with('error_import', 'Some emails were duplicated and skipped: ' . implode(', ', $duplicates));
         }
+
+            $users = \App\Models\User::permission('view-salesperson-assignment') // Spatie magic filter
+                    ->get(); // example
+            foreach ($users as $user) {
+                    $user->notify(new UserNotification(
+                                'There are '.$i.' new client data inserted, please assign salesperson/s to the data/s',
+                                'accept',
+                                route('v1.client-database.list')
+                            ));
+                }
 
         return redirect()
             ->route('v1.client-database.list')
@@ -229,7 +253,7 @@ class ClientController extends Controller
 
         ClientActivityLog::create([
             'client_id' => $client->id,
-            'action'=>'update',
+            'action' => 'update',
             'activity' => "Client Information updated on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
         ]);
 
@@ -301,6 +325,8 @@ class ClientController extends Controller
         }
 
         $user->data_status = 0;
+        $user->deleted_id = auth()->user()->id;
+        $user->deleted_at = date('Y-m-d H:i:s');
         $user->save();
 
         $clientReq = new ClientRequest;
@@ -312,7 +338,7 @@ class ClientController extends Controller
 
         ClientActivityLog::create([
             'client_id' => $request->id,
-            'action'=>'delete',
+            'action' => 'delete',
             'activity' => "Client Information delete on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
         ]);
 
@@ -353,7 +379,7 @@ class ClientController extends Controller
 
             ClientActivityLog::create([
                 'client_id' => $client->id,
-                'action'=>'change',
+                'action' => 'change',
                 'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
             ]);
         }
@@ -381,48 +407,12 @@ class ClientController extends Controller
     public function deleteFromRequest(Request $request)
     {
         $clientRequest = ClientRequest::find($request->id);
-
-        if (!$clientRequest) {
-            $clientRequest = ClientRequest::where(['client_id' => $request->id, 'data_status' => 4])->first();
-            if ($request->action == 'delete') {
-                $clientRequest->data_status = 4;
-                $msg = 'Request to delete client data has approved successfully';
-            } elseif ($request->action == 'edit') {
-                $clientRequest->data_status = 3;
-                $msg = 'Request to edit client data has approved successfully';
-            } elseif ($request->action == 'restore') {
-                $clientRequest->data_status = 1;
-                $msg = 'client data has restored successfully';
-                ClientActivityLog::create([
-                    'client_id' => $clientRequest->client_id,
-                    'action'=>'restore',
-                    'activity' => "Customer Data restored on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
-                ]);
-            } elseif ($request->action == 'permanent_delete') {
-                $clientRequest->data_status = 0;
-                $msg = 'client data has permanent deleted successfully';
-            }
-            $clientRequest->approved_by = auth()->user()->id;
-            $clientRequest->approved_at = date('Y-m-d H:i:s');
-            $clientRequest->save();
-            if ($clientRequest->data_status == 1) {
-                $client = Client::findOrFail($request->id);
-                $client->data_status = 1;
-                $client->save();
-            }
-
-            if ($clientRequest->data_status == 1 || $clientRequest->data_status == 0) {
-                $clientRequestDel = ClientRequest::find($clientRequest->id);
-                $clientRequestDel->delete();
-            }
-
-            return response()->json(['success' => true, 'message' => $msg]);
-            if (!$clientRequest) {
-                return response()->json(['success' => false, 'message' => 'User not found']);
-            }
+        if(!$clientRequest){
+            $clientRequest = ClientRequest::where('client_id',$request->id)->first();
         }
-        if ($request->action == 'delete') {
-            $clientRequest->data_status = 4;
+
+        if ($request->action == 'edit-reject') {
+            $clientRequest->data_status == 0;
             $msg = 'Request to delete client data has approved successfully';
         } elseif ($request->action == 'edit') {
             $clientRequest->data_status = 3;
@@ -430,6 +420,11 @@ class ClientController extends Controller
         } elseif ($request->action == 'restore') {
             $clientRequest->data_status = 1;
             $msg = 'client data has restored successfully';
+            ClientActivityLog::create([
+                'client_id' => $clientRequest->client_id,
+                'action' => 'restore',
+                'activity' => "Customer Data restored on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+            ]);
         } elseif ($request->action == 'permanent_delete') {
             $clientRequest->data_status = 0;
             $msg = 'client data has permanent deleted successfully';
@@ -438,7 +433,19 @@ class ClientController extends Controller
         $clientRequest->approved_at = date('Y-m-d H:i:s');
         $clientRequest->save();
 
+        if ($clientRequest->data_status == 1 || $clientRequest->data_status == 0) {
+            $client = Client::findOrFail($clientRequest->client_id);
+            $client->data_status = 1;
+            $client->save();
+
+            $clientRequestDel = ClientRequest::find($clientRequest->id);
+            $clientRequestDel->delete();
+        }
+
         return response()->json(['success' => true, 'message' => $msg]);
+        if (!$clientRequest) {
+            return response()->json(['success' => false, 'message' => 'User not found']);
+        }
     }
 
     public function getClientsData(Request $request)
@@ -480,10 +487,9 @@ class ClientController extends Controller
             ->addIndexColumn()
             ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
             ->addColumn('country', fn($client) => $client->country->name ?? '-')
-            ->addColumn('sales_person', function ($client) {
-                $btn = '';
+            ->addColumn('salesPerson', fn($client) => $client->salesPerson->name ?? '-')
+            ->addColumn('sales_person_btn', function ($client) {
                 $btnReasign = '';
-                $btn .= $client->salesPerson->name ?? '-';
                 if (!is_null($client->salesPerson->name ?? null)) {
                     if (auth()->user()->can('edit-reasign-salesperson')) {
                         $btnReasign .= '<button class="btn btn-success btn-sm view-client-assign" data-id="' . $client->id . '"
@@ -491,7 +497,7 @@ class ClientController extends Controller
                     }
                 }
 
-                return '<p>' . $btn . '</p>' . $btnReasign;
+                return $btnReasign;
             })
             ->addColumn('image_path_img', function ($row) {
                 if (!empty($row->image_path)) {
@@ -652,7 +658,9 @@ class ClientController extends Controller
                     if ($row->data_status == 1) { // This is the data_status of the ClientRequest
                         if (is_null($row->approved_by)) {
                             $btn .= '<button class="btn btn-primary btn-sm confirm-action" data-id="' . $clientId . '"
-                                                data-action="edit">Approve</button>';
+                                                data-action="edit"  data-text="approve">Approve</button>';
+                            $btn .= '<button class="btn btn-danger btn-sm confirm-action" data-id="' . $clientId . '"
+                                                data-action="edit-reject" data-text="reject">Reject</button>';
                         } else {
                             // This button would typically lead to approving/reviewing the edit request
                             if (is_null($row->updated_by)) {
@@ -810,8 +818,9 @@ class ClientController extends Controller
             ->leftJoin('users', 'clients.sales_person_id', '=', 'users.id')
             ->join('users as created', 'clients.created_id', '=', 'created.id')
             ->leftJoin('users as updated', 'clients.updated_id', '=', 'updated.id')
+            ->leftJoin('users as deleted', 'clients.updated_id', '=', 'deleted.id')
             ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
-            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy'])
+            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy','deletedBy'])
             ->where('client_requests.data_status', 4)
             ->select('clients.*');
 
@@ -865,7 +874,7 @@ class ClientController extends Controller
                                                 data-action="restore" >Restore</button>';
                 }
 
-                return $btn . $btnDelete . $btnRestore;
+                return $btn .  $btnRestore;
             })
             ->addColumn('quotation', fn($client) => 'Nil')
             ->addColumn('created_on', function ($client) {
@@ -877,6 +886,9 @@ class ClientController extends Controller
                 } else {
                     return '';
                 }
+            })
+            ->addColumn('deleted_on', function ($client) {
+                return $client->deleted_at->format('d M Y H:i') . '<br><small>' . $client->deletedBy->name . '</small>';
             })
             ->escapeColumns([])
             ->make(true);
@@ -906,20 +918,10 @@ class ClientController extends Controller
         $client_req->created_by = auth()->user()->id;
         $client_req->save();
         $msg = $request->input('status') == 'delete' ? 'Client delete requested successfully!' : 'Client edit requested successfully!';
-        if($request->input('status') == 'delete'){
+        if ($request->input('status') == 'delete') {
             $msg = 'Client delete requested successfully!';
-            ClientActivityLog::create([
-                'client_id' => $client_req->client_id,
-                'action'=>'delete',
-                'activity' => "Customer Data deleted on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
-            ]);
         } else {
             $msg = 'Client update requested successfully!';
-            ClientActivityLog::create([
-                'client_id' => $client_req->client_id,
-                'action'=>'update',
-                'activity' => "Customer Data deleted on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
-            ]);
         }
 
         return redirect()->route('v1.client-database.list')->with('success', $msg);
