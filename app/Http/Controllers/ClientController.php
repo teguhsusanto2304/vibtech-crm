@@ -368,6 +368,21 @@ class ClientController extends Controller
 
     public function recycleBinlist()
     {
+        $notificationsToMarkAsRead = DB::table('notifications')
+            ->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/recycle-bin/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', Auth::id())
+            ->get();
+
+        if ($notificationsToMarkAsRead->isNotEmpty()) {
+            $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
+
+            DB::table('notifications')
+                ->whereIn('id', $notificationIds)
+                ->update(['read_at' => now()]);
+        }
         return view('client_database.recycle_bin.list', [
             'industries' => IndustryCategory::all(),
             'countries' => Country::all(),
@@ -378,6 +393,21 @@ class ClientController extends Controller
 
     public function updateRequestList()
     {
+                $notificationsToMarkAsRead = DB::table('notifications')
+            ->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/request-list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', Auth::id())
+            ->get();
+
+        if ($notificationsToMarkAsRead->isNotEmpty()) {
+            $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
+
+            DB::table('notifications')
+                ->whereIn('id', $notificationIds)
+                ->update(['read_at' => now()]);
+        }
         return view('client_database.request.list', [
             'industries' => IndustryCategory::all(),
             'countries' => Country::all(),
