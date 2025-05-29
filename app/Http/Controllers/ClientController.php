@@ -481,7 +481,7 @@ class ClientController extends Controller
 
                 $user = \App\Models\User::findOrFail($validated['sales_person_id']);
                 $user->notify(new UserNotification(
-                                'An existing client has been reassigned to you by by '.auth()->user()->name,
+                                'An existing client has been reassigned to you by '.auth()->user()->name,
                                 'accept',
                                 route('v1.client-database.list')
                             ));
@@ -849,7 +849,8 @@ class ClientController extends Controller
             ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'contactFor'])
             ->where('clients.data_status', 1)
             ->whereNull('clients.sales_person_id')
-            ->select('clients.*');
+            ->select('clients.*')
+            ->orderBy('created_at','ASC');
 
         if ($request->filled('industry')) {
             $clients->whereHas('industryCategory', function ($q) use ($request) {
