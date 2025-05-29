@@ -61,7 +61,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Manage Edit Request</h5>
-                                <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View Request</a>
+                                <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View Request &nbsp; @if($requestNotifications > 0)  <span class="badge bg-danger">{{ $requestNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>

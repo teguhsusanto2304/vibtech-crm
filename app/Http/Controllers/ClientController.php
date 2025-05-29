@@ -33,6 +33,7 @@ class ClientController extends Controller
         $salesPersonNotifications = null;
         $clientDataNotifications = null;
         $recycleBinNotification = null;
+        $requestNotifications = null;
         if (\App\Models\User::permission('view-salesperson-assignment')){
             $salesPersonNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
                 ->where('notifiable_type', 'App\Models\User')
@@ -58,9 +59,16 @@ class ClientController extends Controller
                             ->where('notifiable_id',auth()->user()->id)
                             ->count();
 
+        $requestNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
+                            ->where('notifiable_type', 'App\Models\User')
+                            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/request-list%'])
+                            ->whereNull('read_at')
+                            ->where('notifiable_id',auth()->user()->id)
+                            ->count();
 
 
-        return view('client_database.index',compact('recycleBinNotification','clientDataNotifications','salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
+
+        return view('client_database.index',compact('requestNotifications','recycleBinNotification','clientDataNotifications','salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
     }
 
     public function create()
