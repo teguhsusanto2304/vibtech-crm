@@ -978,7 +978,8 @@ class ClientController extends Controller
             ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
             ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy','deletedBy'])
             ->where('client_requests.data_status', 4)
-            ->select('clients.*');
+            ->select('clients.*')
+            ->orderBy('created_at','ASC');
 
         if ($request->filled('sales_person')) {
             if ($request->sales_person == '-') {
