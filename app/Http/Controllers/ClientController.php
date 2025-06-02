@@ -129,7 +129,6 @@ class ClientController extends Controller
             'country_id' => 'required|exists:countries,id',
             'contact_for_id' => 'required|exists:users,id',
             'image_path' => 'nullable|image|max:2048', // Accept only image files
-            'remarks' => 'required'
         ]);
 
         // Handle file upload if exists
@@ -141,13 +140,15 @@ class ClientController extends Controller
 
         // Save the client
         $newClient = Client::create($validated);
+        if($request->remarks->isNotEmpty()){
+            $remark = new ClientRemark([
+                'content' => $request->remarks,
+                'user_id' => auth()->id(),
+            ]);
 
-        $remark = new ClientRemark([
-            'content' => $request->remarks,
-            'user_id' => auth()->id(),
-        ]);
+            $newClient->remarks()->save($remark);
+        }
 
-        $newClient->remarks()->save($remark);
 
         $users = \App\Models\User::permission('view-salesperson-assignment') // Spatie magic filter
             ->get(); // example
@@ -207,8 +208,7 @@ class ClientController extends Controller
         $i = 0;
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-            'contact_for_id' => 'required|exists:users,id',
-            'upload_remarks' => 'required'
+            'contact_for_id' => 'required|exists:users,id'
         ]);
 
         $file = $request->file('csv_file');
@@ -243,12 +243,14 @@ class ClientController extends Controller
                         'created_id' => auth()->user()->id,
                     ]);
 
-                    $remark = new ClientRemark([
-                        'content' => $request->upload_remarks,
-                        'user_id' => auth()->id(),
-                    ]);
+                    if($request->upload_remarks->isNotEmpty()){
+                        $remark = new ClientRemark([
+                                    'content' => $request->upload_remarks,
+                                    'user_id' => auth()->id(),
+                                ]);
 
-                    $newClient->remarks()->save($remark);
+                        $newClient->remarks()->save($remark);
+                    }
                 }
             }
 

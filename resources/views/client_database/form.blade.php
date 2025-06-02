@@ -147,7 +147,7 @@
                     </div>
 
                     <div class="form-group col-12">
-                        <label for="image_path">Remarks</label>
+                        <label for="image_path">Add Remarks</label>
                         <textarea class="form-control" name="remarks" id="remarks" cols="5"></textarea>
                     </div>
 
@@ -182,7 +182,7 @@
                         </select>
                     </div>
                     <div class="form-group col-12">
-                        <label for="image_path">Remarks</label>
+                        <label for="image_path">Add Remarks</label>
                         <textarea class="form-control" name="upload_remarks" id="upload_remarks" cols="5"></textarea>
                     </div>
                     <div class="col-12">
