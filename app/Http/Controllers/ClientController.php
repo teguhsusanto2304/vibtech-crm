@@ -140,7 +140,7 @@ class ClientController extends Controller
 
         // Save the client
         $newClient = Client::create($validated);
-        if($request->remarks->isNotEmpty()){
+        if($request->remarks){
             $remark = new ClientRemark([
                 'content' => $request->remarks,
                 'user_id' => auth()->id(),
@@ -243,7 +243,7 @@ class ClientController extends Controller
                         'created_id' => auth()->user()->id,
                     ]);
 
-                    if($request->upload_remarks->isNotEmpty()){
+                    if($request->upload_remarks){
                         $remark = new ClientRemark([
                                     'content' => $request->upload_remarks,
                                     'user_id' => auth()->id(),
