@@ -26,6 +26,12 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+            @if (session('errors'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('errors') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
         </div>
         <div id="msg"></div>
         <!-- DataTable Dependencies -->
@@ -70,6 +76,7 @@
                     <table class="table table-bordered table-striped nowrap w-100" id="clients-table">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="select-all"></th>
                                 <th>Name</th>
                                 <th>Company</th>
                                 <th>Email</th>
@@ -91,6 +98,11 @@
                             </tr>
                         </thead>
                     </table>
+                    <div class="mb-3">
+                            <button id="approve-selected" class="btn btn-success">Ressignment Selected</button>
+                            <button id="edit-selected" class="btn btn-primary">Request to edit Selected</button>
+                            <button id="delete-selected" class="btn btn-danger">Delete Selected</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,6 +117,31 @@
                     <div class="modal-body" id="client-detail-body">
                         <p>Loading...</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="clientDetailAssignModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clientDetailModalLabel">Salesperson Assignment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="assignClientForm" method="POST"
+                        action="{{ route('v1.client-database.assignment-salesperson')}}">
+                        @csrf
+                        @METHOD('PUT')
+                        <div class="modal-body" id="client-detail-assign-body">
+                            <p>Loading...</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                                aria-label="Close">No</button>&nbsp;
+                            <button type="submit" class="btn btn-success">Yes</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -190,6 +227,63 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-danger" id="confirmBtn">Confirm</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="modal fade" id="clientDetailBulkAssignModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clientDetailModalLabel">Bulk Salesperson Reassignment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="assignClientForm" method="POST"
+                        action="{{ route('v1.client-database.bulk-assignment-salesperson')}}">
+                        @csrf
+                        @METHOD('PUT')
+                        <div class="modal-body" id="client-detail-bulk-assign-body">
+                            <p>Loading...</p>
+                        </div>
+                        <input type="hidden" name="client_ids" id="client_ids">
+                        <input type="hidden" name="status" value="reassign">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                                aria-label="Close">No</button>&nbsp;
+                            <button type="submit" class="btn btn-success">Yes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="clientDetailBulkRequestToEditModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clientDetailModalLabel">Bulk Salesperson Request To Edit</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="assignClientForm" method="POST"
+                        action="{{ route('v1.client-database.bulk-request-to-edit')}}">
+                        @csrf
+                        @METHOD('PUT')
+                        <div class="form-group col-12" style="padding: 15px">
+                            <label for="image_path">Add Reason</label>
+                            <textarea class="form-control" name="edit_reason" id="edit_reason" cols="5"></textarea>
+                        </div>
+                        <input type="hidden" name="edit_client_ids" id="edit_client_ids">
+                        <input type="hidden" name="edit_status" value="edit">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                                aria-label="Close">No</button>&nbsp;
+                            <button type="submit" class="btn btn-success">Yes</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -306,6 +400,13 @@
                     },
 
                     columns: [
+                        { data: 'id',
+                          orderable: false,
+                          searchable: false,
+                            render: function (data, type, row) {
+                                return `<input type="checkbox" class="row-checkbox" value="${data}" data-editable="${row.is_editable}">`;
+                            }
+                        },
                         { data: 'name' },
                         { data: 'company' },
                         { data: 'email' },
@@ -349,6 +450,73 @@
                         { data:'remarks', name:'remarks'}
                     ]
                 });
+
+                function getSelectedIds() {
+                    return $('.row-checkbox:checked').map(function () {
+                        return this.value;
+                    }).get();
+                }
+
+                $('#select-all').on('click', function() {
+                    const isChecked = this.checked;
+                    // Select/Deselect all visible row checkboxes
+                    $('.row-checkbox').prop('checked', isChecked);
+
+                    // Update the selectedClientIds map for the current page
+                    table.rows({ page: 'current' }).data().each(function(row) {
+                        if (isChecked) {
+                            selectedClientIds[row.id] = true;
+                        } else {
+                            delete selectedClientIds[row.id];
+                        }
+                    });
+                });
+
+                $('#approve-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to start assignment.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to assignment the selected data?')) {
+                        handleBulkAction(ids, 'approve');
+                    }
+                });
+
+                $('#edit-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to request to edit.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to request to edit the selected data?')) {
+                        handleBulkEditAction(ids);
+                    }
+                });
+
+                function handleBulkAction(ids, action) {
+                    $('#client-detail-assign-body').html('<p>Loading...</p>');
+                    $('#clientDetailBulkAssignModal').modal('show');
+
+                    $.get('/v1/client-database/0/detail', function (data) {
+                        $('#client-detail-bulk-assign-body').html(data);
+                        $('#client_ids').val(ids);
+                    }).fail(function () {
+                        $('#client-detail-assign-body').html('<p class="text-danger">Failed to load client data.</p>');
+                    });
+                }
+
+                function handleBulkEditAction(ids, action) {
+                    $('#client-detail-edit-body').html('<p>Loading...</p>');
+                    $('#clientDetailBulkRequestToEditModal').modal('show');
+
+                    $.get('/v1/client-database/0/detail', function (data) {
+                        $('#client-detail-bulk-assign-body').html(data);
+                        $('#edit_client_ids').val(ids);
+                    }).fail(function () {
+                        $('#client-detail-assign-body').html('<p class="text-danger">Failed to load client data.</p>');
+                    });
+                }
 
                 $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
                     table.ajax.reload();

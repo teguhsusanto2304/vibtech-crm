@@ -254,6 +254,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
             Route::put('/assignment-salesperson', 'assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
             Route::put('/bulk-assignment-salesperson', 'bulkAssignmentSalesperson')->name('v1.client-database.bulk-assignment-salesperson');
+            Route::put('/bulk-request-to-edit', 'bulkRequestToEdit')->name('v1.client-database.bulk-request-to-edit');
             Route::get('/data', 'getClientsData')->name('v1.client-database.data');
             Route::get('/recycle-bin/data', 'getClientHasRemovedData')->name('v1.client-database.recycle-bin.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');

@@ -80,7 +80,7 @@
                     </table>
                     <div class="mb-3">
                                 <button id="approve-selected" class="btn btn-success">Start Assignment Selected</button>
-                            </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -140,6 +140,7 @@
                             <p>Loading...</p>
                         </div>
                         <input type="hidden" name="client_ids" id="client_ids">
+                        <input type="hidden" name="status" value="assign">
                         <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
                                 aria-label="Close">No</button>&nbsp;
@@ -338,8 +339,6 @@
                             delete selectedClientIds[row.id];
                         }
                     });
-
-
                 });
 
                 $('#approve-selected').on('click', function () {

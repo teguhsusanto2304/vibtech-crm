@@ -35,8 +35,8 @@
     </div>
     <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
         <div class="btn-group" role="group">
-            <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
-            <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+            <button id="download-csv" class="btn btn-outline-primary">Request To Download CSV</button>
+            <button id="download-pdf" class="btn btn-outline-danger">Request To Download PDF</button>
             <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
         </div>
     </div>

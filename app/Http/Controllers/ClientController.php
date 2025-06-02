@@ -18,6 +18,9 @@ use App\Notifications\UserNotification;
 use Auth;
 use App\Models\ClientRemark;
 
+use function PHPUnit\Framework\isEmpty;
+use function PHPUnit\Framework\isNull;
+
 class ClientController extends Controller
 {
     public function __construct()
@@ -29,6 +32,29 @@ class ClientController extends Controller
         $this->middleware('permission:delete-client-database', ['only' => ['destroy']]);
     }
 
+    function getSortedCountries()
+    {
+        $countries = Country::all();
+
+        // 2. Separate Singapore from the rest
+        $singapore = $countries->filter(function ($country) {
+            return strtolower($country->name) === 'singapore';
+        })->first(); // Get the first (and hopefully only) Singapore entry
+
+        // 3. Get the remaining countries (excluding Singapore)
+        $otherCountries = $countries->filter(function ($country) use ($singapore) {
+            return $singapore ? $country->id !== $singapore->id : true; // Exclude if Singapore was found
+        })->sortBy('name'); // Sort the remaining countries alphabetically by name
+
+        // 4. Combine them: Singapore first, then other sorted countries
+        if ($singapore) {
+            $sortedCountries = collect([$singapore])->merge($otherCountries);
+        } else {
+            // If Singapore isn't found, just use the sorted list of all countries
+            $sortedCountries = $otherCountries; // $otherCountries is already sorted and contains all if Singapore wasn't found
+        }
+        return $sortedCountries;
+    }
     public function index()
     {
         $salesPersonNotifications = null;
@@ -76,7 +102,7 @@ class ClientController extends Controller
     {
         return view('client_database.form', [
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPeople' => User::all(),
         ])->with('title', 'Create Client Database')->with('breadcrumb', ['Home', 'Client Database', 'Create a Client Data']);
     }
@@ -88,7 +114,7 @@ class ClientController extends Controller
         return view('client_database.edit', [
             'client' => $client,
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPeople' => User::all(),
             'title' => 'Edit Client Database',
             'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
@@ -326,7 +352,7 @@ class ClientController extends Controller
         return view('client_database.delete', [
             'client' => $client,
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPeople' => User::all(),
             'title' => 'Edit Client Database',
             'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
@@ -353,7 +379,7 @@ class ClientController extends Controller
 
         return view('client_database.list', [
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
 
@@ -380,7 +406,7 @@ class ClientController extends Controller
         }
         return view('client_database.assignment_list', [
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
         ])->with('title', 'List of Salesperson Assignment')->with('breadcrumb', ['Home', 'Client Database', 'List of Salesperson Assignment']);
 
@@ -405,7 +431,7 @@ class ClientController extends Controller
         }
         return view('client_database.recycle_bin.list', [
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
         ])->with('title', 'List of Client Database Recycle Bin')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database Recycle Bin']);
 
@@ -430,7 +456,7 @@ class ClientController extends Controller
         }
         return view('client_database.request.list', [
             'industries' => IndustryCategory::all(),
-            'countries' => Country::all(),
+            'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
         ])->with('title', 'List of Edit Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Edit Request']);
 
@@ -575,66 +601,149 @@ class ClientController extends Controller
         ]);
 
         $clientIdsArray = explode(',', $request->client_ids);
-
+        $countFailed = 0;
+        $countSuccess = 0;
         for ($i = 0; $i < count($clientIdsArray); $i++) {
             $client = Client::findOrFail($clientIdsArray[$i]);
-            $oldSalespersonId = $client->sales_person_id;
-            $validated['is_editable'] = $request->has('is_editable') ? 1 : 0;
-            $validated['updated_by'] = auth()->user()->id;
-            $validated['updated_at'] = date('Y-m-d H:i:s');
-            $validated['sales_person_id'] = $request->sales_person_id;
-            $client->update($validated);
+            if( ($request->status=='reassign' && !is_null($client->sales_person_id) ) || $request->status=='assign' ){
+                $countSuccess ++;
+                $oldSalespersonId = $client->sales_person_id;
+                $validated['is_editable'] = $request->has('is_editable') ? 1 : 0;
+                $validated['updated_by'] = auth()->user()->id;
+                $validated['updated_at'] = date('Y-m-d H:i:s');
+                $validated['sales_person_id'] = $request->sales_person_id;
+                $client->update($validated);
 
-            if ($validated['is_editable'] == 1) {
-                $clientReq = new ClientRequest;
-                $clientReq->data_status = 3;
-                $clientReq->client_id = $clientIdsArray[$i];
-                $clientReq->created_by = auth()->user()->id;
-                $clientReq->approved_by = auth()->user()->id;
-                $clientReq->approved_at = date('Y-m-d H:i:s');
-                $clientReq->remark = 'first time to client edit';
-                $clientReq->save();
-            }
-
-            if ($oldSalespersonId != $request->sales_person_id) {
-                $oldName = User::find($oldSalespersonId)?->name ?? 'N/A';
-                $newName = User::find($request->sales_person_id)?->name ?? 'N/A';
-
-                ClientActivityLog::create([
-                    'client_id' => $client->id,
-                    'action' => 'change',
-                    'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
-                ]);
-                if ($oldName == 'N/A') {
-                    $user = \App\Models\User::findOrFail($request->sales_person_id);
-                    $user->notify(new UserNotification(
-                        'There is a new client data being assigned to you.',
-                        'accept',
-                        route('v1.client-database.list')
-                    ));
-                } else {
-                    $user = \App\Models\User::findOrFail($oldSalespersonId);
-                    $user->notify(new UserNotification(
-                        'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
-                        'accept',
-                        route('v1.client-database.list')
-                    ));
-
-                    $user = \App\Models\User::findOrFail($request->sales_person_id);
-                    $user->notify(new UserNotification(
-                        'An existing client has been reassigned to you by ' . auth()->user()->name,
-                        'accept',
-                        route('v1.client-database.list')
-                    ));
+                if ($validated['is_editable'] == 1) {
+                    $clientReq = new ClientRequest;
+                    $clientReq->data_status = 3;
+                    $clientReq->client_id = $clientIdsArray[$i];
+                    $clientReq->created_by = auth()->user()->id;
+                    $clientReq->approved_by = auth()->user()->id;
+                    $clientReq->approved_at = date('Y-m-d H:i:s');
+                    $clientReq->remark = 'first time to client edit';
+                    $clientReq->save();
                 }
+
+                if ($oldSalespersonId != $request->sales_person_id) {
+                    $oldName = User::find($oldSalespersonId)?->name ?? 'N/A';
+                    $newName = User::find($request->sales_person_id)?->name ?? 'N/A';
+
+                    ClientActivityLog::create([
+                        'client_id' => $client->id,
+                        'action' => 'change',
+                        'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+                    ]);
+                    if ($oldName == 'N/A') {
+                        $user = \App\Models\User::findOrFail($request->sales_person_id);
+                        $user->notify(new UserNotification(
+                            'There is a new client data being assigned to you.',
+                            'accept',
+                            route('v1.client-database.list')
+                        ));
+                    } else {
+                        $user = \App\Models\User::findOrFail($oldSalespersonId);
+                        $user->notify(new UserNotification(
+                            'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
+                            'accept',
+                            route('v1.client-database.list')
+                        ));
+
+                        $user = \App\Models\User::findOrFail($request->sales_person_id);
+                        $user->notify(new UserNotification(
+                            'An existing client has been reassigned to you by ' . auth()->user()->name,
+                            'accept',
+                            route('v1.client-database.list')
+                        ));
+                    }
+                }
+            } else {
+                $countFailed ++;
             }
+
         }
+        //dd($countFailed.'/'.$countSuccess);
 
         // DB::commit();
         if ($request->query('main')) {
-            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has assigned successfully.');
+            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has been assigned successfully.');
         } else {
-            return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
+            if($request->status=='reassign'){
+                if ($countSuccess > 0 && $countFailed === 0) { // Changed $countFailed < 0 to $countFailed === 0
+                    return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has been reassigned successfully.');
+                } elseif ($countSuccess > 0 && $countFailed > 0) {
+                    return redirect()->route('v1.client-database.list')
+                        ->with('success', 'Salesperson has been reassigned successfully.')
+                        ->with('errors', 'Salesperson has been reassigned but some have been rejected.'); // Removed '1' for cleaner message
+                } elseif ($countSuccess === 0 && $countFailed > 0) { // Changed $countSuccess == 0 to $countSuccess === 0 for strict comparison
+                    return redirect()->route('v1.client-database.list')
+                        ->with('errors', 'Salesperson has been reassigned but some have been rejected.'); // Removed '2' for cleaner message
+                } else {
+                    return redirect()->route('v1.client-database.list')
+                        ->with('success', 'No reassignment operations were performed or an unexpected state occurred.');
+                }
+            } else {
+                return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has been assigned successfully.');
+            }
+        }
+    }
+
+    public function bulkRequestToEdit(Request $request)
+    {
+        $validated = $request->validate([
+            'edit_client_ids' => 'required',
+        ]);
+
+        $clientIdsArray = explode(',', $request->edit_client_ids);
+        $countFailed = 0;
+        $countSuccess = 0;
+        for ($i = 0; $i < count($clientIdsArray); $i++) {
+            $client = Client::findOrFail($clientIdsArray[$i]);
+            if( $client->sales_person_id === auth()->user()->id ){
+                $countSuccess ++;
+
+                $client_req = new ClientRequest;
+                $client_req->client_id = $client->id;
+                $client_req->remark = $request->input('edit_reason');
+                $client_req->data_status = $request->input('edit_status') == 'delete' ? 2 : 1;
+                $client_req->created_by = auth()->user()->id;
+                $client_req->save();
+                $msg = $request->input('status') == 'delete' ? 'Client delete requested successfully!' : 'Client edit requested successfully!';
+                if ($request->input('status') == 'delete') {
+                    $msg = 'Client delete requested successfully!';
+                } else {
+                    $msg = 'Client update requested successfully!';
+                    $users = \App\Models\User::permission('view-edit-request')->get();
+                    if ($users) {
+                        foreach ($users as $user) {
+                            $user->notify(new UserNotification(
+                                auth()->user()->name . ' requested to edit an existing client data',
+                                'accept',
+                                route('v1.client-database.request-list')
+                            ));
+                        }
+                    }
+                }
+
+            } else {
+                $countFailed ++;
+            }
+
+        }
+
+        // DB::commit();
+        if ($countSuccess > 0 && $countFailed === 0) { // Changed $countFailed < 0 to $countFailed === 0
+                    return redirect()->route('v1.client-database.list')->with('success', 'Request to edit has been save successfully.');
+            } elseif ($countSuccess > 0 && $countFailed > 0) {
+                    return redirect()->route('v1.client-database.list')
+                        ->with('success', 'Request to edit has been save successfully.')
+                        ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person.'); // Removed '1' for cleaner message
+            } elseif ($countSuccess === 0 && $countFailed > 0) { // Changed $countSuccess == 0 to $countSuccess === 0 for strict comparison
+                    return redirect()->route('v1.client-database.list')
+                        ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person'); // Removed '2' for cleaner message
+            } else {
+                    return redirect()->route('v1.client-database.list')
+                        ->with('success', 'No reassignment operations were performed or an unexpected state occurred.');
         }
     }
 
@@ -827,6 +936,13 @@ class ClientController extends Controller
                     $remarks .= '<p>'.$row->content.'</p>';
                 }
                 return $remarks.'</div>';
+            })
+            ->addColumn('is_editable',function ($client){
+                if ($client->sales_person_id == auth()->user()->id) {
+                    return true;
+                } else {
+                    return false;
+                }
             })
             ->escapeColumns([])
             ->make(true);
