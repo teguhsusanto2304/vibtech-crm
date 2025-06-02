@@ -42,7 +42,6 @@
         <div class="card">
             <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
                 <div></div>
-
                 {{-- Call your new component here --}}
                 <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" />
             </div>
@@ -68,6 +67,7 @@
                                 <th>Updated On</th>
                                 <th>Action</th>
                                 <th>Quotation</th>
+                                <th>Remarks</th>
                             </tr>
                         </thead>
                     </table>
@@ -326,6 +326,7 @@
                         { data: 'updated_on' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'quotation', name: 'quotation' },
+                        { data:'remarks', name:'remarks'}
                     ]
                 });
 

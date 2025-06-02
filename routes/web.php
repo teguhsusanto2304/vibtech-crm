@@ -253,6 +253,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/assignment-salesperson/list', 'assignmentList')->name('v1.client-database.assignment-salesperson.list');
             Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
             Route::put('/assignment-salesperson', 'assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
+            Route::put('/bulk-assignment-salesperson', 'bulkAssignmentSalesperson')->name('v1.client-database.bulk-assignment-salesperson');
             Route::get('/data', 'getClientsData')->name('v1.client-database.data');
             Route::get('/recycle-bin/data', 'getClientHasRemovedData')->name('v1.client-database.recycle-bin.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
@@ -273,6 +274,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/delete-request', 'deleteFromRequest')->name('v1.client-database.delete-request');
             Route::get('/export/csv', 'exportCsv')->name('v1.client-database.export.csv');
             Route::get('/export/pdf', 'exportPdf')->name('v1.client-database.export.pdf');
+            Route::post('/request-bulk','requestBulkAction')->name('v1.client-database.request-bulk');
         });
 
         // 🔹 Client Database Management Routes

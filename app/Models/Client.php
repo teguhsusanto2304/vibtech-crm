@@ -82,6 +82,11 @@ class Client extends Model
         return $this->hasMany(ClientRequest::class, 'client_id');
     }
 
+    public function remarks(): HasMany
+    {
+        return $this->hasMany(ClientRemark::class,'client_id');
+    }
+
     protected static function booted()
     {
         //static::created(function ($client) {

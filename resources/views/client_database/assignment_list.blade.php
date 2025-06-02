@@ -48,12 +48,12 @@
 
         <!-- Card -->
         <div class="card">
-            <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+            <div class="card-header text-white d-flex flex-wrap align-items-center">
                 <div></div>
 
 
                {{-- Call your new component here --}}
-                <x-client-filter-form :salesPersons=null :industries="$industries" :countries="$countries" />
+                <x-sales-person-filter :salesPersons="$salesPersons" salesPersonTitle="Recommended By"/>
 
             </div>
             <div class="card-body" style="overflow-x: auto;">
@@ -61,6 +61,7 @@
                     <table class="table table-bordered table-striped nowrap w-100" id="clients-table">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="select-all"></th>
                                 <th>Name</th>
                                 <th>Company</th>
                                 <th>Email</th>
@@ -77,6 +78,9 @@
                             </tr>
                         </thead>
                     </table>
+                    <div class="mb-3">
+                                <button id="approve-selected" class="btn btn-success">Start Assignment Selected</button>
+                            </div>
                 </div>
             </div>
         </div>
@@ -110,6 +114,32 @@
                         <div class="modal-body" id="client-detail-assign-body">
                             <p>Loading...</p>
                         </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
+                                aria-label="Close">No</button>&nbsp;
+                            <button type="submit" class="btn btn-success">Yes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="clientDetailBulkAssignModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clientDetailModalLabel">Bulk Salesperson Assignment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="assignClientForm" method="POST"
+                        action="{{ route('v1.client-database.bulk-assignment-salesperson')}}">
+                        @csrf
+                        @METHOD('PUT')
+                        <div class="modal-body" id="client-detail-bulk-assign-body">
+                            <p>Loading...</p>
+                        </div>
+                        <input type="hidden" name="client_ids" id="client_ids">
                         <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
                                 aria-label="Close">No</button>&nbsp;
@@ -170,6 +200,8 @@
 
         <script>
             let assignForm;
+
+
 
                 $(document).on("submit", "#assignClientForm", function (e) {
                     e.preventDefault(); // Stop normal form submission
@@ -240,6 +272,14 @@
                     },
 
                     columns: [
+                        {
+                                        data: 'id',
+                                        orderable: false,
+                                        searchable: false,
+                                        render: function (data, type, row) {
+                                            return `<input type="checkbox" class="row-checkbox" value="${data}">`;
+                                        }
+                                    },
                         { data: 'name' },
                         { data: 'company' },
                         { data: 'email' },
@@ -278,6 +318,57 @@
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                     ]
                 });
+
+                function getSelectedIds() {
+                    return $('.row-checkbox:checked').map(function () {
+                        return this.value;
+                    }).get();
+                }
+
+                $('#select-all').on('click', function() {
+                    const isChecked = this.checked;
+                    // Select/Deselect all visible row checkboxes
+                    $('.row-checkbox').prop('checked', isChecked);
+
+                    // Update the selectedClientIds map for the current page
+                    table.rows({ page: 'current' }).data().each(function(row) {
+                        if (isChecked) {
+                            selectedClientIds[row.id] = true;
+                        } else {
+                            delete selectedClientIds[row.id];
+                        }
+                    });
+
+
+                });
+
+                $('#approve-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to start assignment.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to assignment the selected data?')) {
+                        handleBulkAction(ids, 'approve');
+                    }
+                });
+
+                function handleBulkAction(ids, action) {
+                    $('#client-detail-assign-body').html('<p>Loading...</p>');
+                    $('#clientDetailBulkAssignModal').modal('show');
+
+                    $.get('/v1/client-database/0/detail', function (data) {
+                        $('#client-detail-bulk-assign-body').html(data);
+                        $('#client_ids').val(ids);
+                    }).fail(function () {
+                        $('#client-detail-assign-body').html('<p class="text-danger">Failed to load client data.</p>');
+                    });
+                    }
+
+                    $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
+                        table.ajax.reload();
+                    });
+
 
                 $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
                     table.ajax.reload();

@@ -37,12 +37,12 @@
 
         <!-- Card -->
         <div class="card">
-            <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
+            <div class="card-header text-white d-flex flex-wrap align-items-center">
         <div></div>
 
 
         {{-- Call your new component here --}}
-                <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" />
+                <x-sales-person-filter :salesPersons="$salesPersons" />
 
     </div>
             <div class="card-body" style="overflow-x: auto;">

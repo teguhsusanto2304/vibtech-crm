@@ -146,6 +146,11 @@
                         <small>Max 2 MB file size only</small>
                     </div>
 
+                    <div class="form-group col-12">
+                        <label for="image_path">Remarks</label>
+                        <textarea class="form-control" name="remarks" id="remarks" cols="5"></textarea>
+                    </div>
+
 
                     <div class="col-12">
                         <button type="submit" class="btn btn-primary">Submit</button>
@@ -175,6 +180,10 @@
                                 <option value="{{ $user->id }}" >{{ $user->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="form-group col-12">
+                        <label for="image_path">Remarks</label>
+                        <textarea class="form-control" name="upload_remarks" id="upload_remarks" cols="5"></textarea>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-success">Import</button>

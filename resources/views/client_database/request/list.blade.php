@@ -29,24 +29,25 @@
         </div>
 
         <!-- DataTable Dependencies -->
-            <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-            <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
-            <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
-
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
 
 
         <!-- Card -->
         <div class="card">
-            {{-- Call your new component here --}}
-                <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" />
+           <div class="card-header text-white d-flex flex-wrap align-items-center">
+                <div></div>
+                {{-- Call your new component here --}}
+                <x-sales-person-filter :salesPersons="$salesPersons" />
+            </div>
             <div id="msg"></div>
             <div class="card-body" style="overflow-x: auto;">
-
-
                 <table class="table table-bordered table-striped nowrap w-100" id="edit-requests-table">
                                 <thead>
                                     <tr>
+                                        <th><input type="checkbox" id="select-all"></th>
                                         <th>Name</th>
                                         <th>Company</th>
                                         <th>Email</th>
@@ -65,6 +66,10 @@
                                 <tbody>
                                 </tbody>
                             </table>
+                            <div class="mb-3">
+                                <button id="approve-selected" class="btn btn-success">Approve Selected</button>
+                                <button id="reject-selected" class="btn btn-danger">Reject Selected</button>
+                            </div>
             </div>
 
             <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
@@ -130,19 +135,8 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Include jQuery + DataTables -->
-            <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-            <script src="https://cdn.datatables.net/fixedcolumns/4.0.2/js/dataTables.fixedColumns.min.js"></script>
-            <!-- Buttons JS + Dependencies -->
-            <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-            <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
             <script>
+
                 $(function () {
                     let table
                     function initializeDataTable(tableId, requestType) {
@@ -158,12 +152,18 @@
                                     url: '{{ route('v1.client-database.data-request') }}',
                                     data: function (d) {
                                         d.sales_person = $('#filter-sales-person').val();
-                                        d.industry = $('#filter-industry').val();
-                                        d.country = $('#filter-country').val();
                                         d.request_type = requestType;
                                     }
                                 },
                                 columns: [
+                                    {
+                                        data: 'id',
+                                        orderable: false,
+                                        searchable: false,
+                                        render: function (data, type, row) {
+                                            return `<input type="checkbox" class="row-checkbox" value="${data}">`;
+                                        }
+                                    },
                                     { data: 'name', name: 'name' },
                                     { data: 'company' },
                                     { data: 'email' },
@@ -206,6 +206,72 @@
                     }
 
                     initializeDataTable('#edit-requests-table', 1);
+                function getSelectedIds() {
+                    return $('.row-checkbox:checked').map(function () {
+                        return this.value;
+                    }).get();
+                }
+
+                $('#select-all').on('click', function() {
+                    const isChecked = this.checked;
+                    // Select/Deselect all visible row checkboxes
+                    $('.row-checkbox').prop('checked', isChecked);
+
+                    // Update the selectedClientIds map for the current page
+                    table.rows({ page: 'current' }).data().each(function(row) {
+                        if (isChecked) {
+                            selectedClientIds[row.id] = true;
+                        } else {
+                            delete selectedClientIds[row.id];
+                        }
+                    });
+
+
+                });
+
+                $('#approve-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to approve.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to approve the selected data?')) {
+                        handleBulkAction(ids, 'approve');
+                    }
+                });
+
+                $('#reject-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to reject.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to reject the selected data?')) {
+                        handleBulkAction(ids, 'reject');
+                    }
+                });
+                    function handleBulkAction(ids, action) {
+                                        $.ajax({
+                                            url: "{{ route('v1.client-database.request-bulk') }}", // Replace with your actual route
+                                            method: "POST",
+                                            data: {
+                                                _token: "{{ csrf_token() }}",
+                                                ids: ids,
+                                                action: action
+                                            },
+                                            success: function (response) {
+                                                if (response.success) {
+                                                    table.ajax.reload();
+                                                    alert(response.message);
+                                                } else {
+                                                    alert("Action failed.");
+                                                }
+                                            },
+                                            error: function () {
+                                                alert("An error occurred.");
+                                            }
+                                        });
+                                    }
 
                     $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
                         table.ajax.reload();

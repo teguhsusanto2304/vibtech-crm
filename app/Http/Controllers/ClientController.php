@@ -16,6 +16,7 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\UserNotification;
 use Auth;
+use App\Models\ClientRemark;
 
 class ClientController extends Controller
 {
@@ -34,41 +35,41 @@ class ClientController extends Controller
         $clientDataNotifications = null;
         $recycleBinNotification = null;
         $requestNotifications = null;
-        if (\App\Models\User::permission('view-salesperson-assignment')){
+        if (\App\Models\User::permission('view-salesperson-assignment')) {
             $salesPersonNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
                 ->where('notifiable_type', 'App\Models\User')
                 ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/assignment-salesperson/list%'])
                 ->whereNull('read_at')
-                ->where('notifiable_id',auth()->user()->id)
+                ->where('notifiable_id', auth()->user()->id)
                 ->count();
         }
 
-        if (\App\Models\User::permission('view-client-recycle')){
+        if (\App\Models\User::permission('view-client-recycle')) {
             $recycleBinNotification = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
                 ->where('notifiable_type', 'App\Models\User')
                 ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/recycle-bin/list%'])
                 ->whereNull('read_at')
-                ->where('notifiable_id',auth()->user()->id)
+                ->where('notifiable_id', auth()->user()->id)
                 ->count();
         }
 
         $clientDataNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
-                            ->where('notifiable_type', 'App\Models\User')
-                            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/list%'])
-                            ->whereNull('read_at')
-                            ->where('notifiable_id',auth()->user()->id)
-                            ->count();
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', auth()->user()->id)
+            ->count();
 
         $requestNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
-                            ->where('notifiable_type', 'App\Models\User')
-                            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/request-list%'])
-                            ->whereNull('read_at')
-                            ->where('notifiable_id',auth()->user()->id)
-                            ->count();
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/request-list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', auth()->user()->id)
+            ->count();
 
 
 
-        return view('client_database.index',compact('requestNotifications','recycleBinNotification','clientDataNotifications','salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
+        return view('client_database.index', compact('requestNotifications', 'recycleBinNotification', 'clientDataNotifications', 'salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
     }
 
     public function create()
@@ -128,6 +129,7 @@ class ClientController extends Controller
             'country_id' => 'required|exists:countries,id',
             'contact_for_id' => 'required|exists:users,id',
             'image_path' => 'nullable|image|max:2048', // Accept only image files
+            'remarks' => 'required'
         ]);
 
         // Handle file upload if exists
@@ -138,16 +140,24 @@ class ClientController extends Controller
         $validated['created_id'] = auth()->user()->id;
 
         // Save the client
-        Client::create($validated);
-            $users = \App\Models\User::permission('view-salesperson-assignment') // Spatie magic filter
-                    ->get(); // example
-            foreach ($users as $user) {
-                    $user->notify(new UserNotification(
-                                'There are 1 new client data inserted, please assign salesperson/s to the data/s',
-                                'accept',
-                                route('v1.client-database.assignment-salesperson.list')
-                            ));
-                }
+        $newClient = Client::create($validated);
+
+        $remark = new ClientRemark([
+            'content' => $request->remarks,
+            'user_id' => auth()->id(),
+        ]);
+
+        $newClient->remarks()->save($remark);
+
+        $users = \App\Models\User::permission('view-salesperson-assignment') // Spatie magic filter
+            ->get(); // example
+        foreach ($users as $user) {
+            $user->notify(new UserNotification(
+                'There are 1 new client data inserted, please assign salesperson/s to the data/s',
+                'accept',
+                route('v1.client-database.assignment-salesperson.list')
+            ));
+        }
 
         return redirect()->route('v1.client-database.list')->with('success', 'Client created successfully.');
     }
@@ -198,6 +208,7 @@ class ClientController extends Controller
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt|max:2048',
             'contact_for_id' => 'required|exists:users,id',
+            'upload_remarks' => 'required'
         ]);
 
         $file = $request->file('csv_file');
@@ -220,7 +231,7 @@ class ClientController extends Controller
 
                     // Store data
                     $i++;
-                    Client::create([
+                    $newClient = Client::create([
                         'name' => $data['name'] ?? null,
                         'position' => $data['position'] ?? null,
                         'email' => $data['email'] ?? null,
@@ -231,6 +242,13 @@ class ClientController extends Controller
                         'contact_for_id' => $request->input('contact_for_id'),
                         'created_id' => auth()->user()->id,
                     ]);
+
+                    $remark = new ClientRemark([
+                        'content' => $request->upload_remarks,
+                        'user_id' => auth()->id(),
+                    ]);
+
+                    $newClient->remarks()->save($remark);
                 }
             }
 
@@ -245,14 +263,14 @@ class ClientController extends Controller
         }
 
         $users = \App\Models\User::permission('view-salesperson-assignment')
-                    ->get(); // example
-            foreach ($users as $user) {
-                    $user->notify(new UserNotification(
-                                'There are '.$i.' new client data inserted, please assign salesperson/s to the data/s',
-                                'accept',
-                                route('v1.client-database.assignment-salesperson.list')
-                            ));
-                }
+            ->get(); // example
+        foreach ($users as $user) {
+            $user->notify(new UserNotification(
+                'There are ' . $i . ' new client data inserted, please assign salesperson/s to the data/s',
+                'accept',
+                route('v1.client-database.assignment-salesperson.list')
+            ));
+        }
 
         return redirect()
             ->route('v1.client-database.list')
@@ -341,7 +359,7 @@ class ClientController extends Controller
 
     public function assignmentList()
     {
-        if (\App\Models\User::permission('view-salesperson-assignment')){
+        if (\App\Models\User::permission('view-salesperson-assignment')) {
             $notificationsToMarkAsRead = DB::table('notifications')
                 ->where('type', 'App\Notifications\UserNotification')
                 ->where('notifiable_type', 'App\Models\User')
@@ -393,7 +411,7 @@ class ClientController extends Controller
 
     public function updateRequestList()
     {
-                $notificationsToMarkAsRead = DB::table('notifications')
+        $notificationsToMarkAsRead = DB::table('notifications')
             ->where('type', 'App\Notifications\UserNotification')
             ->where('notifiable_type', 'App\Models\User')
             ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/request-list%'])
@@ -444,23 +462,23 @@ class ClientController extends Controller
 
         $allUsers = User::all();
         $users = \App\Models\User::permission('view-client-recycle')->get();
-        if($users){
-            foreach($users as $user){
+        if ($users) {
+            foreach ($users as $user) {
                 $user->notify(new UserNotification(
-                                            'An existing client data has been deleted by '.auth()->user()->name.', the data will be stored in the recycle bin for 60 days.',
-                                            'accept',
-                                            route('v1.client-database.recycle-bin.list')
+                    'An existing client data has been deleted by ' . auth()->user()->name . ', the data will be stored in the recycle bin for 60 days.',
+                    'accept',
+                    route('v1.client-database.recycle-bin.list')
                 ));
             }
         }
         $usersWithoutPermission = $allUsers->diff($users);
-            foreach ($usersWithoutPermission as $user) {
-                $user->notify(new UserNotification(
-                    'An existing client data has been deleted by '.auth()->user()->name,
-                    'accept',
-                    route('v1.client-database.list')
-                ));
-            }
+        foreach ($usersWithoutPermission as $user) {
+            $user->notify(new UserNotification(
+                'An existing client data has been deleted by ' . auth()->user()->name,
+                'accept',
+                route('v1.client-database.list')
+            ));
+        }
 
         return response()->json(['success' => true, 'message' => 'Client deleted successfully']);
     }
@@ -502,27 +520,27 @@ class ClientController extends Controller
                 'action' => 'change',
                 'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
             ]);
-            if($oldName=='N/A'){
+            if ($oldName == 'N/A') {
                 $user = \App\Models\User::findOrFail($validated['sales_person_id']);
                 $user->notify(new UserNotification(
-                                'There is a new client data being assigned to you.',
-                                'accept',
-                                route('v1.client-database.list')
-                            ));
+                    'There is a new client data being assigned to you.',
+                    'accept',
+                    route('v1.client-database.list')
+                ));
             } else {
                 $user = \App\Models\User::findOrFail($oldSalespersonId);
                 $user->notify(new UserNotification(
-                                'An existing client has been reassigned to '.$newName.' by '.auth()->user()->name,
-                                'accept',
-                                route('v1.client-database.list')
-                            ));
+                    'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
+                    'accept',
+                    route('v1.client-database.list')
+                ));
 
                 $user = \App\Models\User::findOrFail($validated['sales_person_id']);
                 $user->notify(new UserNotification(
-                                'An existing client has been reassigned to you by '.auth()->user()->name,
-                                'accept',
-                                route('v1.client-database.list')
-                            ));
+                    'An existing client has been reassigned to you by ' . auth()->user()->name,
+                    'accept',
+                    route('v1.client-database.list')
+                ));
             }
 
         }
@@ -547,31 +565,102 @@ class ClientController extends Controller
         // }
     }
 
+    public function bulkAssignmentSalesperson(Request $request)
+    {
+        $validated = $request->validate([
+            'client_ids' => 'required',
+            'sales_person_id' => 'required',
+        ]);
+
+        $clientIdsArray = explode(',', $request->client_ids);
+
+        for ($i = 0; $i < count($clientIdsArray); $i++) {
+            $client = Client::findOrFail($clientIdsArray[$i]);
+            $oldSalespersonId = $client->sales_person_id;
+            $validated['is_editable'] = $request->has('is_editable') ? 1 : 0;
+            $validated['updated_by'] = auth()->user()->id;
+            $validated['updated_at'] = date('Y-m-d H:i:s');
+            $validated['sales_person_id'] = $request->sales_person_id;
+            $client->update($validated);
+
+            if ($validated['is_editable'] == 1) {
+                $clientReq = new ClientRequest;
+                $clientReq->data_status = 3;
+                $clientReq->client_id = $clientIdsArray[$i];
+                $clientReq->created_by = auth()->user()->id;
+                $clientReq->approved_by = auth()->user()->id;
+                $clientReq->approved_at = date('Y-m-d H:i:s');
+                $clientReq->remark = 'first time to client edit';
+                $clientReq->save();
+            }
+
+            if ($oldSalespersonId != $request->sales_person_id) {
+                $oldName = User::find($oldSalespersonId)?->name ?? 'N/A';
+                $newName = User::find($request->sales_person_id)?->name ?? 'N/A';
+
+                ClientActivityLog::create([
+                    'client_id' => $client->id,
+                    'action' => 'change',
+                    'activity' => "Salesperson changed from $oldName to $newName on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+                ]);
+                if ($oldName == 'N/A') {
+                    $user = \App\Models\User::findOrFail($request->sales_person_id);
+                    $user->notify(new UserNotification(
+                        'There is a new client data being assigned to you.',
+                        'accept',
+                        route('v1.client-database.list')
+                    ));
+                } else {
+                    $user = \App\Models\User::findOrFail($oldSalespersonId);
+                    $user->notify(new UserNotification(
+                        'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
+                        'accept',
+                        route('v1.client-database.list')
+                    ));
+
+                    $user = \App\Models\User::findOrFail($request->sales_person_id);
+                    $user->notify(new UserNotification(
+                        'An existing client has been reassigned to you by ' . auth()->user()->name,
+                        'accept',
+                        route('v1.client-database.list')
+                    ));
+                }
+            }
+        }
+
+        // DB::commit();
+        if ($request->query('main')) {
+            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has assigned successfully.');
+        } else {
+            return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
+        }
+    }
+
     public function deleteFromRequest(Request $request)
     {
         $clientRequest = ClientRequest::find($request->id);
-        if(!$clientRequest){
-            $clientRequest = ClientRequest::where('client_id',$request->id)->first();
+        if (!$clientRequest) {
+            $clientRequest = ClientRequest::where('client_id', $request->id)->first();
         }
 
         if ($request->action == 'edit-reject') {
             $clientRequest->data_status == 0;
             $msg = 'Request to edit client data has rejected successfully';
-                        $user = \App\Models\User::find($clientRequest->created_by);
+            $user = \App\Models\User::find($clientRequest->created_by);
             $user->notify(new UserNotification(
-                                'Your request to edit an existing client data has been rejected.',
-                                'accept',
-                                route('v1.client-database.list')
-                            ));
+                'Your request to edit an existing client data has been rejected.',
+                'accept',
+                route('v1.client-database.list')
+            ));
         } elseif ($request->action == 'edit') {
             $clientRequest->data_status = 3;
             $msg = 'Request to edit client data has approved successfully';
             $user = \App\Models\User::find($clientRequest->created_by);
             $user->notify(new UserNotification(
-                                'Your request to edit an existing client data has been approved.',
-                                'accept',
-                                route('v1.client-database.list')
-                            ));
+                'Your request to edit an existing client data has been approved.',
+                'accept',
+                route('v1.client-database.list')
+            ));
         } elseif ($request->action == 'restore') {
             $clientRequest->data_status = 1;
             $msg = 'client data has restored successfully';
@@ -730,6 +819,13 @@ class ClientController extends Controller
                     return '';
                 }
             })
+            ->addColumn('remarks', function ($client) {
+                $remarks='';
+                foreach($client->remarks()->get() as $row){
+                    $remarks .= $row->content;
+                }
+                return $remarks;
+            })
             ->escapeColumns([])
             ->make(true);
     }
@@ -763,22 +859,10 @@ class ClientController extends Controller
             if ($request->sales_person == '-') {
                 $clientReqs->whereNull('sales_person_id');
             } else {
-                $clientReqs->whereHas('salesPerson', function ($q) use ($request) {
+                $clientReqs->whereHas('client.salesPerson', function ($q) use ($request) {
                     $q->where('name', $request->sales_person);
                 });
             }
-        }
-
-        if ($request->filled('industry')) {
-            $clientReqs->whereHas('client.industryCategory', function ($q) use ($request) {
-                $q->where('name', $request->industry);
-            });
-        }
-
-        if ($request->filled('country')) {
-            $clientReqs->whereHas('client.country', function ($q) use ($request) {
-                $q->where('name', $request->country);
-            });
         }
 
         $data = $clientReqs->get();
@@ -888,7 +972,7 @@ class ClientController extends Controller
             ->where('clients.data_status', 1)
             ->whereNull('clients.sales_person_id')
             ->select('clients.*')
-            ->orderBy('created_at','ASC');
+            ->orderBy('created_at', 'ASC');
 
         if ($request->filled('industry')) {
             $clients->whereHas('industryCategory', function ($q) use ($request) {
@@ -976,10 +1060,10 @@ class ClientController extends Controller
             ->leftJoin('users as updated', 'clients.updated_id', '=', 'updated.id')
             ->leftJoin('users as deleted', 'clients.updated_id', '=', 'deleted.id')
             ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
-            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy','deletedBy'])
+            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy', 'deletedBy'])
             ->where('client_requests.data_status', 4)
             ->select('clients.*')
-            ->orderBy('created_at','ASC');
+            ->orderBy('created_at', 'ASC');
 
         if ($request->filled('sales_person')) {
             if ($request->sales_person == '-') {
@@ -1031,7 +1115,7 @@ class ClientController extends Controller
                                                 data-action="restore" >Restore</button>';
                 }
 
-                return $btn .  $btnRestore;
+                return $btn . $btnRestore;
             })
             ->addColumn('quotation', fn($client) => 'Nil')
             ->addColumn('created_on', function ($client) {
@@ -1053,17 +1137,23 @@ class ClientController extends Controller
 
     public function getClientDetail(Request $request, $id)
     {
-        $client = Client::with(['industryCategory', 'country', 'salesPerson'])->findOrFail($id);
-        $delete = $request->query('delete');
-        $assign = $request->query('assign');
-        $users = null;
-        if (!empty($assign)) {
+        if($id==0){
             $users = User::all();
-
             return view('client_database.partials.detail', compact('users'));
         } else {
-            return view('client_database.partials.detail', compact('client', 'delete', 'users'));
+            $client = Client::with(['industryCategory', 'country', 'salesPerson'])->findOrFail($id);
+            $delete = $request->query('delete');
+            $assign = $request->query('assign');
+            $users = null;
+            if (!empty($assign)) {
+                $users = User::all();
+
+                return view('client_database.partials.detail', compact('users'));
+            } else {
+                return view('client_database.partials.detail', compact('client', 'delete', 'users'));
+            }
         }
+
     }
 
     public function clientDataRequest(Request $request)
@@ -1080,13 +1170,13 @@ class ClientController extends Controller
         } else {
             $msg = 'Client update requested successfully!';
             $users = \App\Models\User::permission('view-edit-request')->get();
-            if ($users){
+            if ($users) {
                 foreach ($users as $user) {
                     $user->notify(new UserNotification(
-                                auth()->user()->name.' requested to edit an existing client data',
-                                'accept',
-                                route('v1.client-database.request-list')
-                            ));
+                        auth()->user()->name . ' requested to edit an existing client data',
+                        'accept',
+                        route('v1.client-database.request-list')
+                    ));
                 }
             }
         }
@@ -1158,5 +1248,46 @@ class ClientController extends Controller
         $pdf = PDF::loadView('client_database.partials.export_pdf', ['clients' => $clients]);
 
         return $pdf->download('clients_export.pdf');
+    }
+
+    public function requestBulkAction(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'action' => 'required|in:approve,reject',
+        ]);
+
+        $clients = ClientRequest::whereIn('id', $request->ids)
+                    ->where('data_status', 1)
+                    ->get();
+        foreach ($clients as $client) {
+            if ($request->action === 'approve') {
+                $user = \App\Models\User::find($client->created_by);
+                $user->notify(new UserNotification(
+                    'Your request to edit an existing client data has been approved.',
+                    'accept',
+                    route('v1.client-database.list')
+                ));
+                ClientRequest::whereIn('id', $request->ids)
+                                    ->where('data_status', 1)
+                                    ->update(['data_status'=>3,'approved_by'=>auth()->user()->id,'approved_at'=>date('Y-m-d H:i:s')]);
+            } else {
+                $user = \App\Models\User::find($client->created_by);
+                $user->notify(new UserNotification(
+                    'Your request to edit an existing client data has been rejected.',
+                    'reject',
+                    route('v1.client-database.list')
+                ));
+                ClientRequest::whereIn('id', $request->ids)
+                                    ->where('data_status', 1)
+                                    ->delete();
+            }
+
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selected clients have been ' . $request->action . 'd.',
+        ]);
     }
 }
