@@ -36,7 +36,27 @@
         <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
 
+        <style>
+            .remarks-scroll-container {
+    max-height: 100px; /* Adjust this value as needed */
+    overflow-y: auto;  /* Enables vertical scrolling if content exceeds max-height */
+    padding-right: 5px; /* Adds a little space for the scrollbar */
+    /* Optional styling for better appearance */
+    border: 1px solid #eee; /* Light border */
+    background-color: #f9f9f9; /* Light background */
+    margin: 0; /* Remove default margins from paragraphs if any */
+}
 
+/* Optional: Style for the paragraphs inside to reduce spacing if needed */
+.remarks-scroll-container p {
+    margin-bottom: 5px; /* Reduce space between remarks */
+    padding: 0;
+}
+
+.remarks-scroll-container p:last-child {
+    margin-bottom: 0; /* No margin on the last paragraph */
+}
+            </style>
 
         <!-- Card -->
         <div class="card">

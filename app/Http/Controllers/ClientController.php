@@ -820,11 +820,11 @@ class ClientController extends Controller
                 }
             })
             ->addColumn('remarks', function ($client) {
-                $remarks='';
+                $remarks='<div class="remarks-scroll-container">';
                 foreach($client->remarks()->get() as $row){
-                    $remarks .= $row->content;
+                    $remarks .= '<p>'.$row->content.'</p>';
                 }
-                return $remarks;
+                return $remarks.'</div>';
             })
             ->escapeColumns([])
             ->make(true);
