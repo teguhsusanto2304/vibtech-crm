@@ -64,6 +64,7 @@
                                 <th>Updated On</th>
                                 <th>Action</th>
                                 <th>Deleted On</th>
+                                <th>Auto Delete On</th>
                                 <th>Quotation</th>
                             </tr>
                         </thead>
@@ -224,6 +225,7 @@ $('#download-pdf').on('click', function () {
                         { data: 'updated_on' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'deleted_on' },
+                        { data: 'automation_delete' },
                         { data: 'quotation', name: 'quotation' }
 
                     ]

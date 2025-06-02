@@ -1249,6 +1249,10 @@ class ClientController extends Controller
             ->addColumn('deleted_on', function ($client) {
                 return $client->deleted_at->format('d M Y H:i') . '<br><small>' . $client->deletedBy->name . '</small>';
             })
+            ->addColumn('automation_delete', function ($client) {
+                return $client->deleted_at->addDays(60)->format('d M Y H:i');
+
+            })
             ->escapeColumns([])
             ->make(true);
     }
