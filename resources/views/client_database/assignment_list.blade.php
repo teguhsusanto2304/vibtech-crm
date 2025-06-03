@@ -53,7 +53,7 @@
 
 
                {{-- Call your new component here --}}
-                <x-sales-person-filter :salesPersons="$salesPersons" salesPersonTitle="Recommended By"/>
+                <x-sales-person-filter :salesPersons="$salesPersons" salesPersonTitle="Recommended For"/>
 
             </div>
             <div class="card-body" style="overflow-x: auto;">
@@ -267,8 +267,6 @@
                         url: '{{ route('v1.client-database.assignment-salesperson.data') }}',
                         data: function (d) {
                             d.sales_person = $('#filter-sales-person').val();
-                            d.industry = $('#filter-industry').val();
-                            d.country = $('#filter-country').val();
                         }
                     },
 

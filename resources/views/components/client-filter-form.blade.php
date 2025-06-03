@@ -1,6 +1,6 @@
 {{-- resources/views/components/filter-form.blade.php --}}
 
-@props(['salesPersons', 'industries', 'countries', 'formId' => 'filters-form'])
+@props(['salesPersons', 'industries', 'countries','downloadFile', 'formId' => 'filters-form'])
 
 <div id="{{ $formId }}" class="row g-3">
     @if($salesPersons)
@@ -35,116 +35,105 @@
     </div>
     <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
         <div class="btn-group" role="group">
-            <button id="download-csv" class="btn btn-outline-primary">Request To Download CSV</button>
-            <button id="download-pdf" class="btn btn-outline-danger">Request To Download PDF</button>
-            <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
+                @php $pdf = 0; $csv=0; @endphp
+                @forelse ($downloadFile as $row )
+                    @if($row->file_type=='csv' && $row->data_status==0)
+                        <button id="download-csv1" class="btn btn-outline-primary">Request To Download CSV</button>
+                    @elseif($row->file_type=='csv' && $row->data_status==1)
+                        <button id="download-csv1" class="btn btn-outline-primary" disabled>Waiting response</button>
+                    @elseif($row->file_type=='csv' && $row->data_status==2)
+                        <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
+                    @endif
+                    @if($row->file_type=='pdf' && $row->data_status==0)
+                        <button id="download-pdf1" class="btn btn-outline-danger">Request To Download PDF</button>
+                    @elseif($row->file_type=='pdf' && $row->data_status==1)
+                        <button id="download-pdf1" class="btn btn-outline-danger" disabled>Waiting response</button>
+                    @elseif($row->file_type=='pdf' && $row->data_status==2)
+                        <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+                    @endif
+                    @if ($row->file_type=='pdf')
+                       @php $pdf ++;  @endphp
+                    @endif
+                    @if ($row->file_type=='csv')
+                       @php $csv ++;  @endphp
+                    @endif
+                @empty
+                @endforelse
+                @if($pdf == 0)
+                    <button id="download-pdf1" class="btn btn-outline-danger">Request To Download PDF</button>
+                @endif
+                @if($csv == 0)
+                    <<button id="download-csv1" class="btn btn-outline-primary">Request To Download CSV</button>
+                @endif
+                <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
         </div>
     </div>
 </div>
 <script>
     $(document).ready(function() {
-    const downloadStatusMessage = $('#download-status-message');
-    let pollingInterval; // To store the interval ID for polling, allows us to stop it
+        const downloadStatusMessage = $('#download-status-message');
+        const csvButton = $('#download-csv1');
+        const pdfButton = $('#download-pdf1');
 
-    /**
-     * Sends an AJAX request to the backend to create a new download request.
-     * @param {string} fileType - The type of file requested ('csv' or 'pdf').
-     */
-    function sendDownloadRequest(fileType) {
-        // Clear any previous messages and show loading state
-        downloadStatusMessage.html('<div class="alert alert-info">Requesting download for ' + fileType.toUpperCase() + '... Please wait for admin approval.</div>');
-        $('#download-csv, #download-pdf').prop('disabled', true); // Disable buttons to prevent multiple requests
+        let pollingInterval;     // To store the interval ID for polling
+        let currentRequestId = null; // Stores the ID of the ongoing request
+        let lastRequestedFileType = null; // Stores 'csv' or 'pdf' for the current request
 
-        $.ajax({
-            url: '/api/download-request', // Your API endpoint to create a request (Laravel route: POST /api/download-request)
-            method: 'POST',
-            data: {
-                file_type: fileType,
-                // If your download needs to be based on current table filters, pass them here:
-                // filters: getTableFilters(), // You'd need a function to gather these filters
-                _token: '{{ csrf_token() }}' // Essential for Laravel CSRF protection
-            },
-            success: function(response) {
-                if (response.request_id) {
-                    downloadStatusMessage.html('<div class="alert alert-warning">Your request (ID: ' + response.request_id + ') has been submitted. Waiting for admin approval...</div>');
-                    startPollingStatus(response.request_id); // Start polling the server for status updates
-                } else {
-                    // Handle cases where request_id might be missing from response (though unlikely with proper backend)
-                    downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (response.message || 'Unknown error') + '</div>');
-                    $('#download-csv, #download-pdf').prop('disabled', false); // Re-enable buttons on backend error
-                }
-            },
-            error: function(xhr) {
-                // Handle AJAX error (e.g., network error, 500 server error)
-                downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Server error occurred. Please try again.') + '</div>');
-                $('#download-csv, #download-pdf').prop('disabled', false); // Re-enable buttons on AJAX error
-            }
-        });
-    }
-
-    /**
-     * Starts polling the server to check the status of a specific download request.
-     * @param {number} requestId - The ID of the download request to poll.
-     */
-    function startPollingStatus(requestId) {
-        // Clear any existing polling interval to prevent multiple intervals running simultaneously
-        if (pollingInterval) {
-            clearInterval(pollingInterval);
+        // Function to reset buttons to their initial "request" state
+        function resetButtons() {
+            csvButton.prop('disabled', false).text('Request To Download CSV');
+            pdfButton.prop('disabled', false).text('Request To Download PDF');
         }
 
-        // Set up polling to check status every 5 seconds
-        pollingInterval = setInterval(function() {
+        // Function to set buttons to "waiting" state
+        function setWaitingState() {
+            csvButton.prop('disabled', true).text('Waiting response');
+            pdfButton.prop('disabled', true).text('Waiting response');
+        }
+
+        // Function to send the initial download request
+        function sendDownloadRequest(fileType) {
+            // Clear any previous messages and set initial UI state
+            downloadStatusMessage.html('');
+            setWaitingState();
+
+            lastRequestedFileType = fileType; // Store the type for later reference
+
             $.ajax({
-                url: '/api/download-status/' + requestId, // Your API endpoint to check status (Laravel route: GET /api/download-status/{id})
-                method: 'GET',
+                url: '{{ route('v1.client-database.request-download') }}', // Your API endpoint to create a request
+                method: 'POST',
+                data: {
+                    user_id: $('#filter-sales-person').val(),
+                    total_data:2,
+                    file_type: fileType,
+                    _token: '{{ csrf_token() }}' // For CSRF protection in Laravel
+                },
                 success: function(response) {
-                    if (response.status === 'approved') {
-                        clearInterval(pollingInterval); // Stop polling when approved
-                        downloadStatusMessage.html('<div class="alert alert-success">Admin approved! Initiating download...</div>');
-
-                        if (response.download_url) {
-                            // Trigger the actual download by redirecting the browser
-                            window.location.href = response.download_url;
-                        } else {
-                            downloadStatusMessage.html('<div class="alert alert-danger">Approval received, but no download URL found. Please contact support.</div>');
-                        }
-                        $('#download-csv, #download-pdf').prop('disabled', false); // Re-enable buttons
-
-                    } else if (response.status === 'rejected') {
-                        clearInterval(pollingInterval); // Stop polling when rejected
-                        downloadStatusMessage.html('<div class="alert alert-danger">Your download request has been rejected by the admin.</div>');
-                        $('#download-csv, #download-pdf').prop('disabled', false); // Re-enable buttons
-
+                    if (response.request_id) {
+                        currentRequestId = response.request_id; // Store the ID of the new request
+                        location.reload();
                     } else {
-                        // Request is still 'pending' or in another intermediate status
-                        downloadStatusMessage.html('<div class="alert alert-warning">Your request (ID: ' + requestId + ') is still ' + response.status + '. Waiting for admin approval...</div>');
+                        downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (response.message || 'Unknown error') + '</div>');
+                        //resetButtons(); // Reset buttons on error
                     }
                 },
                 error: function(xhr) {
-                    clearInterval(pollingInterval); // Stop polling on error
-                    downloadStatusMessage.html('<div class="alert alert-danger">Error checking status: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Server error occurred.') + ' Please refresh and try again.</div>');
-                    $('#download-csv, #download-pdf').prop('disabled', false); // Re-enable buttons
+                    downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Server error') + '</div>');
+                    resetButtons(); // Reset buttons on error
                 }
             });
-        }, 5000); // Poll every 5 seconds (adjust this interval as needed)
-    }
+        }
 
-    // Attach click event listeners to your buttons
-    $('#download-csv').on('click', function() {
-        sendDownloadRequest('csv');
+
+
+        // Attach click event handlers to your buttons
+        csvButton.on('click', function() {
+            sendDownloadRequest('csv');
+        });
+
+        pdfButton.on('click', function() {
+            sendDownloadRequest('pdf');
+        });
+
     });
-
-    $('#download-pdf').on('click', function() {
-        sendDownloadRequest('pdf');
-    });
-
-    // Optional: If you need to pass table filters to the backend
-    // function getTableFilters() {
-    //     return {
-    //         sales_person: $('#filter-sales-person').val(),
-    //         industry: $('#filter-industry').val(),
-    //         country: $('#filter-country').val()
-    //     };
-    // }
-});
-    </script>
+</script>

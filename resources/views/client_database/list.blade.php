@@ -69,7 +69,7 @@
             <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
                 <div></div>
                 {{-- Call your new component here --}}
-                <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" />
+                <x-client-filter-form :salesPersons="$salesPersons" :industries="$industries" :countries="$countries" :downloadFile="$downloadFile" />
             </div>
             <div class="card-body" style="overflow-x: auto;">
                 <div class="table-responsive">
@@ -99,9 +99,13 @@
                         </thead>
                     </table>
                     <div class="mb-3">
-                            <button id="approve-selected" class="btn btn-success">Reassignment All</button>
+                        @can('edit1-client-database')
+                            <button id="approve-selected" class="btn btn-success">Reassign To All</button>
+                            @endcan
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
+                            @can('delete-client-database')
                             <button id="delete-selected" class="btn btn-danger">Delete All</button>
+                            @endcan
                     </div>
                 </div>
             </div>
@@ -361,6 +365,11 @@
                     country: $('#filter-country').val()
                 });
                 window.location.href = `/v1/client-database/export/csv?${params.toString()}`;
+                $.ajax({ method: 'GET', url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'csv']) }}' })
+                const reloadDelay = 2000;
+                setTimeout(function() {
+                    location.reload();
+                }, reloadDelay);
             });
 
             $(document).on('click', '.view-client-assign', function () {
@@ -383,6 +392,11 @@
                     country: $('#filter-country').val()
                 });
                 window.location.href = `/v1/client-database/export/pdf?${params.toString()}`;
+                $.ajax({ method: 'GET', url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}' })
+                const reloadDelay = 2000;
+                setTimeout(function() {
+                    location.reload();
+                }, reloadDelay);
             });
             $(function () {
                 let table = $('#clients-table').DataTable({

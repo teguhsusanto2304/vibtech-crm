@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('client_download_requests', function (Blueprint $table) {
             $table->id();
             $table->integer('total_data');
-            $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->foreignId('request_id')->constrained('users');
             $table->foreignId('approved_id')->nullable()->constrained('users')->onDelete('set null');
             $table->integer('data_status'); //0 = request,1=approved,3=rejected
+            $table->string('file_type',50);
+            $table->string('unique_token',100)->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->json('request_data')->nullable();
             $table->timestamps();
         });
     }

@@ -8,6 +8,7 @@ use App\Models\Country;
 use App\Models\IndustryCategory;
 use App\Models\User;
 use App\Models\ClientActivityLog;
+use App\Models\ClientDownloadRequest;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -377,11 +378,43 @@ class ClientController extends Controller
                 ->update(['read_at' => now()]);
         }
 
+        $downloadFile = ClientDownloadRequest::where(['request_id'=>auth()->user()->id])->get();
+
         return view('client_database.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
+            'downloadFile'=>$downloadFile,
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
+
+    }
+
+    public function downloadRequestList()
+    {
+        $notificationsToMarkAsRead = DB::table('notifications')
+            ->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', Auth::id())
+            ->get();
+
+        if ($notificationsToMarkAsRead->isNotEmpty()) {
+            $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
+
+            DB::table('notifications')
+                ->whereIn('id', $notificationIds)
+                ->update(['read_at' => now()]);
+        }
+
+        $downloadFile = ClientDownloadRequest::where(['request_id'=>auth()->user()->id])->get();
+
+        return view('client_database.request.download_list', [
+            'industries' => IndustryCategory::all(),
+            'countries' => $this->getSortedCountries(),
+            'salesPersons' => User::all(),
+            'downloadFile'=>null
+        ])->with('title', 'List of Download Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Download Request']);
 
     }
 
@@ -1079,6 +1112,65 @@ class ClientController extends Controller
             ->make(true);
     }
 
+    public function getClientDownloadRequestsData(Request $request)
+    {
+        $requestType = $request->input('request_type');
+        $clientReqs = ClientDownloadRequest::with([
+            'createdBy',            // Eager load the User who approved the ClientRequest
+        ]);
+        $clientReqs->where(['file_type'=>$requestType,'data_status'=>1]);
+        // Filters based on Client's relationships (correctly using whereHas with dot notation)
+        if ($request->filled('sales_person')) {
+            if ($request->sales_person == '-') {
+                $clientReqs->whereNull('request_id');
+            } else {
+                $clientReqs->whereHas('createdBy', function ($q) use ($request) {
+                    $q->where('name', $request->sales_person);
+                });
+            }
+        }
+
+        $data = $clientReqs->get();
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('created_name', fn($row) => $row->createdBy->name ?? '-')
+            ->addColumn('action', function ($row) {
+                $btn = '<div class="btn-group" role="group" aria-label="Basic mixed styles example">';
+                $btn .= '<a href="'.route('v1.client-download.request-download-response',['id'=>$row->id,'actionType'=>'approve']).'" class="btn btn-primary btn-sm">Approve</a>';
+                $btn .= '<a href="'.route('v1.client-download.request-download-response',['id'=>$row->id,'actionType'=>'reject']).'" class="btn btn-danger btn-sm">Reject</a>';
+                $btn .= '</div>'; // Close the btn-group
+
+                return $btn;
+            })
+            ->escapeColumns([])
+            ->make(true);
+    }
+
+    public function clientDownloadRequestResponse($id,$actionType)
+    {
+        $req = ClientDownloadRequest::find($id);
+        $msg = '';
+        if($actionType=='approve'){
+            $req->data_status=2;
+            $req->approved_id=auth()->user()->id;
+            $req->save();
+            $msg = 'Request to '.\Str::upper($req->file_type).' Download, has been approved successfully!';
+        } else {
+            $msg = 'Request to '.\Str::upper($req->file_type).' Download, has been rejected successfully!';
+            $req->delete();
+        }
+
+        return redirect()->route('v1.client-database.download-request.list')
+                        ->with('success', $msg);
+    }
+
+    public function clientDownloadRequestComplete($user_id,$fileType)
+    {
+        $req = ClientDownloadRequest::where(['request_id'=>$user_id,'file_type'=>$fileType])->first();
+        $req->delete();
+    }
+
     public function getAssignmentSalespersonData(Request $request)
     {
         $clients = Client::leftJoin('industry_categories', 'clients.industry_category_id', '=', 'industry_categories.id')
@@ -1092,10 +1184,14 @@ class ClientController extends Controller
             ->select('clients.*')
             ->orderBy('created_at', 'ASC');
 
-        if ($request->filled('industry')) {
-            $clients->whereHas('industryCategory', function ($q) use ($request) {
-                $q->where('name', $request->industry);
-            });
+        if ($request->filled('sales_person')) {
+            if ($request->sales_person == '-') {
+                $clients->whereNotNull('contact_for_id');
+            } else {
+                $clients->whereHas('contactFor', function ($q) use ($request) {
+                    $q->where('name', $request->sales_person);
+                });
+            }
         }
 
         if ($request->filled('country')) {
@@ -1412,4 +1508,41 @@ class ClientController extends Controller
             'message' => 'Selected clients have been ' . $request->action . 'd.',
         ]);
     }
+
+    public function clientDownloadRequestStore(Request $request)
+    {
+        // 1. Validate the incoming request data
+        $request->validate([
+            'file_type' => ['required', 'string', 'in:csv,pdf'],
+        ]);
+
+        try {
+            // 2. Create a new record in the download_requests table
+            $downloadRequest = ClientDownloadRequest::create([
+                'user_id' => Auth::id(), // Get the ID of the currently authenticated user
+                'file_type' => $request->file_type,
+                'data_status' => 1,
+                'total_data' => $request->total_data,
+                'request_id' => auth()->user()->id
+            ]);
+
+            // 3. Return a JSON response
+            return response()->json([
+                'message' => 'Download request submitted successfully and is awaiting admin approval.',
+                'request_id' => $downloadRequest->id, // Return the ID for client-side polling
+            ], 200); // 200 OK status code
+
+        } catch (\Exception $e) {
+            // Handle any exceptions that occur during creation
+            //\Log::error("Failed to store download request: " . $e->getMessage(), ['user_id' => Auth::id(), 'request_data' => $request->all()]);
+
+            return response()->json([
+                'message' => 'An error occurred while submitting your download request. Please try again later.',
+                'error' => $e->getMessage(), // Include error message for debugging (remove in production)
+            ], 500); // 500 Internal Server Error status code
+        }
+    }
+
+
+
 }

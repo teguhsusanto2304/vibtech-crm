@@ -251,11 +251,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/', 'index')->name('v1.client-database');
             Route::get('/list', 'list')->name('v1.client-database.list');
             Route::get('/assignment-salesperson/list', 'assignmentList')->name('v1.client-database.assignment-salesperson.list');
+            Route::get('/download-request/list', 'downloadRequestList')->name('v1.client-database.download-request.list');
             Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
             Route::put('/assignment-salesperson', 'assignmentSalesperson')->name('v1.client-database.assignment-salesperson');
             Route::put('/bulk-assignment-salesperson', 'bulkAssignmentSalesperson')->name('v1.client-database.bulk-assignment-salesperson');
-            Route::put('/bulk-request-to-edit', 'bulkRequestToEdit')->name('v1.client-database.bulk-request-to-edit');
-            Route::get('/data', 'getClientsData')->name('v1.client-database.data');
+            Route::put('/bulk-request-to-edit', 'bulkRequestToEdit')->name('v1.client-database.bulk-request-to-edit');Route::get('/data', 'getClientsData')->name('v1.client-database.data');
             Route::get('/recycle-bin/data', 'getClientHasRemovedData')->name('v1.client-database.recycle-bin.data');
             Route::get('/{id}/show', 'show')->name('v1.client-database.show');
             Route::get('/create', 'create')->name('v1.client-database.create');
@@ -272,10 +272,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/request-list', 'updateRequestList')->name('v1.client-database.request-list');
             Route::get('/recycle-bin/list', 'recycleBinList')->name('v1.client-database.recycle-bin.list');
             Route::get('/data-request', 'getClientRequestsData')->name('v1.client-database.data-request');
+            Route::get('/download-data-request', 'getClientDownloadRequestsData')->name('v1.client-database.download-data-request');
             Route::post('/delete-request', 'deleteFromRequest')->name('v1.client-database.delete-request');
             Route::get('/export/csv', 'exportCsv')->name('v1.client-database.export.csv');
             Route::get('/export/pdf', 'exportPdf')->name('v1.client-database.export.pdf');
             Route::post('/request-bulk','requestBulkAction')->name('v1.client-database.request-bulk');
+            Route::post('/request-download','clientDownloadRequestStore')->name('v1.client-database.request-download');
+            Route::get('/{id}/{actionType}/request-download-response','clientDownloadRequestResponse')->name('v1.client-download.request-download-response');
+            Route::get('/{user_id}/{fileType}/request-download-complete','clientDownloadRequestComplete')->name('v1.client-download.request-download-complete');
         });
 
         // 🔹 Client Database Management Routes
