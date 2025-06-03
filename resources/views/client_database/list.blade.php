@@ -99,9 +99,9 @@
                         </thead>
                     </table>
                     <div class="mb-3">
-                            <button id="approve-selected" class="btn btn-success">Ressignment Selected</button>
-                            <button id="edit-selected" class="btn btn-primary">Request to edit Selected</button>
-                            <button id="delete-selected" class="btn btn-danger">Delete Selected</button>
+                            <button id="approve-selected" class="btn btn-success">Reassignment All</button>
+                            <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
+                            <button id="delete-selected" class="btn btn-danger">Delete All</button>
                     </div>
                 </div>
             </div>

@@ -67,8 +67,8 @@
                                 </tbody>
                             </table>
                             <div class="mb-3">
-                                <button id="approve-selected" class="btn btn-success">Approve Selected</button>
-                                <button id="reject-selected" class="btn btn-danger">Reject Selected</button>
+                                <button id="approve-selected" class="btn btn-success">Approve All</button>
+                                <button id="reject-selected" class="btn btn-danger">Reject All</button>
                             </div>
             </div>
 
