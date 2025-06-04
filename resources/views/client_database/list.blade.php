@@ -100,7 +100,7 @@
                     </table>
                     <div class="mb-3">
                         @can('edit1-client-database')
-                            <button id="approve-selected" class="btn btn-success">Reassign To All</button>
+                            <button id="approve-selected" class="btn btn-success">Assign To All</button>
                             @endcan
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
                             @can('delete-client-database')
@@ -358,6 +358,7 @@
                 $('#filter-country').val('');
                 $('#clients-table').DataTable().ajax.reload();
             });
+
             $('#download-csv').on('click', function () {
                 const params = new URLSearchParams({
                     sales_person: $('#filter-sales-person').val(),
@@ -471,6 +472,17 @@
                     }).get();
                 }
 
+                $('#edit-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to delete.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to delete the selected data?')) {
+                        handleBulkAction(ids, 'delete');
+                    }
+                });
+
                 $('#select-all').on('click', function() {
                     const isChecked = this.checked;
                     // Select/Deselect all visible row checkboxes
@@ -486,7 +498,7 @@
                     });
                 });
 
-                $('#approve-selected').on('click', function () {
+                $('#delete-selected').on('click', function () {
                     let ids = getSelectedIds();
                     if (ids.length === 0) {
                         alert('Please select at least one row to start assignment.');
@@ -504,7 +516,41 @@
                         return;
                     }
                     if (confirm('Are you sure you want to request to edit the selected data?')) {
-                        handleBulkEditAction(ids);
+                        //process bulk delete
+
+                        $.ajax({
+                            url: '{{ route('v1.client-database.bulk-delete') }}', // Laravel route for bulk delete
+                            method: 'DELETE', // Use DELETE method for RESTfulness
+                            data: {
+                                ids: ids, // Send the array of IDs
+                                _token: '{{ csrf_token() }}' // Laravel CSRF token for security
+                            },
+                            success: function(response) {
+                                // Handle success response
+                                if (response.success) {
+                                    alert(response.message);
+                                    // Reload your DataTable or the page to reflect changes
+                                    // If using DataTables, you might do:
+                                    // $('#your-data-table').DataTable().ajax.reload();
+                                    location.reload(); // Or reload the entire page
+                                } else {
+                                    alert('Error: ' + response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                // Handle error response
+                                let errorMessage = 'An error occurred during deletion.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                    // Handle validation errors if any
+                                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                                }
+                                alert(errorMessage);
+                                console.error('Bulk Delete Error:', xhr);
+                            }
+                        });
+
                     }
                 });
 

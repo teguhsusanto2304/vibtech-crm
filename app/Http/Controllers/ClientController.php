@@ -1543,6 +1543,43 @@ class ClientController extends Controller
         }
     }
 
+    public function bulkDelete(Request $request)
+    {
+            // 1. Validate the incoming request
+            $request->validate([
+                'ids' => 'required|array',         // 'ids' must be a required array
+                'ids.*' => 'required|integer|exists:clients,id', // Each ID must be an integer and exist in the 'clients' table
+            ]);
+
+            $clientIds = $request->input('ids');
+
+            foreach ($clientIds as $id) {
+
+                $user = Client::find($id);
+                $user->data_status = 0;
+                $user->deleted_id = auth()->user()->id;
+                $user->deleted_at = date('Y-m-d H:i:s');
+                $user->save();
+
+                $clientReq = new ClientRequest;
+                $clientReq->client_id = $request->id;
+                $clientReq->data_status = 4;
+                $clientReq->created_by = auth()->user()->id;
+                $clientReq->remark = 'N/A';
+                $clientReq->save();
+
+            }
+
+            //if ($deletedCount > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully deleted  client(s)."
+                ]);
+
+
+
+    }
+
 
 
 }
