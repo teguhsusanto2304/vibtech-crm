@@ -79,7 +79,7 @@
                         </thead>
                     </table>
                     <div class="mb-3">
-                                <button id="approve-selected" class="btn btn-success">Assignment All</button>
+                                <button id="approve-selected" class="btn btn-success">Assign To All</button>
                     </div>
                 </div>
             </div>

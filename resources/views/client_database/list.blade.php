@@ -100,7 +100,7 @@
                     </table>
                     <div class="mb-3">
                         @can('edit1-client-database')
-                            <button id="approve-selected" class="btn btn-success">Assign To All</button>
+                            <button id="approve-selected" class="btn btn-success">Reassign To All</button>
                             @endcan
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
                             @can('delete-client-database')
