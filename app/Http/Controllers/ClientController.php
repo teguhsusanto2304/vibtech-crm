@@ -167,7 +167,7 @@ class ClientController extends Controller
 
         // Save the client
         $newClient = Client::create($validated);
-        if($request->remarks){
+        if ($request->remarks) {
             $remark = new ClientRemark([
                 'content' => $request->remarks,
                 'user_id' => auth()->id(),
@@ -270,11 +270,11 @@ class ClientController extends Controller
                         'created_id' => auth()->user()->id,
                     ]);
 
-                    if($request->upload_remarks){
+                    if ($request->upload_remarks) {
                         $remark = new ClientRemark([
-                                    'content' => $request->upload_remarks,
-                                    'user_id' => auth()->id(),
-                                ]);
+                            'content' => $request->upload_remarks,
+                            'user_id' => auth()->id(),
+                        ]);
 
                         $newClient->remarks()->save($remark);
                     }
@@ -378,13 +378,13 @@ class ClientController extends Controller
                 ->update(['read_at' => now()]);
         }
 
-        $downloadFile = ClientDownloadRequest::where(['request_id'=>auth()->user()->id])->get();
+        $downloadFile = ClientDownloadRequest::where(['request_id' => auth()->user()->id])->get();
 
         return view('client_database.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
-            'downloadFile'=>$downloadFile,
+            'downloadFile' => $downloadFile,
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
 
     }
@@ -407,13 +407,13 @@ class ClientController extends Controller
                 ->update(['read_at' => now()]);
         }
 
-        $downloadFile = ClientDownloadRequest::where(['request_id'=>auth()->user()->id])->get();
+        $downloadFile = ClientDownloadRequest::where(['request_id' => auth()->user()->id])->get();
 
         return view('client_database.request.download_list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
-            'downloadFile'=>null
+            'downloadFile' => null
         ])->with('title', 'List of Download Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Download Request']);
 
     }
@@ -638,8 +638,8 @@ class ClientController extends Controller
         $countSuccess = 0;
         for ($i = 0; $i < count($clientIdsArray); $i++) {
             $client = Client::findOrFail($clientIdsArray[$i]);
-            if( ($request->status=='reassign' && !is_null($client->sales_person_id) ) || $request->status=='assign' ){
-                $countSuccess ++;
+            if (($request->status == 'reassign' && !is_null($client->sales_person_id)) || $request->status == 'assign') {
+                $countSuccess++;
                 $oldSalespersonId = $client->sales_person_id;
                 $validated['is_editable'] = $request->has('is_editable') ? 1 : 0;
                 $validated['updated_by'] = auth()->user()->id;
@@ -691,7 +691,7 @@ class ClientController extends Controller
                     }
                 }
             } else {
-                $countFailed ++;
+                $countFailed++;
             }
 
         }
@@ -701,7 +701,7 @@ class ClientController extends Controller
         if ($request->query('main')) {
             return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has been assigned successfully.');
         } else {
-            if($request->status=='reassign'){
+            if ($request->status == 'reassign') {
                 if ($countSuccess > 0 && $countFailed === 0) { // Changed $countFailed < 0 to $countFailed === 0
                     return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has been reassigned successfully.');
                 } elseif ($countSuccess > 0 && $countFailed > 0) {
@@ -732,8 +732,8 @@ class ClientController extends Controller
         $countSuccess = 0;
         for ($i = 0; $i < count($clientIdsArray); $i++) {
             $client = Client::findOrFail($clientIdsArray[$i]);
-            if( $client->sales_person_id === auth()->user()->id ){
-                $countSuccess ++;
+            if ($client->sales_person_id === auth()->user()->id) {
+                $countSuccess++;
 
                 $client_req = new ClientRequest;
                 $client_req->client_id = $client->id;
@@ -759,24 +759,24 @@ class ClientController extends Controller
                 }
 
             } else {
-                $countFailed ++;
+                $countFailed++;
             }
 
         }
 
         // DB::commit();
         if ($countSuccess > 0 && $countFailed === 0) { // Changed $countFailed < 0 to $countFailed === 0
-                    return redirect()->route('v1.client-database.list')->with('success', 'Request to edit has been save successfully.');
-            } elseif ($countSuccess > 0 && $countFailed > 0) {
-                    return redirect()->route('v1.client-database.list')
-                        ->with('success', 'Request to edit has been save successfully.')
-                        ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person.'); // Removed '1' for cleaner message
-            } elseif ($countSuccess === 0 && $countFailed > 0) { // Changed $countSuccess == 0 to $countSuccess === 0 for strict comparison
-                    return redirect()->route('v1.client-database.list')
-                        ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person'); // Removed '2' for cleaner message
-            } else {
-                    return redirect()->route('v1.client-database.list')
-                        ->with('success', 'No reassignment operations were performed or an unexpected state occurred.');
+            return redirect()->route('v1.client-database.list')->with('success', 'Request to edit has been save successfully.');
+        } elseif ($countSuccess > 0 && $countFailed > 0) {
+            return redirect()->route('v1.client-database.list')
+                ->with('success', 'Request to edit has been save successfully.')
+                ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person.'); // Removed '1' for cleaner message
+        } elseif ($countSuccess === 0 && $countFailed > 0) { // Changed $countSuccess == 0 to $countSuccess === 0 for strict comparison
+            return redirect()->route('v1.client-database.list')
+                ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person'); // Removed '2' for cleaner message
+        } else {
+            return redirect()->route('v1.client-database.list')
+                ->with('success', 'No reassignment operations were performed or an unexpected state occurred.');
         }
     }
 
@@ -964,13 +964,13 @@ class ClientController extends Controller
                 }
             })
             ->addColumn('remarks', function ($client) {
-                $remarks='<div class="remarks-scroll-container">';
-                foreach($client->remarks()->get() as $row){
-                    $remarks .= '<p>'.$row->content.'</p>';
+                $remarks = '<div class="remarks-scroll-container">';
+                foreach ($client->remarks()->get() as $row) {
+                    $remarks .= '<p>' . $row->content . '</p>';
                 }
-                return $remarks.'</div>';
+                return $remarks . '</div>';
             })
-            ->addColumn('is_editable',function ($client){
+            ->addColumn('is_editable', function ($client) {
                 if ($client->sales_person_id == auth()->user()->id) {
                     return true;
                 } else {
@@ -1118,7 +1118,7 @@ class ClientController extends Controller
         $clientReqs = ClientDownloadRequest::with([
             'createdBy',            // Eager load the User who approved the ClientRequest
         ]);
-        $clientReqs->where(['file_type'=>$requestType,'data_status'=>1]);
+        $clientReqs->where(['file_type' => $requestType, 'data_status' => 1]);
         // Filters based on Client's relationships (correctly using whereHas with dot notation)
         if ($request->filled('sales_person')) {
             if ($request->sales_person == '-') {
@@ -1137,8 +1137,8 @@ class ClientController extends Controller
             ->addColumn('created_name', fn($row) => $row->createdBy->name ?? '-')
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group" role="group" aria-label="Basic mixed styles example">';
-                $btn .= '<a href="'.route('v1.client-download.request-download-response',['id'=>$row->id,'actionType'=>'approve']).'" class="btn btn-primary btn-sm">Approve</a>';
-                $btn .= '<a href="'.route('v1.client-download.request-download-response',['id'=>$row->id,'actionType'=>'reject']).'" class="btn btn-danger btn-sm">Reject</a>';
+                $btn .= '<a href="' . route('v1.client-download.request-download-response', ['id' => $row->id, 'actionType' => 'approve']) . '" class="btn btn-primary btn-sm">Approve</a>';
+                $btn .= '<a href="' . route('v1.client-download.request-download-response', ['id' => $row->id, 'actionType' => 'reject']) . '" class="btn btn-danger btn-sm">Reject</a>';
                 $btn .= '</div>'; // Close the btn-group
 
                 return $btn;
@@ -1147,27 +1147,27 @@ class ClientController extends Controller
             ->make(true);
     }
 
-    public function clientDownloadRequestResponse($id,$actionType)
+    public function clientDownloadRequestResponse($id, $actionType)
     {
         $req = ClientDownloadRequest::find($id);
         $msg = '';
-        if($actionType=='approve'){
-            $req->data_status=2;
-            $req->approved_id=auth()->user()->id;
+        if ($actionType == 'approve') {
+            $req->data_status = 2;
+            $req->approved_id = auth()->user()->id;
             $req->save();
-            $msg = 'Request to '.\Str::upper($req->file_type).' Download, has been approved successfully!';
+            $msg = 'Request to ' . \Str::upper($req->file_type) . ' Download, has been approved successfully!';
         } else {
-            $msg = 'Request to '.\Str::upper($req->file_type).' Download, has been rejected successfully!';
+            $msg = 'Request to ' . \Str::upper($req->file_type) . ' Download, has been rejected successfully!';
             $req->delete();
         }
 
         return redirect()->route('v1.client-database.download-request.list')
-                        ->with('success', $msg);
+            ->with('success', $msg);
     }
 
-    public function clientDownloadRequestComplete($user_id,$fileType)
+    public function clientDownloadRequestComplete($user_id, $fileType)
     {
-        $req = ClientDownloadRequest::where(['request_id'=>$user_id,'file_type'=>$fileType])->first();
+        $req = ClientDownloadRequest::where(['request_id' => $user_id, 'file_type' => $fileType])->first();
         $req->delete();
     }
 
@@ -1355,7 +1355,7 @@ class ClientController extends Controller
 
     public function getClientDetail(Request $request, $id)
     {
-        if($id==0){
+        if ($id == 0) {
             $users = User::all();
             return view('client_database.partials.detail', compact('users'));
         } else {
@@ -1404,11 +1404,16 @@ class ClientController extends Controller
 
     public function exportCsv(Request $request)
     {
-        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+        /**$clients = Client::with(['industryCategory', 'country', 'salesPerson'])
             ->when($request->sales_person, fn($q) => $q->whereHas('salesPerson', fn($q) => $q->where('name', $request->sales_person)))
             ->when($request->industry, fn($q) => $q->whereHas('industryCategory', fn($q) => $q->where('name', $request->industry)))
             ->when($request->country, fn($q) => $q->whereHas('country', fn($q) => $q->where('name', $request->country)))
+            ->get();**/
+        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+            ->where('sales_person_id', auth()->user()->id)
             ->get();
+
+
 
         $csvHeader = [
             'Name',
@@ -1457,10 +1462,15 @@ class ClientController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+        /**$clients = Client::with(['industryCategory', 'country', 'salesPerson'])
             ->when($request->sales_person, fn($q) => $q->whereHas('salesPerson', fn($q) => $q->where('name', $request->sales_person)))
             ->when($request->industry, fn($q) => $q->whereHas('industryCategory', fn($q) => $q->where('name', $request->industry)))
             ->when($request->country, fn($q) => $q->whereHas('country', fn($q) => $q->where('name', $request->country)))
+            ->get();
+            **/
+
+        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+            ->where('sales_person_id', auth()->user()->id)
             ->get();
 
         $pdf = PDF::loadView('client_database.partials.export_pdf', ['clients' => $clients]);
@@ -1476,8 +1486,8 @@ class ClientController extends Controller
         ]);
 
         $clients = ClientRequest::whereIn('id', $request->ids)
-                    ->where('data_status', 1)
-                    ->get();
+            ->where('data_status', 1)
+            ->get();
         foreach ($clients as $client) {
             if ($request->action === 'approve') {
                 $user = \App\Models\User::find($client->created_by);
@@ -1487,8 +1497,8 @@ class ClientController extends Controller
                     route('v1.client-database.list')
                 ));
                 ClientRequest::whereIn('id', $request->ids)
-                                    ->where('data_status', 1)
-                                    ->update(['data_status'=>3,'approved_by'=>auth()->user()->id,'approved_at'=>date('Y-m-d H:i:s')]);
+                    ->where('data_status', 1)
+                    ->update(['data_status' => 3, 'approved_by' => auth()->user()->id, 'approved_at' => date('Y-m-d H:i:s')]);
             } else {
                 $user = \App\Models\User::find($client->created_by);
                 $user->notify(new UserNotification(
@@ -1497,8 +1507,8 @@ class ClientController extends Controller
                     route('v1.client-database.list')
                 ));
                 ClientRequest::whereIn('id', $request->ids)
-                                    ->where('data_status', 1)
-                                    ->delete();
+                    ->where('data_status', 1)
+                    ->delete();
             }
 
         }
@@ -1518,19 +1528,27 @@ class ClientController extends Controller
 
         try {
             // 2. Create a new record in the download_requests table
-            $downloadRequest = ClientDownloadRequest::create([
-                'user_id' => Auth::id(), // Get the ID of the currently authenticated user
-                'file_type' => $request->file_type,
-                'data_status' => 1,
-                'total_data' => $request->total_data,
-                'request_id' => auth()->user()->id
-            ]);
+            $countData = Client::where('sales_person_id',auth()->user()->id)->get()->count();
+            if($countData > 0){
+                $downloadRequest = ClientDownloadRequest::create([
+                    'user_id' => Auth::id(), // Get the ID of the currently authenticated user
+                    'file_type' => $request->file_type,
+                    'data_status' => 1,
+                    'total_data' => $countData,
+                    'request_id' => auth()->user()->id
+                ]);
 
-            // 3. Return a JSON response
-            return response()->json([
-                'message' => 'Download request submitted successfully and is awaiting admin approval.',
-                'request_id' => $downloadRequest->id, // Return the ID for client-side polling
-            ], 200); // 200 OK status code
+                // 3. Return a JSON response
+                return response()->json([
+                    'message' => 'Download request submitted successfully and is awaiting admin approval.',
+                    'request_id' => $downloadRequest->id, // Return the ID for client-side polling
+                ], 200); // 200 OK status code
+            } else {
+                return response()->json([
+                    'message' => 'Download request has been rejected, because you have not own client data.',
+                    'request_id' => 1, // Return the ID for client-side polling
+                ], 200);
+            }
 
         } catch (\Exception $e) {
             // Handle any exceptions that occur during creation
@@ -1545,40 +1563,40 @@ class ClientController extends Controller
 
     public function bulkDelete(Request $request)
     {
-            // 1. Validate the incoming request
-            $request->validate([
-                'ids' => 'required|array',         // 'ids' must be a required array
-                'ids.*' => 'required|integer|exists:clients,id', // Each ID must be an integer and exist in the 'clients' table
-            ]);
+        // 1. Validate the incoming request
+        $request->validate([
+            'ids' => 'required|array',         // 'ids' must be a required array
+            'ids.*' => 'required|integer|exists:clients,id', // Each ID must be an integer and exist in the 'clients' table
+        ]);
 
-            $clientIds = $request->input('ids');
+        $clientIds = $request->input('ids');
 
-            foreach ($clientIds as $id) {
+        foreach ($clientIds as $id) {
 
-                $user = Client::find($id);
-                $user->data_status = 0;
-                $user->deleted_id = auth()->user()->id;
-                $user->deleted_at = date('Y-m-d H:i:s');
-                $user->save();
+            $user = Client::find($id);
+            $user->data_status = 0;
+            $user->deleted_id = auth()->user()->id;
+            $user->deleted_at = date('Y-m-d H:i:s');
+            $user->save();
 
-                $clientReq = new ClientRequest;
-                $clientReq->client_id = $request->id;
-                $clientReq->data_status = 4;
-                $clientReq->created_by = auth()->user()->id;
-                $clientReq->remark = 'N/A';
-                $clientReq->save();
+            $clientReq = new ClientRequest;
+            $clientReq->client_id = $id;
+            $clientReq->data_status = 4;
+            $clientReq->created_by = auth()->user()->id;
+            $clientReq->remark = 'N/A';
+            $clientReq->save();
 
-            }
+        }
 
-            //if ($deletedCount > 0) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "Successfully deleted  client(s)."
-                ]);
-
-
+        //if ($deletedCount > 0) {
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully deleted  client(s)."
+        ]);
 
     }
+
+
 
 
 

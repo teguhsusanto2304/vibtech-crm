@@ -366,8 +366,21 @@
                     country: $('#filter-country').val()
                 });
                 window.location.href = `/v1/client-database/export/csv?${params.toString()}`;
-                $.ajax({ method: 'GET', url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'csv']) }}' })
-                const reloadDelay = 2000;
+                $.ajax({
+                    method: 'GET',
+                    url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}',
+                    success: function(response) {
+                        alert(response.message);
+                        console.log('Server response for download complete:', response.message);
+                        $('#msg').html(`
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
+                    }
+                })
+                const reloadDelay = 5000;
                 setTimeout(function() {
                     location.reload();
                 }, reloadDelay);
@@ -393,8 +406,11 @@
                     country: $('#filter-country').val()
                 });
                 window.location.href = `/v1/client-database/export/pdf?${params.toString()}`;
-                $.ajax({ method: 'GET', url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}' })
-                const reloadDelay = 2000;
+                $.ajax({
+                    method: 'GET',
+                    url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}'
+                })
+                const reloadDelay = 5000;
                 setTimeout(function() {
                     location.reload();
                 }, reloadDelay);
@@ -498,7 +514,7 @@
                     });
                 });
 
-                $('#delete-selected').on('click', function () {
+                $('#approve-selected').on('click', function () {
                     let ids = getSelectedIds();
                     if (ids.length === 0) {
                         alert('Please select at least one row to start assignment.');
@@ -509,7 +525,7 @@
                     }
                 });
 
-                $('#edit-selected').on('click', function () {
+                $('#delete-selected').on('click', function () {
                     let ids = getSelectedIds();
                     if (ids.length === 0) {
                         alert('Please select at least one row to request to edit.');
@@ -528,10 +544,12 @@
                             success: function(response) {
                                 // Handle success response
                                 if (response.success) {
-                                    alert(response.message);
-                                    // Reload your DataTable or the page to reflect changes
-                                    // If using DataTables, you might do:
-                                    // $('#your-data-table').DataTable().ajax.reload();
+                                    $('#msg').html(`
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
                                     location.reload(); // Or reload the entire page
                                 } else {
                                     alert('Error: ' + response.message);

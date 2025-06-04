@@ -111,7 +111,16 @@
                 success: function(response) {
                     if (response.request_id) {
                         currentRequestId = response.request_id; // Store the ID of the new request
-                        location.reload();
+                        $('#msg').html(`
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
+                        const reloadDelay = 5000;
+                        setTimeout(function() {
+                            location.reload();
+                        }, reloadDelay);
                     } else {
                         downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (response.message || 'Unknown error') + '</div>');
                         //resetButtons(); // Reset buttons on error
