@@ -43,8 +43,10 @@
 
         {{-- Call your new component here --}}
                 <x-sales-person-filter :salesPersons="$salesPersons" />
+                <div class="bd-callout bd-callout-info">Data automatically permanent delete in 60 days refer with deleted on</div>
 
     </div>
+
             <div class="card-body" style="overflow-x: auto;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped nowrap w-100" id="clients-table">

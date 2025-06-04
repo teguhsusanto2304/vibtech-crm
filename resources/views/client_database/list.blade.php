@@ -491,11 +491,11 @@
                 $('#edit-selected').on('click', function () {
                     let ids = getSelectedIds();
                     if (ids.length === 0) {
-                        alert('Please select at least one row to delete.');
+                        alert('Please select at least one row to edit.');
                         return;
                     }
-                    if (confirm('Are you sure you want to delete the selected data?')) {
-                        handleBulkAction(ids, 'delete');
+                    if (confirm('Are you sure you want to edit the selected data?')) {
+                        handleBulkEditAction(ids, 'edit');
                     }
                 });
 
@@ -528,10 +528,10 @@
                 $('#delete-selected').on('click', function () {
                     let ids = getSelectedIds();
                     if (ids.length === 0) {
-                        alert('Please select at least one row to request to edit.');
+                        alert('Please select at least one row to request to delete.');
                         return;
                     }
-                    if (confirm('Are you sure you want to request to edit the selected data?')) {
+                    if (confirm('Are you sure you want to request to delete the selected data?')) {
                         //process bulk delete
 
                         $.ajax({
