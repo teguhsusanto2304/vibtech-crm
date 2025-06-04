@@ -380,7 +380,7 @@
                                     `);
                     }
                 })
-                const reloadDelay = 5000;
+                const reloadDelay = 3000;
                 setTimeout(function() {
                     location.reload();
                 }, reloadDelay);
@@ -410,7 +410,7 @@
                     method: 'GET',
                     url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}'
                 })
-                const reloadDelay = 5000;
+                const reloadDelay = 3000;
                 setTimeout(function() {
                     location.reload();
                 }, reloadDelay);
