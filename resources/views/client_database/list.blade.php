@@ -368,7 +368,7 @@
                 window.location.href = `/v1/client-database/export/csv?${params.toString()}`;
                 $.ajax({
                     method: 'GET',
-                    url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}',
+                    url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'csv']) }}',
                     success: function(response) {
                         alert(response.message);
                         console.log('Server response for download complete:', response.message);
