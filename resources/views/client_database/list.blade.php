@@ -550,7 +550,7 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                         </div>
                                     `);
-                                    location.reload(); // Or reload the entire page
+                                    table.ajax.reload(); // Or reload the entire page
                                 } else {
                                     alert('Error: ' + response.message);
                                 }

@@ -91,7 +91,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">CSV/PDF Download Request</h5>
-                                <a href="{{ route('v1.client-database.download-request.list')}}" class="btn btn_primary mt-auto">View Request  &nbsp; @if($recycleBinNotification > 0)  <span class="badge bg-danger">{{ $recycleBinNotification }}</span>  @endif </a>
+                                <a href="{{ route('v1.client-database.download-request.list')}}" class="btn btn_primary mt-auto">View Request  &nbsp; @if($PDFCSVDownloadRequestNotification > 0)  <span class="badge bg-danger">{{ $PDFCSVDownloadRequestNotification }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>

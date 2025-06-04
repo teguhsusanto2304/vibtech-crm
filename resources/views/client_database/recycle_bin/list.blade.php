@@ -52,6 +52,7 @@
                     <table class="table table-bordered table-striped nowrap w-100" id="clients-table">
                         <thead>
                             <tr>
+                                <th><input type="checkbox" id="select-all"></th>
                                 <th>Name</th>
                                 <th>Company</th>
                                 <th>Email</th>
@@ -71,6 +72,9 @@
                             </tr>
                         </thead>
                     </table>
+                    <div class="mb-3">
+                                <button id="restore-selected" class="btn btn-success">Restore All</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -151,29 +155,6 @@
         </div>
 
         <script>
-            $('#reset-filters').on('click', function () {
-                $('#filter-sales-person').val('');
-                $('#filter-industry').val('');
-                $('#filter-country').val('');
-                $('#clients-table').DataTable().ajax.reload();
-            });
-            $('#download-csv').on('click', function () {
-    const params = new URLSearchParams({
-        sales_person: $('#filter-sales-person').val(),
-        industry: $('#filter-industry').val(),
-        country: $('#filter-country').val()
-    });
-    window.location.href = `/v1/client-database/export/csv?${params.toString()}`;
-});
-
-$('#download-pdf').on('click', function () {
-    const params = new URLSearchParams({
-        sales_person: $('#filter-sales-person').val(),
-        industry: $('#filter-industry').val(),
-        country: $('#filter-country').val()
-    });
-    window.location.href = `/v1/client-database/export/pdf?${params.toString()}`;
-});
             $(function () {
                 let table = $('#clients-table').DataTable({
                     processing: true,
@@ -190,6 +171,13 @@ $('#download-pdf').on('click', function () {
                     },
 
                     columns: [
+                        { data: 'id',
+                          orderable: false,
+                          searchable: false,
+                            render: function (data, type, row) {
+                                return `<input type="checkbox" class="row-checkbox" value="${data}" data-editable="${row.is_editable}">`;
+                            }
+                        },
                         { data: 'name' },
                         { data: 'company' },
                         { data: 'email' },
@@ -235,6 +223,75 @@ $('#download-pdf').on('click', function () {
 
                 $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
                     table.ajax.reload();
+                });
+
+                function getSelectedIds() {
+                    return $('.row-checkbox:checked').map(function () {
+                        return this.value;
+                    }).get();
+                }
+
+            $('#select-all').on('click', function() {
+                    const isChecked = this.checked;
+                    // Select/Deselect all visible row checkboxes
+                    $('.row-checkbox').prop('checked', isChecked);
+
+                    // Update the selectedClientIds map for the current page
+                    table.rows({ page: 'current' }).data().each(function(row) {
+                        if (isChecked) {
+                            selectedClientIds[row.id] = true;
+                        } else {
+                            delete selectedClientIds[row.id];
+                        }
+                    });
+                });
+
+            $('#restore-selected').on('click', function () {
+                    let ids = getSelectedIds();
+                    if (ids.length === 0) {
+                        alert('Please select at least one row to request to restore.');
+                        return;
+                    }
+                    if (confirm('Are you sure you want to request to restore the selected data?')) {
+                        //process bulk delete
+
+                        $.ajax({
+                            url: '{{ route('v1.client-database.bulk-delete') }}', // Laravel route for bulk delete
+                            method: 'DELETE', // Use DELETE method for RESTfulness
+                            data: {
+                                ids: ids, // Send the array of IDs
+                                action:'restore',
+                                _token: '{{ csrf_token() }}' // Laravel CSRF token for security
+                            },
+                            success: function(response) {
+                                // Handle success response
+                                if (response.success) {
+                                    $('#msg').html(`
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
+                                    table.ajax.reload();
+                                } else {
+                                    alert('Error: ' + response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                // Handle error response
+                                let errorMessage = 'An error occurred during deletion.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                    // Handle validation errors if any
+                                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                                }
+                                alert(errorMessage);
+                                console.error('Bulk Delete Error:', xhr);
+                            }
+                        });
+
+                    }
                 });
 
                 $(document).on('click', '.view-client', function () {

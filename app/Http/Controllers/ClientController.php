@@ -62,6 +62,7 @@ class ClientController extends Controller
         $clientDataNotifications = null;
         $recycleBinNotification = null;
         $requestNotifications = null;
+        $PDFCSVDownloadRequestNotification = null;
         if (\App\Models\User::permission('view-salesperson-assignment')) {
             $salesPersonNotifications = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
                 ->where('notifiable_type', 'App\Models\User')
@@ -94,9 +95,16 @@ class ClientController extends Controller
             ->where('notifiable_id', auth()->user()->id)
             ->count();
 
+        $PDFCSVDownloadRequestNotification = DB::table('notifications')->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/download-request/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', auth()->user()->id)
+            ->count();
 
 
-        return view('client_database.index', compact('requestNotifications', 'recycleBinNotification', 'clientDataNotifications', 'salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
+
+        return view('client_database.index', compact('PDFCSVDownloadRequestNotification','requestNotifications', 'recycleBinNotification', 'clientDataNotifications', 'salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
     }
 
     public function create()
@@ -394,7 +402,7 @@ class ClientController extends Controller
         $notificationsToMarkAsRead = DB::table('notifications')
             ->where('type', 'App\Notifications\UserNotification')
             ->where('notifiable_type', 'App\Models\User')
-            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/list%'])
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/download-request/list%'])
             ->whereNull('read_at')
             ->where('notifiable_id', Auth::id())
             ->get();
@@ -407,8 +415,6 @@ class ClientController extends Controller
                 ->update(['read_at' => now()]);
         }
 
-        $downloadFile = ClientDownloadRequest::where(['request_id' => auth()->user()->id])->get();
-
         return view('client_database.request.download_list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
@@ -420,23 +426,22 @@ class ClientController extends Controller
 
     public function assignmentList()
     {
-        if (\App\Models\User::permission('view-salesperson-assignment')) {
-            $notificationsToMarkAsRead = DB::table('notifications')
-                ->where('type', 'App\Notifications\UserNotification')
-                ->where('notifiable_type', 'App\Models\User')
-                ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/salesperson-assignment/list%'])
-                ->whereNull('read_at')
-                ->where('notifiable_id', Auth::id())
-                ->get();
+        $notificationsToMarkAsRead = DB::table('notifications')
+            ->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/assignment-salesperson/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', Auth::id())
+            ->get();
 
-            if ($notificationsToMarkAsRead->isNotEmpty()) {
-                $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
+        if ($notificationsToMarkAsRead->isNotEmpty()) {
+            $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
 
-                DB::table('notifications')
-                    ->whereIn('id', $notificationIds)
-                    ->update(['read_at' => now()]);
-            }
+            DB::table('notifications')
+                ->whereIn('id', $notificationIds)
+                ->update(['read_at' => now()]);
         }
+
         return view('client_database.assignment_list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
@@ -1474,7 +1479,7 @@ class ClientController extends Controller
             ->get();
 
         $pdf = PDF::loadView('client_database.partials.export_pdf', ['clients' => $clients]);
-
+        $pdf->setPaper('A4', 'landscape');
         return $pdf->download('clients_export.pdf');
     }
 
@@ -1538,6 +1543,16 @@ class ClientController extends Controller
                     'request_id' => auth()->user()->id
                 ]);
 
+                $users = \App\Models\User::permission('view-csv-pdf-download-request') // Spatie magic filter
+                ->get(); // example
+                foreach ($users as $user) {
+                    $user->notify(new UserNotification(
+                        'There is a new CSV/PDF File Download Request',
+                        'accept',
+                        route('v1.client-database.download-request.list')
+                    ));
+                }
+
                 // 3. Return a JSON response
                 return response()->json([
                     'message' => 'Download request submitted successfully and is awaiting admin approval.',
@@ -1570,29 +1585,55 @@ class ClientController extends Controller
         ]);
 
         $clientIds = $request->input('ids');
+        if($request->input('action')){
+            foreach ($clientIds as $id) {
 
-        foreach ($clientIds as $id) {
+                $user = Client::find($id);
+                $user->data_status = 1;
+                $user->deleted_id = auth()->user()->id;
+                $user->deleted_at = date('Y-m-d H:i:s');
+                $user->save();
 
-            $user = Client::find($id);
-            $user->data_status = 0;
-            $user->deleted_id = auth()->user()->id;
-            $user->deleted_at = date('Y-m-d H:i:s');
-            $user->save();
+                $clientReq = ClientRequest::where(['client_id'=>$id,'data_status'=>4])->first();
+                $clientReq->delete();
+                ClientActivityLog::create([
+                    'client_id' => $id,
+                    'action' => 'restore',
+                    'activity' => "Customer Data restored on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
+                ]);
 
-            $clientReq = new ClientRequest;
-            $clientReq->client_id = $id;
-            $clientReq->data_status = 4;
-            $clientReq->created_by = auth()->user()->id;
-            $clientReq->remark = 'N/A';
-            $clientReq->save();
+            }
+            return response()->json([
+                    'success' => true,
+                    'message' => "Successfully restore  client(s)."
+                ]);
 
+        } else {
+            foreach ($clientIds as $id) {
+
+                        $user = Client::find($id);
+                        $user->data_status = 0;
+                        $user->deleted_id = auth()->user()->id;
+                        $user->deleted_at = date('Y-m-d H:i:s');
+                        $user->save();
+
+                        $clientReq = new ClientRequest;
+                        $clientReq->client_id = $id;
+                        $clientReq->data_status = 4;
+                        $clientReq->created_by = auth()->user()->id;
+                        $clientReq->remark = 'N/A';
+                        $clientReq->save();
+
+                    }
+
+                    //if ($deletedCount > 0) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Successfully deleted  client(s)."
+                    ]);
         }
 
-        //if ($deletedCount > 0) {
-        return response()->json([
-            'success' => true,
-            'message' => "Successfully deleted  client(s)."
-        ]);
+
 
     }
 
