@@ -1533,7 +1533,7 @@ class ClientController extends Controller
 
         try {
             // 2. Create a new record in the download_requests table
-            $countData = Client::where('sales_person_id',auth()->user()->id)->get()->count();
+            $countData = Client::where(['sales_person_id'=>auth()->user()->id,'data_status'=>1])->get()->count();
             if($countData > 0){
                 $downloadRequest = ClientDownloadRequest::create([
                     'user_id' => Auth::id(), // Get the ID of the currently authenticated user
