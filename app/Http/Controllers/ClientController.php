@@ -1415,7 +1415,7 @@ class ClientController extends Controller
             ->when($request->country, fn($q) => $q->whereHas('country', fn($q) => $q->where('name', $request->country)))
             ->get();**/
         $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->where('sales_person_id', auth()->user()->id)
+            ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
             ->get();
 
 
@@ -1475,7 +1475,7 @@ class ClientController extends Controller
             **/
 
         $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->where('sales_person_id', auth()->user()->id)
+            ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
             ->get();
 
         $pdf = PDF::loadView('client_database.partials.export_pdf', ['clients' => $clients]);
