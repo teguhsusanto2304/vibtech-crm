@@ -613,7 +613,7 @@ class ClientController extends Controller
 
         // DB::commit();
         if ($request->query('main')) {
-            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has assigned successfully.');
+            return redirect()->route('v1.client-database.list')->with('success', 'Salesperson has reassigned successfully.');
         } else {
             return redirect()->route('v1.client-database.assignment-salesperson.list')->with('success', 'Salesperson has assigned successfully.');
         }

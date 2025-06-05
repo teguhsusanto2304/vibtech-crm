@@ -134,7 +134,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="assignClientForm" method="POST"
-                        action="{{ route('v1.client-database.assignment-salesperson')}}">
+                        action="{{ route('v1.client-database.assignment-salesperson')}}?main=yes">
                         @csrf
                         @METHOD('PUT')
                         <div class="modal-body" id="client-detail-assign-body">
@@ -192,30 +192,7 @@
             </div>
         </div>
 
-        <div class="modal fade" id="clientDetailAssignModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="clientDetailModalLabel">Salesperson Assignment</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="assignClientForm" method="POST"
-                        action="{{ route('v1.client-database.assignment-salesperson')}}?main=yes">
-                        @csrf
-                        @METHOD('PUT')
-                        <div class="modal-body" id="client-detail-assign-body">
-                            <p>Loading...</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal"
-                                aria-label="Close">No</button>&nbsp;
-                            <button type="submit" class="btn btn-success">Yes</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        
 
         <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -245,7 +222,7 @@
                         <h5 class="modal-title" id="clientDetailModalLabel">Bulk Salesperson Reassignment</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="assignClientForm" method="POST"
+                    <form id="bulkAssignClientForm" method="POST"
                         action="{{ route('v1.client-database.bulk-assignment-salesperson')}}">
                         @csrf
                         @METHOD('PUT')
