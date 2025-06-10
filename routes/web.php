@@ -251,6 +251,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('client-database')->controller(ClientController::class)->group(function () {
             Route::get('/', 'index')->name('v1.client-database');
             Route::get('/list', 'list')->name('v1.client-database.list');
+            Route::get('/my-list', 'ownlist')->name('v1.client-database.my-list');
             Route::get('/assignment-salesperson/list', 'assignmentList')->name('v1.client-database.assignment-salesperson.list');
             Route::get('/download-request/list', 'downloadRequestList')->name('v1.client-database.download-request.list');
             Route::get('/assignment-salesperson/data', 'getAssignmentSalespersonData')->name('v1.client-database.assignment-salesperson.data');
@@ -284,6 +285,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/{id}/{actionType}/request-download-response','clientDownloadRequestResponse')->name('v1.client-download.request-download-response');
             Route::get('/{user_id}/{fileType}/request-download-complete','clientDownloadRequestComplete')->name('v1.client-download.request-download-complete');
             Route::get('/{client}/remarks', 'getRemarks')->name('v1.client-download.remarks');
+            Route::post('/{client}/remarks', 'storeRemark')->name('v1.client-download.remarks');
         });
 
         // 🔹 Client Database Management Routes

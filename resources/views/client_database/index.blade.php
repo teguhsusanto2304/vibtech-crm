@@ -62,7 +62,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Your Personal Database</h5>
-                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Your Client's Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                                <a href="{{ route('v1.client-database.my-list')}}" class="btn btn_primary mt-auto">View Your Client's Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>
@@ -73,7 +73,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Vibtech Genesis Database</h5>
-                                <a href="{{ route('v1.client-database.list')}}?master=yes" class="btn btn_primary mt-auto">View Main Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Main Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>

@@ -356,6 +356,34 @@
             </div>
         </div>
 
+        <!-- Add Client Remark Modal -->
+        <div class="modal fade" id="addClientRemarkModal" tabindex="-1" aria-labelledby="addClientRemarkModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form id="addClientRemarkForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addClientRemarkModalLabel">Add New Remark for Client</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="client_id" id="addRemarkClientId">
+                            <div class="mb-3">
+                                <label for="remarkTextarea" class="form-label">Remark</label>
+                                <textarea class="form-control" id="remarkTextarea" name="remark_text" rows="5" required></textarea>
+                                <div class="invalid-feedback" id="remarkTextareaFeedback">
+                                    Please enter a remark.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Remark</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <script>
             let assignForm;
 
@@ -365,6 +393,94 @@
                     $('#clientDetailAssignModal').modal('hide');
                     $("#loginConfirmModal").modal("show"); // Show the login modal
                 });
+
+                $(document).on('click', '.view-add-remark', function() {
+                    const clientId = $(this).data('id'); // Get the client ID from the data-id attribute
+
+                    // Set the client ID in the hidden input of the add remark form
+                    $('#addRemarkClientId').val(clientId);
+
+                    // Clear any previous remarks text and validation feedback
+                    $('#remarkTextarea').val('');
+                    $('#remarkTextarea').removeClass('is-invalid');
+                    $('#remarkTextareaFeedback').text('Please enter a remark.');
+
+                    // Show the "Add Client Remark" modal
+                    $('#addClientRemarkModal').modal('show');
+                });
+
+                $('#addClientRemarkForm').on('submit', function(e) {
+                    e.preventDefault(); // Prevent default form submission
+
+                    const form = $(this);
+                    const clientId = $('#addRemarkClientId').val();
+                    const remarkText = $('#remarkTextarea').val();
+                    const csrfToken = $('meta[name="csrf-token"]').attr('content'); // Get the CSRF token
+
+                    // Basic client-side validation
+                    if (remarkText.trim() === '') {
+                        $('#remarkTextarea').addClass('is-invalid');
+                        $('#remarkTextareaFeedback').text('Remark cannot be empty.');
+                        return; // Stop the function
+                    } else {
+                        $('#remarkTextarea').removeClass('is-invalid');
+                    }
+
+                    // Show a loading state if you have one (e.g., disable button, show spinner)
+                    const submitButton = form.find('button[type="submit"]');
+                    submitButton.prop('disabled', true).text('Saving...');
+
+                    $.ajax({
+                        url: `/v1/client-database/${clientId}/remarks`, // New API endpoint for adding remarks
+                        method: 'POST', // Use POST method for creating a new resource
+                        data: {
+                            client_id: clientId,
+                            remark_text: remarkText, // Make sure your backend expects this key
+                            _token: csrfToken // Include CSRF token for POST requests
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#addClientRemarkModal').modal('hide'); // Hide the modal
+                                showAlert(response.message, 'success'); // Show success alert
+
+                                // Optionally, reload DataTables if adding a remark should update the table (e.g., remark count)
+                                $('#clients-table').DataTable().ajax.reload();
+
+                                
+
+                            } else {
+                                showAlert(response.message || 'Failed to save remark. Please try again.', 'danger');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            let errorMessage = 'An error occurred while saving the remark.';
+                            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                                // Handle validation errors from Laravel backend
+                                errorMessage = 'Validation Errors:\n';
+                                Object.values(xhr.responseJSON.errors).forEach(messages => {
+                                    messages.forEach(msg => {
+                                        errorMessage += `- ${msg}\n`;
+                                    });
+                                });
+                                // Highlight the textarea if it was a validation error
+                                $('#remarkTextarea').addClass('is-invalid');
+                                $('#remarkTextareaFeedback').text(Object.values(xhr.responseJSON.errors).flat().join('\n'));
+
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 419) {
+                                errorMessage = 'Session expired or CSRF token mismatch. Please refresh the page.';
+                            }
+                            showAlert(errorMessage, 'danger');
+                            console.error("AJAX Error saving remark:", xhr);
+                        },
+                        complete: function() {
+                            // Re-enable the submit button regardless of success or error
+                            submitButton.prop('disabled', false).text('Save Remark');
+                        }
+                    });
+                });
+
                 $("#loginConfirmForm").on("submit", function (e) {
                     e.preventDefault();
 
@@ -806,7 +922,7 @@
                                     // Assuming 'remark_text' and 'created_at' are available in each remark object
                                     remarksHtml += `
                                         <div class="remark-item border-b pb-2 mb-2">
-                                            <p class="text-gray-800">${new Date(remark.created_at).toLocaleString()} - ${remark.content}</p>
+                                            <p class="text-gray-800">${new Date(remark.created_at).toLocaleString()}, <i>${remark.user_name}</i> - ${remark.content}</p>
                                         </div>
                                     `;
                                 });

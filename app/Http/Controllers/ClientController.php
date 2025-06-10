@@ -425,8 +425,40 @@ class ClientController extends Controller
             'downloadFile' => $downloadFile,
             'editClientDatabase' => $this->checkPermission('edit-client-database'),
             'viewClientDatabase' => $this->checkPermission('view-client-database'),
-            'master'=> $request->query('master')??null
-        ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
+            'master'=> 'yes'
+        ])->with('title', 'List of Vibtech Genesis Client’s Data')->with('breadcrumb', ['Home', 'Client Database', 'List of Vibtech Genesis Client’s Data']);
+
+    }
+
+    public function ownlist(Request $request)
+    {
+        $notificationsToMarkAsRead = DB::table('notifications')
+            ->where('type', 'App\Notifications\UserNotification')
+            ->where('notifiable_type', 'App\Models\User')
+            ->whereRaw("JSON_UNQUOTE(data->'$.url') LIKE ?", ['%v1/client-database/list%'])
+            ->whereNull('read_at')
+            ->where('notifiable_id', Auth::id())
+            ->get();
+
+        if ($notificationsToMarkAsRead->isNotEmpty()) {
+            $notificationIds = $notificationsToMarkAsRead->pluck('id')->toArray();
+
+            DB::table('notifications')
+                ->whereIn('id', $notificationIds)
+                ->update(['read_at' => now()]);
+        }
+
+        $downloadFile = ClientDownloadRequest::where(['request_id' => auth()->user()->id])->get();
+        
+        return view('client_database.list', [
+            'industries' => IndustryCategory::all(),
+            'countries' => $this->getSortedCountries(),
+            'salesPersons' => null,
+            'downloadFile' => $downloadFile,
+            'editClientDatabase' => $this->checkPermission('edit-client-database'),
+            'viewClientDatabase' => $this->checkPermission('view-client-database'),
+            'master'=> null
+        ])->with('title', 'List of Your Client’s Data')->with('breadcrumb', ['Home', 'Client Database', 'List of Your Client’s Data']);
 
     }
 
@@ -902,7 +934,7 @@ class ClientController extends Controller
                                         ->where('clients.contact_for_id', $currentUserId);
                             });
                         });
-                    }
+            }
         }
         
         if ($request->filled('sales_person')) {
@@ -1020,17 +1052,12 @@ class ClientController extends Controller
                     return '';
                 }
             })
-            ->addColumn('remarks', function ($client) {
-                $remarks = '<div class="remarks-scroll-container">';
-                foreach ($client->remarks()->get() as $row) {
-                    $remarks .= '<p>' . $row->content . '</p>';
-                }
-                return $remarks . '</div>';
-            })
-            ->addColumn('remarks_action', function ($client) {
+            ->addColumn('remarks_action', function ($client,Request $request) {
                 $remarks = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example">';
-                $remarks .= '<button class="btn btn-info btn-sm view-remark" data-id="' . $client->id . '">View Remark</button>';
-                $remarks .= '<button class="btn btn-primary btn-sm view-add-remark" data-id="' . $client->id . '">Add</button>';
+                $remarks .= '<button class="btn btn-info btn-sm view-remark" data-id="' . $client->id . '" >View Remark</button>';
+                if(!$request->filled('master')){
+                    $remarks .= '<button class="btn btn-primary btn-sm view-add-remark" data-id="' . $client->id . '">Add</button>';
+                }
                 return $remarks . '</div>';
             })
             ->addColumn('is_editable', function ($client) {
@@ -1106,8 +1133,6 @@ class ClientController extends Controller
                 if ($clientId) { // Only show buttons if a related client exists
                     $btn .= '<button class="btn btn-info btn-sm view-client" data-id="' . $row->client->id . '">View Client</button>';
 
-                    // Logic for ClientRequest specific actions (edit/delete request)
-                    // Assuming $row is a ClientRequest model instance
                     if ($row->data_status == 1) { // This is the data_status of the ClientRequest
                         if (is_null($row->approved_by)) {
                             $btn .= '<button class="btn btn-primary btn-sm confirm-action" data-id="' . $clientId . '"
@@ -1157,7 +1182,6 @@ class ClientController extends Controller
             // Added the remark column, accessing it directly from the ClientRequest model
             ->addColumn('remark', fn($row) => $row->remark ?? '-')
             ->addColumn('request_status', function ($row) {
-                // This refers to the data_status of the ClientRequest
                 if ($row->data_status == 1) {
                     return '<span class="badge bg-primary">Edit Request</span>';
                 } elseif ($row->data_status == 2) {
@@ -1170,7 +1194,6 @@ class ClientController extends Controller
 
                 return '<span class="badge bg-secondary">Other Status</span>';
             })
-            // IMPORTANT: Specify which columns contain raw HTML to prevent escaping
             ->escapeColumns([])
             ->make(true);
     }
@@ -1696,23 +1719,72 @@ class ClientController extends Controller
     {
         $remarks = ClientRemark::where('client_id', $client->id)
                                ->orderBy('created_at', 'desc') 
+                               ->with('user')
                                ->get(); 
 
         $remarkTexts = $remarks->map(function ($remark) {
-            return $remark->remark_text; 
-        })->filter()->implode("\n\n"); 
+            $userName = $remark->user->name ?? 'Unknown User'; // Get user name, fallback if user is null
+            $createdAt = $remark->created_at->format('M d, Y H:i'); // Format date/time
+            return "<strong>{$userName} ({$createdAt}):</strong><br>{$remark->remark_text}";
+        })->filter()->implode("<br><br>"); // Join with HTML break tags for readability
 
         // If no remarks are found after processing
         if ($remarks->isEmpty()) {
-            $remarkTexts = 'No remarks available for this client.';
+            $remarkTexts = '<p class="text-center text-muted">No remarks available for this client.</p>';
         }
+
+        // Prepare the 'all_remarks' array with user name for frontend
+        // Using map here to ensure 'user_name' is directly part of each remark object for easy access
+        $allRemarksFormatted = $remarks->map(function ($remark) {
+            return [
+                'id' => $remark->id,
+                'content' => $remark->content,
+                'user_id' => $remark->user_id,
+                'user_name' => $remark->user->name ?? 'Unknown User', // Add user's name
+                'created_at' => $remark->created_at->toDateTimeString(), // Send full timestamp
+                'updated_at' => $remark->updated_at->toDateTimeString(),
+            ];
+        })->toArray();
+
 
         return response()->json([
             'success' => true,
-            'remark' => $remarkTexts, // Sending the joined text, or the 'No remarks' message
-            'client_name' => $client->name, // You can send client name for modal title
-            'all_remarks' => $remarks->toArray(), // Optionally send the raw array of remark objects for more complex frontend rendering
+            'remark' => $remarkTexts, // For simple display (concatenated text)
+            'client_name' => $client->name,
+            'all_remarks' => $allRemarksFormatted, // For detailed frontend rendering
         ]);
+    }
+
+    public function storeRemark(Client $client, Request $request)
+    {
+        $validatedData = $request->validate([
+            'remark_text' => 'required|string|max:1000', 
+        ]);
+
+        try {
+            // 2. Create the new client remark
+            $remark = ClientRemark::create([
+                'client_id' => $client->id,
+                'user_id' => Auth::id(), // Assign the ID of the authenticated user
+                'content' => $validatedData['remark_text'],
+                // Add any other fields you have in your client_remarks table
+            ]);
+
+            // 3. Return a success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Remark added successfully!',
+                'remark_id' => $remark->id, // Optionally return the ID of the new remark
+            ], 201); // 201 Created is appropriate for successful resource creation
+
+        } catch (\Exception $e) {
+            // 4. Handle any exceptions during saving
+            \Log::error('Error adding client remark: ' . $e->getMessage(), ['client_id' => $client->id, 'user_id' => Auth::id()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add remark. Please try again later.'
+            ], 500); // 500 Internal Server Error for unexpected issues
+        }
     }
 
 

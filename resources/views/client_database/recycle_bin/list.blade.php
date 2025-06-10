@@ -36,6 +36,11 @@
 
 
         <!-- Card -->
+         <!-- Default Info Alert as a Callout -->
+        <div class="alert alert-warning mt-3" role="alert">
+            <h5 class="alert-heading">Important Note!</h5>
+            <p>All client data in the recycle bin will be automatically deleted 60 days after the date of deletion</p>
+        </div>
         <div class="card">
             <div class="card-header text-white d-flex flex-wrap align-items-center">
         <div></div>
@@ -43,7 +48,6 @@
 
         {{-- Call your new component here --}}
                 <x-sales-person-filter :salesPersons="$salesPersons" />
-                <div class="bd-callout bd-callout-info">Data automatically permanent delete in 60 days refer with deleted on</div>
 
     </div>
 
