@@ -196,7 +196,7 @@ class ClientController extends Controller
             ));
         }
 
-        return redirect()->route('v1.client-database.list')->with('success', 'Client created successfully.');
+        return redirect()->route('v1.client-database.my-list')->with('success', 'Client created successfully.');
     }
 
     public function update(Request $request, $id)
@@ -311,7 +311,7 @@ class ClientController extends Controller
         }
 
         return redirect()
-            ->route('v1.client-database.list')
+            ->route('v1.client-database.my-list')
             ->with('success', 'CSV imported successfully!');
     }
 
