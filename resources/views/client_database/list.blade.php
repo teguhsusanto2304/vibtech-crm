@@ -97,7 +97,6 @@
                                 <th>Updated On</th>
                                 <th>Action</th>
                                 <th>Quotation</th>
-                                <th>Remarks</th>
                                 <th>Remark Action</th>
                             </tr>
                         </thead>
@@ -518,7 +517,6 @@
                         { data: 'updated_on' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'quotation', name: 'quotation' },
-                        { data:'remarks', name:'remarks'},
                         { data: 'remarks_action', name:'remarks_action'}
                     ]
                 });
