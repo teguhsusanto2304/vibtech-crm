@@ -48,7 +48,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4" style='display:none;'>
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">View</h5>
@@ -56,6 +56,28 @@
                             </div>
                         </div>
                     </div>
+                    @can('view-client-database')
+                    @if($viewClientDatabase==true)
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Your Personal Database</h5>
+                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Your Client's Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                    @endcan
+                    @can('view-vibtech-database')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Vibtech Genesis Database</h5>
+                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Main Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                            </div>
+                        </div>
+                    </div>
+                    @endcan
                     @can('view-edit-request')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">

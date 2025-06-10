@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Notifications\UserNotification;
 use Auth;
 use App\Models\ClientRemark;
-
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use function PHPUnit\Framework\isEmpty;
 use function PHPUnit\Framework\isNull;
 
@@ -103,8 +104,8 @@ class ClientController extends Controller
             ->count();
 
 
-
-        return view('client_database.index', compact('PDFCSVDownloadRequestNotification','requestNotifications', 'recycleBinNotification', 'clientDataNotifications', 'salesPersonNotifications'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
+        $viewClientDatabase = $this->checkPermission('view-client-database');
+        return view('client_database.index', compact('PDFCSVDownloadRequestNotification','requestNotifications', 'recycleBinNotification', 'clientDataNotifications', 'salesPersonNotifications','viewClientDatabase'))->with('title', 'Client Database')->with('breadcrumb', ['Home', 'Client Database']);
     }
 
     public function create()
@@ -367,7 +368,36 @@ class ClientController extends Controller
             'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
         ]);
     }
-
+    function checkPermission($permissionName)
+    {
+        $userId = auth()->user()->id;
+        //$permissionName = 'edit-client-database';
+        // Start querying from the Role model (corresponds to 'a' in your SQL)
+        $results = Role::select(
+                'roles.name AS role_name', // 'a.name' - Aliasing to avoid conflict with 'permissions.name'
+                'permissions.*' // 'd.*' - Select all columns from the permissions table
+            )
+            // Join with model_has_roles (corresponds to 'b')
+            ->join('model_has_roles', function ($join) use ($userId) {
+                $join->on('roles.id', '=', 'model_has_roles.role_id')
+                    ->where('model_has_roles.model_id', $userId) // Filter by user ID
+                    ->where('model_has_roles.model_type', 'App\\Models\\User'); // Crucial for polymorphic relation
+            })
+            // Join with role_has_permissions (corresponds to 'c')
+            ->join('role_has_permissions', 'roles.id', '=', 'role_has_permissions.role_id')
+            // Join with permissions (corresponds to 'd')
+            ->join('permissions', function ($join) use ($permissionName) {
+                $join->on('permissions.id', '=', 'role_has_permissions.permission_id')
+                    ->where('permissions.name', $permissionName); // Filter by permission name
+            })
+            ->count();
+            if ($results > 0) {
+                $return = true;
+            } else {
+                $return = false;
+            }
+            return $return;
+    }
     public function list()
     {
         $notificationsToMarkAsRead = DB::table('notifications')
@@ -387,12 +417,14 @@ class ClientController extends Controller
         }
 
         $downloadFile = ClientDownloadRequest::where(['request_id' => auth()->user()->id])->get();
-
+        
         return view('client_database.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
             'salesPersons' => User::all(),
             'downloadFile' => $downloadFile,
+            'editClientDatabase' => $this->checkPermission('edit-client-database'),
+            'viewClientDatabase' => $this->checkPermission('view-client-database')
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
 
     }
@@ -848,12 +880,26 @@ class ClientController extends Controller
             ->leftJoin('countries', 'clients.country_id', '=', 'countries.id')
             ->leftJoin('users', 'clients.sales_person_id', '=', 'users.id')
             ->join('users as created', 'clients.created_id', '=', 'created.id')
-            ->leftJoin('users as updated', 'clients.updated_id', '=', 'updated.id')
+            ->leftJoin('users as updated', 'clients.updated_id', '=', 'updated.id')            
             ->leftJoin('client_requests', 'clients.id', '=', 'client_requests.client_id')
-            ->with(['industryCategory', 'country', 'salesPerson', 'createdBy', 'updatedBy'])
+            ->with(['industryCategory', 'country', 'salesPerson','contactFor', 'createdBy', 'updatedBy'])
             ->where('clients.data_status', 1)
             ->whereNot('clients.data_status', 0)
             ->select('clients.*');
+        if ($this->checkPermission('view-client-database')) {
+            $currentUserId = Auth::id(); // Get the ID of the currently authenticated user
+
+            $clients->where(function ($query) use ($currentUserId) {
+                // Condition 1: User is the assigned salesperson
+                $query->where('clients.sales_person_id', $currentUserId);
+
+                // Condition 2: OR (sales_person_id is NULL AND contacts_for_id is current user)
+                $query->orWhere(function ($subQuery) use ($currentUserId) {
+                    $subQuery->whereNull('clients.sales_person_id')
+                            ->where('clients.contact_for_id', $currentUserId);
+                });
+            });
+        }
         if ($request->filled('sales_person')) {
             if ($request->sales_person == '-') {
                 $clients->whereNull('sales_person_id');
@@ -881,6 +927,7 @@ class ClientController extends Controller
             ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
             ->addColumn('country', fn($client) => $client->country->name ?? '-')
             ->addColumn('salesPerson', fn($client) => $client->salesPerson->name ?? '-')
+            ->addColumn('contactFor', fn($client) => $client->contactFor->name ?? '-')
             ->addColumn('sales_person_btn', function ($client) {
                 $btnReasign = '';
                 if (!is_null($client->salesPerson->name ?? null)) {
@@ -975,6 +1022,12 @@ class ClientController extends Controller
                 }
                 return $remarks . '</div>';
             })
+            ->addColumn('remarks_action', function ($client) {
+                $remarks = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example">';
+                $remarks .= '<button class="btn btn-info btn-sm view-remark" data-id="' . $client->id . '">View Remark</button>';
+                $remarks .= '<button class="btn btn-primary btn-sm view-add-remark" data-id="' . $client->id . '">Add</button>';
+                return $remarks . '</div>';
+            })
             ->addColumn('is_editable', function ($client) {
                 if ($client->sales_person_id == auth()->user()->id) {
                     return true;
@@ -1031,7 +1084,7 @@ class ClientController extends Controller
             ->addColumn('client_email', fn($row) => $row->client->email ?? '-')
             ->addColumn('industry', fn($row) => $row->client->industryCategory->name ?? '-')
             ->addColumn('country', fn($row) => $row->client->country->name ?? '-')
-            ->addColumn('sales_person', fn($row) => $row->client->salesPerson->name ?? '-') // Access via client relationship
+            ->addColumn('sales_person', fn($row) => $row->client->salesPerson->name ?? '-')
             ->addColumn('image_path_img', function ($row) {
                 // This refers to the image_path on the Client model
                 if (!empty($row->client->image_path)) {
@@ -1633,8 +1686,28 @@ class ClientController extends Controller
                     ]);
         }
 
+    }
+    public function getRemarks(Client $client)
+    {
+        $remarks = ClientRemark::where('client_id', $client->id)
+                               ->orderBy('created_at', 'desc') 
+                               ->get(); 
 
+        $remarkTexts = $remarks->map(function ($remark) {
+            return $remark->remark_text; 
+        })->filter()->implode("\n\n"); 
 
+        // If no remarks are found after processing
+        if ($remarks->isEmpty()) {
+            $remarkTexts = 'No remarks available for this client.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'remark' => $remarkTexts, // Sending the joined text, or the 'No remarks' message
+            'client_name' => $client->name, // You can send client name for modal title
+            'all_remarks' => $remarks->toArray(), // Optionally send the raw array of remark objects for more complex frontend rendering
+        ]);
     }
 
 

@@ -5,7 +5,7 @@
                     <div class="form-group col-8">
                         <input id="client_id" name="client_id" type="hidden">
                         <label for="contact_for_id">Salesperson *</label>
-                        <select name="sales_person_id" class="form-control" required>
+                        <select name="sales_person_id" id="sales_person_id" class="form-control" required>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}">{{ $user->name }}</option>
                             @endforeach

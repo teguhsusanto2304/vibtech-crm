@@ -86,6 +86,9 @@
                                 <th>Industry</th>
                                 <th>Country</th>
                                 <th>Sales Person</th>
+                                @if($viewClientDatabase==true)
+                                <th>Recommended For</th>
+                                @endif
                                 @can('edit-reasign-salesperson')
                                 <th>Reassign Sales Person</th>
                                 @endcan
@@ -95,21 +98,77 @@
                                 <th>Action</th>
                                 <th>Quotation</th>
                                 <th>Remarks</th>
+                                <th>Remark Action</th>
                             </tr>
                         </thead>
                     </table>
                     <div class="mb-3">
                         @can('edit1-client-database')
                             <button id="approve-selected" class="btn btn-success">Reassign All</button>
-                            @endcan
+                        @endcan
+                        @if($editClientDatabase===true)
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
-                            @can('delete-client-database')
+                        @endif
+                        @can('delete-client-database')
                             <button id="delete-selected" class="btn btn-danger">Delete All</button>
-                            @endcan
+                        @endcan
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Client Remarks Modal -->
+        <div class="modal fade" id="clientRemarksModal" tabindex="-1" aria-labelledby="clientRemarksModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clientRemarksModalLabel">Client Remarks</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="clientRemarksModalBody">
+                        <p class="text-center">Loading remarks...</p>
+                        <!-- Remarks content will be loaded here via AJAX -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            /* Custom styles for the client remarks modal body */
+            #clientRemarksModalBody {
+                max-height: 400px; /* Adjust this value as needed. For larger screens, maybe 500px, smaller screens 300px. */
+                overflow-y: auto;  /* This enables vertical scrolling when content exceeds max-height */
+                padding: 20px;     /* Add some padding for better aesthetics */
+            }
+
+            /* Optional: Some styling for individual remark items if you use Option 2 (Detailed Display) in JS */
+            .remark-item {
+                margin-bottom: 15px; /* Space between remarks */
+                padding-bottom: 15px; /* Padding before the border */
+                border-bottom: 1px solid #eee; /* Light separator line */
+            }
+
+            .remark-item:last-child {
+                border-bottom: none; /* No border for the last item */
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .remark-item p {
+                margin-bottom: 5px; /* Space between text and small tag */
+                line-height: 1.5;
+            }
+
+            .remark-item small {
+                font-size: 0.85em;
+                color: #777;
+                display: block; /* Ensures it's on its own line */
+            }
+        </style>
+
         <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -249,7 +308,7 @@
                         <h5 class="modal-title" id="clientDetailModalLabel">Bulk Salesperson Request To Edit</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="assignClientForm" method="POST"
+                    <form id="bulkRequestToEditClientForm" method="POST"
                         action="{{ route('v1.client-database.bulk-request-to-edit')}}">
                         @csrf
                         @METHOD('PUT')
@@ -424,6 +483,9 @@
                         { data: 'industry', name: 'industryCategory.name' },
                         { data: 'country', name: 'country.name' },
                         { data: 'salesPerson', name: 'salesPerson.name' },
+                        @if($viewClientDatabase==true)
+                        { data: 'contactFor', name: 'contactFor.name' },
+                        @endif
                         @can('edit-reasign-salesperson')
                         { data: 'sales_person_btn' },
                         @endcan
@@ -455,7 +517,8 @@
                         { data: 'updated_on' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'quotation', name: 'quotation' },
-                        { data:'remarks', name:'remarks'}
+                        { data:'remarks', name:'remarks'},
+                        { data: 'remarks_action', name:'remarks_action'}
                     ]
                 });
 
@@ -714,6 +777,68 @@
                 $(document).on('click', '.preview-image', function () {
                     const fullImg = $(this).data('full');
                     $('#modalImage').attr('src', fullImg);
+                });
+            });
+
+            $(document).on('click', '.view-remark', function() {
+                const clientId = $(this).data('id'); // Get the client ID from the data-id attribute
+                const modalBody = $('#clientRemarksModalBody');
+                const modalTitle = $('#clientRemarksModalLabel');
+
+                // Reset modal content and show loading message
+                modalTitle.text('Client Remarks'); // Reset title in case it was modified
+                modalBody.html('<p class="text-center text-muted">Loading remarks...</p>');
+                $('#clientRemarksModal').modal('show'); // Show the modal immediately
+
+                // Make an AJAX request to fetch the client's remarks
+                $.ajax({
+                    url: `/v1/client-database/${clientId}/remarks`, // Make sure this route exists in Laravel
+                    method: 'GET',
+                    success: function(response) {
+                        const modalBody = $('#clientRemarksModalBody');
+                        const modalTitle = $('#clientRemarksModalLabel');
+
+                        if (response.success) {
+                            modalTitle.text(`Remarks for Client: ${response.client_name || 'ID ' + clientId}`);
+
+                            if (response.all_remarks && response.all_remarks.length > 0) {
+                                let remarksHtml = '<div class="remarks-list">';
+                                response.all_remarks.forEach(remark => {
+                                    // Assuming 'remark_text' and 'created_at' are available in each remark object
+                                    remarksHtml += `
+                                        <div class="remark-item border-b pb-2 mb-2">
+                                            <p class="text-gray-800">${new Date(remark.created_at).toLocaleString()} - ${remark.content}</p>
+                                        </div>
+                                    `;
+                                });
+                                remarksHtml += '</div>';
+                                modalBody.html(remarksHtml);
+                            } else {
+                                modalBody.html('<p class="text-center text-muted">No remarks found for this client.</p>');
+                            }
+
+                        } else {
+                            modalBody.html(`<p class="text-danger text-center">${response.message || 'Failed to load remarks.'}</p>`);
+                            console.error("Failed to fetch remarks (backend response):", response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        const modalBody = $('#clientRemarksModalBody');
+                        const modalTitle = $('#clientRemarksModalLabel');
+                        let errorMessage = 'An error occurred while fetching remarks. Please try again.';
+
+                        modalTitle.text('Error Loading Remarks');
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.status === 404) {
+                            errorMessage = 'Client or remarks not found.';
+                        } else if (xhr.status === 403) {
+                            errorMessage = 'You are not authorized to view these remarks.';
+                        }
+                        modalBody.html(`<p class="text-danger text-center">${errorMessage}</p>`);
+                        console.error("AJAX Error fetching remarks:", xhr);
+                    }
                 });
             });
         </script>

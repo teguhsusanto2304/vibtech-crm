@@ -95,7 +95,12 @@
         function sendDownloadRequest(fileType) {
             // Clear any previous messages and set initial UI state
             downloadStatusMessage.html('');
-            setWaitingState();
+            //setWaitingState();
+            if(fileType==='csv'){
+                csvButton.prop('disabled', true).text('Waiting response');
+            } else {
+                pdfButton.prop('disabled', true).text('Waiting response');
+            }
 
             lastRequestedFileType = fileType; // Store the type for later reference
 
@@ -111,15 +116,29 @@
                 success: function(response) {
                     if (response.request_id) {
                         currentRequestId = response.request_id; // Store the ID of the new request
-                        $('#msg').html(`
+                        if(response.request_id===1){
+                            $('#msg').html(`
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <p>${response.message}</p>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    `);
+                            if(fileType==='csv'){
+                                csvButton.prop('disabled', false).text('Request To Download CSV');
+                            } else {
+                                pdfButton.prop('disabled', false).text('Request To Download PDF');
+                            }
+                        } else {
+                            $('#msg').html(`
                                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                                             <p>${response.message}</p>
                                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                         </div>
                                     `);
+                        }
                         const reloadDelay = 5000;
                         setTimeout(function() {
-                            location.reload();
+                            //location.reload();
                         }, reloadDelay);
                     } else {
                         downloadStatusMessage.html('<div class="alert alert-danger">Error submitting request: ' + (response.message || 'Unknown error') + '</div>');

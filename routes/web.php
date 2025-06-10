@@ -31,6 +31,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleBookingController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\WhistleblowningPolicyController;
+use App\Http\Controllers\V2\ClientController as ClientControllerV2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -282,6 +283,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/request-download','clientDownloadRequestStore')->name('v1.client-database.request-download');
             Route::get('/{id}/{actionType}/request-download-response','clientDownloadRequestResponse')->name('v1.client-download.request-download-response');
             Route::get('/{user_id}/{fileType}/request-download-complete','clientDownloadRequestComplete')->name('v1.client-download.request-download-complete');
+            Route::get('/{client}/remarks', 'getRemarks')->name('v1.client-download.remarks');
         });
 
         // 🔹 Client Database Management Routes
@@ -296,6 +298,14 @@ Route::middleware('auth')->group(function () {
 
     });
 
+});
+
+Route::prefix('v2')->group(function () {
+    // 🔹 Client Database Management Routes
+        Route::prefix('client-database')->controller(ClientControllerV2::class)->group(function () {
+            Route::get('/', 'index')->name('v1.client-database');
+            Route::get('/list', 'list')->name('v2.client-database.list');
+        });
 });
 
 Route::post('/dologin', function (Request $request) {
