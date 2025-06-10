@@ -235,7 +235,7 @@ class ClientController extends Controller
         //$clientReq->data_status = 1;
         //$clientReq->save();
 
-        return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
+        return redirect()->route('v1.client-database.my-list')->with('success', 'Client updated successfully.');
     }
 
     public function import(Request $request)
@@ -352,7 +352,7 @@ class ClientController extends Controller
 
         DB::commit();
 
-        return redirect()->route('v1.client-database.list')->with('success', 'Client updated successfully.');
+        return redirect()->route('v1.client-database.my-list')->with('success', 'Client updated successfully.');
     }
 
     public function deleteRequest($id)
@@ -1485,7 +1485,7 @@ class ClientController extends Controller
             }
         }
 
-        return redirect()->route('v1.client-database.list')->with('success', $msg);
+        return redirect()->route('v1.client-database.my-list')->with('success', $msg);
     }
 
     public function exportCsv(Request $request)
