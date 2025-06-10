@@ -108,7 +108,9 @@
                         @endif
                         @endcan
                         @if($editClientDatabase===true)
+                        @if(is_null($master))
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
+                        @endif
                         @endif
                         @can('delete-client-database')
                         @if(!is_null($master))
