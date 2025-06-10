@@ -103,13 +103,17 @@
                     </table>
                     <div class="mb-3">
                         @can('edit1-client-database')
+                        @if($viewClientDatabase==false)
                             <button id="approve-selected" class="btn btn-success">Reassign All</button>
+                        @endif
                         @endcan
                         @if($editClientDatabase===true)
                             <button id="edit-selected" class="btn btn-primary">Request to edit All</button>
                         @endif
                         @can('delete-client-database')
+                        @if($viewClientDatabase==false)
                             <button id="delete-selected" class="btn btn-danger">Delete All</button>
+                        @endif
                         @endcan
                     </div>
                 </div>
