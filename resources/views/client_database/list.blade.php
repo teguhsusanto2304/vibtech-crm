@@ -463,6 +463,7 @@
                             d.sales_person = $('#filter-sales-person').val();
                             d.industry = $('#filter-industry').val();
                             d.country = $('#filter-country').val();
+                            d.master = '{{ $master }}';
                         }
                     },
 

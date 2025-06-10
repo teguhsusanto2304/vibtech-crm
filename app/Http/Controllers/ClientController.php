@@ -398,7 +398,7 @@ class ClientController extends Controller
             }
             return $return;
     }
-    public function list()
+    public function list(Request $request)
     {
         $notificationsToMarkAsRead = DB::table('notifications')
             ->where('type', 'App\Notifications\UserNotification')
@@ -424,7 +424,8 @@ class ClientController extends Controller
             'salesPersons' => User::all(),
             'downloadFile' => $downloadFile,
             'editClientDatabase' => $this->checkPermission('edit-client-database'),
-            'viewClientDatabase' => $this->checkPermission('view-client-database')
+            'viewClientDatabase' => $this->checkPermission('view-client-database'),
+            'master'=> $request->query('master')??null
         ])->with('title', 'List of Client Database')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database']);
 
     }
@@ -886,20 +887,24 @@ class ClientController extends Controller
             ->where('clients.data_status', 1)
             ->whereNot('clients.data_status', 0)
             ->select('clients.*');
-        if ($this->checkPermission('view-client-database')) {
-            $currentUserId = Auth::id(); // Get the ID of the currently authenticated user
+        if(!$request->filled('master'))
+        {
+            if ($this->checkPermission('view-client-database')) {
+                        $currentUserId = Auth::id(); // Get the ID of the currently authenticated user
 
-            $clients->where(function ($query) use ($currentUserId) {
-                // Condition 1: User is the assigned salesperson
-                $query->where('clients.sales_person_id', $currentUserId);
+                        $clients->where(function ($query) use ($currentUserId) {
+                            // Condition 1: User is the assigned salesperson
+                            $query->where('clients.sales_person_id', $currentUserId);
 
-                // Condition 2: OR (sales_person_id is NULL AND contacts_for_id is current user)
-                $query->orWhere(function ($subQuery) use ($currentUserId) {
-                    $subQuery->whereNull('clients.sales_person_id')
-                            ->where('clients.contact_for_id', $currentUserId);
-                });
-            });
+                            // Condition 2: OR (sales_person_id is NULL AND contacts_for_id is current user)
+                            $query->orWhere(function ($subQuery) use ($currentUserId) {
+                                $subQuery->whereNull('clients.sales_person_id')
+                                        ->where('clients.contact_for_id', $currentUserId);
+                            });
+                        });
+                    }
         }
+        
         if ($request->filled('sales_person')) {
             if ($request->sales_person == '-') {
                 $clients->whereNull('sales_person_id');
