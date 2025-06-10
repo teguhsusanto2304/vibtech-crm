@@ -656,21 +656,21 @@ class ClientController extends Controller
                 $user->notify(new UserNotification(
                     'There is a new client data being assigned to you.',
                     'accept',
-                    route('v1.client-database.list')
+                    route('v1.client-database.my-list')
                 ));
             } else {
                 $user = \App\Models\User::findOrFail($oldSalespersonId);
                 $user->notify(new UserNotification(
                     'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
                     'accept',
-                    route('v1.client-database.list')
+                    route('v1.client-database.my-list')
                 ));
 
                 $user = \App\Models\User::findOrFail($validated['sales_person_id']);
                 $user->notify(new UserNotification(
                     'An existing client has been reassigned to you by ' . auth()->user()->name,
                     'accept',
-                    route('v1.client-database.list')
+                    route('v1.client-database.my-list')
                 ));
             }
 
@@ -742,21 +742,21 @@ class ClientController extends Controller
                         $user->notify(new UserNotification(
                             'There is a new client data being assigned to you.',
                             'accept',
-                            route('v1.client-database.list')
+                            route('v1.client-database.my-list')
                         ));
                     } else {
                         $user = \App\Models\User::findOrFail($oldSalespersonId);
                         $user->notify(new UserNotification(
                             'An existing client has been reassigned to ' . $newName . ' by ' . auth()->user()->name,
                             'accept',
-                            route('v1.client-database.list')
+                            route('v1.client-database.my-list')
                         ));
 
                         $user = \App\Models\User::findOrFail($request->sales_person_id);
                         $user->notify(new UserNotification(
                             'An existing client has been reassigned to you by ' . auth()->user()->name,
                             'accept',
-                            route('v1.client-database.list')
+                            route('v1.client-database.my-list')
                         ));
                     }
                 }
@@ -836,16 +836,16 @@ class ClientController extends Controller
 
         // DB::commit();
         if ($countSuccess > 0 && $countFailed === 0) { // Changed $countFailed < 0 to $countFailed === 0
-            return redirect()->route('v1.client-database.list')->with('success', 'Request to edit has been save successfully.');
+            return redirect()->route('v1.client-database.my-list')->with('success', 'Request to edit has been save successfully.');
         } elseif ($countSuccess > 0 && $countFailed > 0) {
-            return redirect()->route('v1.client-database.list')
+            return redirect()->route('v1.client-database.my-list')
                 ->with('success', 'Request to edit has been save successfully.')
                 ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person.'); // Removed '1' for cleaner message
         } elseif ($countSuccess === 0 && $countFailed > 0) { // Changed $countSuccess == 0 to $countSuccess === 0 for strict comparison
-            return redirect()->route('v1.client-database.list')
+            return redirect()->route('v1.client-database.my-list')
                 ->with('errors', 'Request to edit has been processed but some have been rejected because you not assigned as sales person'); // Removed '2' for cleaner message
         } else {
-            return redirect()->route('v1.client-database.list')
+            return redirect()->route('v1.client-database.my-list')
                 ->with('success', 'No reassignment operations were performed or an unexpected state occurred.');
         }
     }
