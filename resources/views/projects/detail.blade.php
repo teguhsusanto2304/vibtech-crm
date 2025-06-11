@@ -116,7 +116,7 @@
         <div>
           <p class="mb-2"><strong>Project Members (Total: {{ $project->projectMembers()->count() }}) </strong></p>
           <div class="d-flex align-items-center gap-2">
-            @foreach($project->projectMembers as $projectMember)
+            @foreach($project->showProjectMembers as $projectMember)
            @php
                 // Get the member's name
                 $memberName = $projectMember->member->name ?? 'Unknown';

@@ -80,11 +80,11 @@ class ProjectService {
     {
         $userId = Auth::id(); // Get the ID of the currently authenticated user
 
-        $projects = Project::with(['projectManager', 'projectMembers.member']) // Eager load necessary relationships
+        $projects = Project::with(['projectManager', 'showProjectMembers.member']) // Eager load necessary relationships
             ->where(function ($query) use ($userId) {
                 $query->where('project_manager_id', $userId);
 
-                $query->orWhereHas('projectMembers', function ($subQuery) use ($userId) {
+                $query->orWhereHas('showProjectMembers', function ($subQuery) use ($userId) {
                     $subQuery->where('member_id', $userId); // <--- Use the column name on the pivot table/model
                 });
             })
@@ -101,14 +101,14 @@ class ProjectService {
             })
             ->addColumn('project_members', function ($project) {
                 $return = null;
-                foreach($project->projectMembers as $row)
+                foreach($project->showProjectMembers as $row)
                 {
                     $return .= '<span class="badge bg-primary">'.$row->member->name.'</span>&nbsp;';
                 }
                 return $return;
             })
             ->addColumn('total_project_members', fn($project) => 
-                $project->projectMembers()->count().' Person(s)' 
+                $project->showProjectMembers()->count().' Person(s)' 
             )
             ->addColumn('progress_percentage',fn($project) => rand(0, 100) )
             ->addColumn('action', function ($row) {

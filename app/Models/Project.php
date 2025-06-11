@@ -27,7 +27,12 @@ class Project extends Model
         return $this->belongsTo(User::class, 'project_manager_id');
     }
 
-    public function projectMembers()
+    public function projectMembers() // <--- This relationship name is fine, but it must be belongsToMany
+    {
+        return $this->belongsToMany(User::class, 'project_members', 'project_id', 'member_id');
+    }
+
+    public function showProjectMembers()
     {
         //return $this->belongsToMany(User::class, 'project_members', 'project_id', 'member_id');
         return $this->hasMany(ProjectMember::class);
