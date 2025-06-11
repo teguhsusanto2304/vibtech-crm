@@ -94,7 +94,7 @@ class ProjectService {
         return DataTables::of($projects)
             ->addIndexColumn()
             ->addColumn('project_manager', function ($project) {
-                 return '<img src="'.asset($project->projectManager->path_image).'" alt="Project Manager Avatar" 
+                 return '<img src="'.$project->projectManager->avatar_url.'" alt="Project Manager Avatar" 
                         class="rounded-circle me-2" data-bs-toggle="tooltip"
                  data-bs-placement="top"
                  width="40" height="40">&nbsp;'.$project->projectManager->name;

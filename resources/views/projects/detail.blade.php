@@ -105,7 +105,7 @@
         <!-- Project Manager -->
         <div class="d-flex align-items-center mb-3">
           <strong class="me-3">Project Manager:</strong>
-          <img src="{{ asset($project->projectManager->path_image) }}" alt="Project Manager Avatar" 
+          <img src="{{ $project->projectManager->avatar_url }}" alt="Project Manager Avatar" 
           title="{{ $project->projectManager->name }}"
           class="rounded-circle me-2" data-bs-toggle="tooltip"
                  data-bs-placement="top"
@@ -117,40 +117,14 @@
           <p class="mb-2"><strong>Project Members (Total: {{ $project->projectMembers()->count() }}) </strong></p>
           <div class="d-flex align-items-center gap-2">
             @foreach($project->showProjectMembers as $projectMember)
-           @php
-                // Get the member's name
-                $memberName = $projectMember->member->name ?? 'Unknown';
 
-                // Get initials (e.g., "John Doe" -> "JD")
-                $initials = '';
-                $nameParts = explode(' ', $memberName);
-                foreach ($nameParts as $part) {
-                    if (!empty($part)) {
-                        $initials .= strtoupper(substr($part, 0, 1));
-                    }
-                }
-                // If initials are empty (e.g., empty name), use a fallback like '?'
-                if (empty($initials)) {
-                    $initials = '?';
-                }
-
-                // Construct the placeholder URL with initials
-                // Note: placehold.co uses `?text=` for text. URLs need to be encoded for spaces and special chars.
-                $placeholderUrl = 'https://placehold.co/45x45/d0c5f3/333333?text=' . urlencode($initials);
-
-                // Determine the final image source
-                $memberImageUrl = $projectMember->member->path_image
-                                  ? asset($projectMember->member->path_image)
-                                  : $placeholderUrl;
-            @endphp
-
-            <img src="{{ $memberImageUrl }}"
-                 alt="{{ $memberName }}'s avatar" {{-- Improved alt text --}}
+            <img src="{{ $projectMember->member->avatar_url }}"
+                 alt="{{ $projectMember->member->name }}'s avatar" {{-- Improved alt text --}}
                  class="rounded-circle"
                  data-bs-toggle="tooltip"
                  data-bs-placement="top"
                  width="40" height="40"
-                 title="{{ $memberName }}">
+                 title="{{ $projectMember->member->name }}">
             @endforeach
           </div>
         </div>
@@ -192,9 +166,9 @@
                         <p class="card-text mb-0 flex-grow-1 me-3">{{ $kanbanStage->name }}</p> {{-- Text takes available space --}}
                         <div class="btn-group btn-group-sm btn-group-vertical" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
                             <button type="button" class="btn btn-outline-primary btn-sm">Create</button>
-                            @can('edit-project-management-task-complete')
+                            @if($project->project_manager_id == auth()->user()->id)
                             <button type="button" class="btn btn-outline-success btn-sm">Complete</button>
-                            @endcan
+                            @endif
                         </div>
                     </div>
                     <strong class="text-primary">@if($kanbanStage->id > 2) Inactive @else Active @endif</strong>

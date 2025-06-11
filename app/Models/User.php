@@ -82,4 +82,28 @@ class User extends Authenticatable
         return $this->belongsToMany(ChatGroup::class, 'chat_group_members', 'user_id', 'chat_group_id')
             ->withTimestamps();
     }
+
+    public function getInitialsAttribute(): string
+    {
+        $initials = '';
+        $nameParts = explode(' ', $this->name);
+        foreach ($nameParts as $part) {
+            if (!empty($part)) {
+                $initials .= strtoupper(substr($part, 0, 1));
+            }
+        }
+        return empty($initials) ? '?' : $initials;
+    }
+    
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->path_image) {
+            return asset($this->path_image);
+        }
+
+        // Generate placeholder URL with initials
+        $initials = $this->initials; // Access the initials accessor
+        $placeholderUrl = 'https://placehold.co/45x45/d0c5f3/333333?text=' . urlencode($initials);
+        return $placeholderUrl;
+    }
 }
