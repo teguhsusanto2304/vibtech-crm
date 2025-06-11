@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\Country;
 use App\Models\IndustryCategory;
 use App\Models\User;
+use App\Models\KanbanStage;
 
 class CommonService
 {
@@ -44,5 +45,10 @@ class CommonService
     public function getUsers()
     {
         return User::orderBy('name','ASC')->get();
+    }
+
+    public function getKanbanStages()
+    {
+        return KanbanStage::orderBy('id','asc')->get();
     }
 }
