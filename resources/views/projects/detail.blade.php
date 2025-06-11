@@ -224,7 +224,7 @@
     }
 </style>
 <script>
-    function progressBar(percentage,aClass,aSymbol)
+    function progressBar(percentage,aClass,aSymbol,aValue)
     {
 if (percentage < 30) {
                                 progressBarClass = 'bg-danger'; // Red for low progress
@@ -242,13 +242,14 @@ if (percentage < 30) {
                                          aria-valuenow="${percentage}"
                                          aria-valuemin="0"
                                          aria-valuemax="100">
-                                        <span class="text-white small fw-bold">${percentage} ${aSymbol}</span>
+                                        <span class="text-white small fw-bold">${aValue} ${aSymbol}</span>
                                     </div>
                                 </div>
                             `);
     }
-    progressBar({{ $project->remaining_days }},'#dayProgress','d')
-    progressBar({{ rand(0, 100) }},'#workProgress','%')
+
+    progressBar({{ round(($project->remaining_days/$project->start_at->diffInDays($project->end_at))*100) }},'#dayProgress','d',{{ $project->remaining_days }})
+    progressBar({{ rand(0, 100) }},'#workProgress','%',{{ rand(0, 100) }})
     
     </script>
 </div>
