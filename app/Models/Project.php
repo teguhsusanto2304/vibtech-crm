@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use App\Helpers\IdObfuscator;
 
 class Project extends Model
 {
@@ -85,5 +86,23 @@ class Project extends Model
         }
 
         return $currentDate->diffInDays($endDate);
+    }
+
+    public function getObfuscatedIdAttribute(): string
+    {
+        return IdObfuscator::encode($this->attributes['id']); // <--- Call your encoder
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if ($field) {
+            return $this->where($field, $value)->first();
+        }
+        try {
+            $decodedId = IdObfuscator::decode($value);
+            return $this->where('id', $decodedId)->first();
+        } catch (\InvalidArgumentException $e) {
+            return null;
+        }
     }
 }

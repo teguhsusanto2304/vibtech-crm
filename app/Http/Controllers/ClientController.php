@@ -873,7 +873,7 @@ class ClientController extends Controller
             $user->notify(new UserNotification(
                 'Your request to edit an existing client data has been approved.',
                 'accept',
-                route('v1.client-database.list')
+                route('v1.client-database.my-list')
             ));
         } elseif ($request->action == 'restore') {
             $clientRequest->data_status = 1;
@@ -1000,6 +1000,7 @@ class ClientController extends Controller
                 $btnDelete = '';
                 $btnEdit = '';
                 if ($row->sales_person_id == auth()->user()->id) {
+                
                     $delete = $row->clientRequests
                         ->whereIn('data_status', [2, 4]) // Akan memfilter data_status 2 atau 4
                         ->sortByDesc('created_at')
@@ -1036,9 +1037,12 @@ class ClientController extends Controller
 
                      }
                 }
-                if (auth()->user()->can('delete-client-database')) {
-                    $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="' . $row->id . '"
-                                                data-action="edit" >Delete</button>';
+                if($request->filled('master'))
+                {
+                    if (auth()->user()->can('delete-client-database')) {
+                        $btnDelete .= '<button class="btn btn-danger btn-sm confirm-action" data-id="' . $row->id . '"
+                                                    data-action="edit" >Delete</button>';
+                    }
                 }
 
                 return $btn . $btnEdit . $btnDelete;

@@ -22,7 +22,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/', 'index')->name('v1.project-management');
             Route::get('/list', 'list')->name('v1.project-management.list');
             Route::get('/create', 'create')->name('v1.project-management.create');
-            Route::get('/{id}/detail', 'detail')->name('v1.project-management.detail');
+            Route::get('/{project}/detail', 'detail')->name('v1.project-management.detail');
             Route::post('/store', 'store')->name('v1.project-management.store');
             Route::get('/data', 'getProjectsData')->name('v1.project-management.data');
         });

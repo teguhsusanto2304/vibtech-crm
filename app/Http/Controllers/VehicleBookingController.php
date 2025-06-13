@@ -53,6 +53,7 @@ class VehicleBookingController extends Controller
     {
         $now = Carbon::now();
         $vehicles = Vehicle::whereNot('data_status', 1)->get();
+        
         $jobs = JobAssignment::select('job_assignments.id', 'job_assignments.job_type', 'job_assignments.job_record_id')
             ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
             ->where('job_assignment_personnels.user_id', auth()->user()->id)
@@ -66,6 +67,9 @@ class VehicleBookingController extends Controller
             })
             ->orderBy('job_assignments.created_at', 'DESC')
             ->get();
+            can('view-vehicle-booking')
+                $vehicles->like(DB::raw('upper(name)'),Str::upper('%sedan%'));
+            endcan
 
         return view('vehicle_booking.form', compact('vehicles', 'jobs'))->with('title', 'Create a Vehicle Booking')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking', 'Create a Vehicle Booking']);
     }

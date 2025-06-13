@@ -90,7 +90,9 @@
                                 <th>Recommended For</th>
                                 @endif
                                 @can('edit-reasign-salesperson')
+                                @if($master)
                                 <th>Reassign Sales Person</th>
+                                @endif
                                 @endcan
                                 <th>Image</th>
                                 <th>Created On</th>
@@ -609,7 +611,9 @@
                         { data: 'contactFor', name: 'contactFor.name' },
                         @endif
                         @can('edit-reasign-salesperson')
+                        @if($master)
                         { data: 'sales_person_btn' },
+                        @endif
                         @endcan
                         {
                             data: 'image_path_img',

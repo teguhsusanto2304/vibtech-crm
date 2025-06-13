@@ -132,35 +132,12 @@
     </div>
 
     <hr>
-    <style>
-        .card-disabled {
-    opacity: 0.6; /* Fades the entire card */
-    pointer-events: none; /* Prevents all clicks on the card content */
-    cursor: not-allowed; /* Changes cursor when hovering over the card */
-    filter: grayscale(100%); /* Optional: Make it grayscale for a stronger "disabled" look */
-    /* Add a subtle visual hint that it's disabled, e.g., a patterned background */
-    background-image: linear-gradient(45deg, rgba(255, 255, 255, .1) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%, transparent 75%, transparent);
-    background-size: 0.5rem 0.5rem; /* Small pattern */
-}
 
-/* Optional: To make text within disabled card a bit lighter */
-.card-disabled .card-text,
-.card-disabled .small,
-.card-disabled .badge {
-    color: #999 !important; /* Lighter text color */
-}
-
-/* Ensure buttons within are visually disabled */
-.card-disabled .btn {
-    pointer-events: none; /* Already handled by card-disabled, but good for specific override */
-    opacity: 0.7; /* Make buttons slightly more faded */
-}
-        </style>
     <div class="horizontal-scroll-wrapper"> {{-- Custom wrapper for overflow --}}
     <div class="row flex-nowrap g-4">
     @foreach($kanbanStages as $kanbanStage)
         <div class="col">
-            <div class="card h-100 @if($kanbanStage->id > 2) card-disabled @endif"> {{-- h-100 to make cards in a row have equal height --}}
+            <div class="card h-100y position-relative border border-dark @if($kanbanStage->id > 2) card-disabled @endif"> {{-- h-100 to make cards in a row have equal height --}}
                 <div class="card-body d-flex flex-column"> {{-- d-flex flex-column to make content inside vertical --}}
                     <div class="d-flex justify-content-between align-items-center mb-3"> {{-- Flex container for text and buttons --}}
                         <p class="card-text mb-0 flex-grow-1 me-3">{{ $kanbanStage->name }}</p> {{-- Text takes available space --}}

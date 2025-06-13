@@ -5,12 +5,15 @@ use App\Models\User;
 use App\Models\Project;
 use Auth;
 use Yajra\DataTables\DataTables;
+use App\Helpers\IdObfuscator;
 
 class ProjectService {
 
     public function getProject($id)
     {
-        return Project::with(['projectMembers', 'projectManager'])->find($id);
+        $decodedId = IdObfuscator::decode($id);
+        $project = Project::with(['projectMembers', 'projectManager'])->find($decodedId);
+        return $project;
     }
     public function store(Request $request)
     {
@@ -49,7 +52,7 @@ class ProjectService {
 
 
             // 4. Return a success response
-            return redirect()->route('v1.project-management')->with('success', 'Project has been stored successfully.');
+            return redirect()->route('v1.project-management.detail', ['project' => $project->id])->with('success', 'Project has been stored successfully.');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             // This block is actually rarely hit because $request->validate()
@@ -80,16 +83,28 @@ class ProjectService {
     {
         $userId = Auth::id(); // Get the ID of the currently authenticated user
 
-        $projects = Project::with(['projectManager', 'showProjectMembers.member']) // Eager load necessary relationships
-            ->where(function ($query) use ($userId) {
-                $query->where('project_manager_id', $userId);
+        //$projects = Project::with(['projectManager', 'showProjectMembers.member']) // Eager load necessary relationships
+            //->where(function ($query) use ($userId) {
+            //    $query->where('project_manager_id', $userId);
 
-                $query->orWhereHas('showProjectMembers', function ($subQuery) use ($userId) {
-                    $subQuery->where('member_id', $userId); // <--- Use the column name on the pivot table/model
-                });
-            })
-            ->orderBy('created_at', 'ASC')
-            ->get();
+           //     $query->orWhereHas('showProjectMembers', function ($subQuery) use ($userId) {
+           //         $subQuery->where('member_id', $userId); // <--- Use the column name on the pivot table/model
+           //     });
+           // })
+            //->orderBy('created_at', 'ASC')
+            //->get();
+        $projectsQuery = Project::with(['projectManager', 'showProjectMembers.member']); // Assuming projectMembers is the correct relationship name
+
+        // Apply conditional filtering based on $request->type
+        if ($request->type === 'my') {
+            // Filter projects where the authenticated user is the project manager
+            $projectsQuery->where('project_manager_id', $userId);
+        } elseif ($request->type === 'others') {
+            // Filter projects where the authenticated user is NOT the project manager
+            $projectsQuery->where('project_manager_id', '!=', $userId);
+        }
+        $projects = $projectsQuery->orderBy('created_at', 'ASC')->get();
+
 
         return DataTables::of($projects)
             ->addIndexColumn()
@@ -113,7 +128,7 @@ class ProjectService {
             ->addColumn('progress_percentage',fn($project) => rand(0, 100) )
             ->addColumn('action', function ($row) {
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example">';
-                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail',['id'=>$row->id]) . '">View</a>';
+                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail',['project'=>$row->obfuscated_id]) . '">View</a>';
                 $btn .= '</div>';               
 
                 return $btn;

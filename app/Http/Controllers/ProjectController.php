@@ -42,6 +42,7 @@ class ProjectController extends Controller
     public function create()
     {
         $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
         return view('projects.form',compact('users'))->with('title', 'Create A New Project')->with('breadcrumb', ['Home', 'Project Management','Create A New Project']);
     }
 
@@ -53,6 +54,9 @@ class ProjectController extends Controller
     public function detail($id)
     {
         $project = $this->projectService->getProject($id);
+        if (!$project) {
+                return redirect()->route('v1.project-management.list')->with('errors', 'Data not finded');
+        }
         $kanbanStages = $this->commonService->getKanbanStages();
         return view('projects.detail',compact('project','kanbanStages'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
     }

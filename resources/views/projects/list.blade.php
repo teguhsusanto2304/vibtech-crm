@@ -49,82 +49,120 @@
                
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped nowrap w-100" id="projects-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Description</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
-                                <th>Project Manager</th>
-                                <th>Members</th>
-                                <th>Progress</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                    </table>                    
+                <ul class="nav nav-tabs" id="projectTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="others-tab" data-bs-toggle="tab" href="#others" role="tab">Projects You’re In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="my-tab" data-bs-toggle="tab" href="#my" role="tab">Projects You Manage</a>
+                    </li>
+                </ul>
+
+                <div class="tab-content mt-3">
+                    <!-- Tab 1: Projects with other managers -->
+                    <div class="tab-pane fade show active" id="others" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped nowrap w-100" id="others-projects-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Project Manager</th>
+                                        <th>Members</th>
+                                        <th>Progress</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Projects where user is PM -->
+                    <div class="tab-pane fade" id="my" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped nowrap w-100" id="my-projects-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Project Manager</th>
+                                        <th>Members</th>
+                                        <th>Progress</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+
         <script>
-            $(function () {
-                let table = $('#projects-table').DataTable({
-                    processing: true,
-                    serverSide: true,
-                    scrollX: true, // Enable horizontal scrolling
-                    responsive: false,
-                    ajax: {
-                        url: '{{ route('v1.project-management.data') }}'
-                    },
-
-                    columns: [
-                        { data: 'name' },
-                        { data: 'description' },
-                        { data: 'start_at' },
-                        { data: 'end_at' }, 
-                        { data: 'project_manager',name:'projectManager.name' },
-                        { data: 'total_project_members' },   
-                        {
-                    data: 'progress_percentage', // Use the data field from your backend
-                    name: 'progress', // Name for server-side processing/ordering
-                    orderable: false, // Progress bars are usually not orderable
-                    searchable: false, // Progress bars are usually not searchable
-                    // THIS IS THE KEY PART: The render function
-                    render: function(data, type, row) {
-                        if (type === 'display' || type === 'filter') {
-                            // Ensure data is a number and within 0-100 range
+            function getProjectColumns() {
+                return [
+                    { data: 'name' },
+                    { data: 'description' },
+                    { data: 'start_at' },
+                    { data: 'end_at' }, 
+                    { data: 'project_manager', name: 'projectManager.name' },
+                    { data: 'total_project_members' },   
+                    {
+                        data: 'progress_percentage',
+                        name: 'progress',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
                             const percentage = Math.max(0, Math.min(100, parseInt(data) || 0));
-                            let progressBarClass = 'bg-primary'; // Default color
+                            let progressBarClass = 'bg-primary';
 
-                            // Optional: Change color based on progress
-                            if (percentage < 30) {
-                                progressBarClass = 'bg-danger'; // Red for low progress
-                            } else if (percentage < 70) {
-                                progressBarClass = 'bg-warning'; // Yellow for medium progress
-                            } else {
-                                progressBarClass = 'bg-success'; // Green for high progress
-                            }
+                            if (percentage < 30) progressBarClass = 'bg-danger';
+                            else if (percentage < 70) progressBarClass = 'bg-warning';
+                            else progressBarClass = 'bg-success';
 
                             return `
                                 <div class="progress" style="height: 20px; border-radius: 5px;">
                                     <div class="progress-bar ${progressBarClass} progress-bar-striped progress-bar-animated"
-                                         role="progressbar"
-                                         style="width: ${percentage}%;"
-                                         aria-valuenow="${percentage}"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100">
+                                        role="progressbar"
+                                        style="width: ${percentage}%;"
+                                        aria-valuenow="${percentage}"
+                                        aria-valuemin="0"
+                                        aria-valuemax="100">
                                         <span class="text-white small fw-bold">${percentage}%</span>
                                     </div>
                                 </div>
                             `;
                         }
-                        return data; // Return raw data for other types (e.g., 'sort', 'type')
-                    }
-                },                   
-                        { data: 'action', name: 'action', orderable: false, searchable: false },
+                    },
+                    { data: 'action', name: 'action', orderable: false, searchable: false }
+                ];
+            }
+            $(function () {
+                $('#others-projects-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    scrollX: true,
+                    responsive: false,
+                    ajax: {
+                        url: '{{ route("v1.project-management.data") }}',
+                        data: { type: 'others' }
+                    },
+                    columns: getProjectColumns()
+                });
 
-                    ]
+                $('#my-projects-table').DataTable({
+                    processing: true,
+                    serverSide: true,
+                    scrollX: true,
+                    responsive: false,
+                    ajax: {
+                        url: '{{ route("v1.project-management.data") }}',
+                        data: { type: 'my' }
+                    },
+                    columns: getProjectColumns()
                 });
             });
         </script>

@@ -4,6 +4,8 @@
 
 @section('content')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <!-- custom-icon Breadcrumb-->
@@ -85,7 +87,10 @@
                             <select name="addProjectMembers[]" id="addProjectMembers" class="form-select" multiple="multiple">
                                         <!-- Removed 'disabled selected' from here as it conflicts with multiple select -->
                                         @foreach($users as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            <option value="{{ $user->id }}"
+                                        data-avatar-url="{{ asset($user->path_image) }}" {{-- Pass avatar URL --}}
+                                        data-initials="{{ $user->name }}" {{-- Pass initials for fallback --}}
+                                        >{{ $user->name }}</option>
                                         @endforeach
                                     </select>
                         </div>
@@ -109,10 +114,38 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- jQuery (Select2 depends on jQuery) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <!-- Select2 JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+$(document).ready(function() {
+    $('#addProjectMembers').select2({
+        templateResult: formatUserOption,
+        templateSelection: formatUserSelection
+    });
+
+    function formatUserOption(user) {
+        if (!user.id) return user.text;
+
+        const avatar = $(user.element).data('avatar');
+        const name = user.text;
+
+        return $(`
+            <div style="display: flex; align-items: center;">
+                <img src="${avatar}" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
+                <span>${name}</span>
+            </div>
+        `);
+    }
+
+    function formatUserSelection(user) {
+        return user.text; // Keeps selected items simple, or you can reuse formatUserOption
+    }
+});
+</script>
 
     <script>
         // Initialize Select2 on your select element
