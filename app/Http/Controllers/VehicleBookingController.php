@@ -52,7 +52,9 @@ class VehicleBookingController extends Controller
     public function create()
     {
         $now = Carbon::now();
-        $vehicles = Vehicle::whereNot('data_status', 1)->get();
+        $vehiclesQuery = Vehicle::query()
+                                ->where('data_status', 0); // This filter is correctly applied
+        $vehicles = $vehiclesQuery->get();
         
         $jobs = JobAssignment::select('job_assignments.id', 'job_assignments.job_type', 'job_assignments.job_record_id')
             ->join('job_assignment_personnels', 'job_assignments.id', '=', 'job_assignment_personnels.job_assignment_id')
@@ -67,9 +69,7 @@ class VehicleBookingController extends Controller
             })
             ->orderBy('job_assignments.created_at', 'DESC')
             ->get();
-            can('view-vehicle-booking')
-                $vehicles->like(DB::raw('upper(name)'),Str::upper('%sedan%'));
-            endcan
+            
 
         return view('vehicle_booking.form', compact('vehicles', 'jobs'))->with('title', 'Create a Vehicle Booking')->with('breadcrumb', ['Home', 'Staff Task', 'Vehicle Booking', 'Create a Vehicle Booking']);
     }
@@ -270,9 +270,13 @@ class VehicleBookingController extends Controller
                     ->orWhere(function ($subQuery) use ($bookedVehicleIds) {
                         $subQuery->whereNotIn('id', $bookedVehicleIds);
                     });
-            })
-                ->where('data_status', 0)
+            });
+            if (auth()->check() && !auth()->user()->can('view-vehicle-booking-sedan')) {
+                $availableVehiclesAllSelf->where(\DB::raw('UPPER(name)'), 'NOT LIKE', '%' . Str::upper('sedan') . '%');
+            }    
+            $availableVehiclesAllSelf->where('data_status', 0)
                 ->get();
+       
             // Append image URL (assuming image field exists)
             $availableVehiclesAllSelf->each(function ($vehicle) {
                 $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
@@ -280,9 +284,12 @@ class VehicleBookingController extends Controller
 
             return response()->json($availableVehiclesAllSelf);
         } else {
-            $availableVehiclesAll = Vehicle::whereNotIn('id', $bookedVehicleIds)
-                ->where('data_status', 0)
-                ->get();
+            $availableVehiclesAllQuery = Vehicle::whereNotIn('id', $bookedVehicleIds)
+                ->where('data_status', 0);
+                if (auth()->user()->can('view-vehicle-booking-sedan')==false) {
+                    $availableVehiclesAllQuery->where(\DB::raw('UPPER(name)'), 'NOT LIKE', '%' . \Str::upper('sedan') . '%');
+                }
+                $availableVehiclesAll = $availableVehiclesAllQuery->get();
             $availableVehiclesAll->each(function ($vehicle) {
                 $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
             });
