@@ -51,116 +51,115 @@
 @endif
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('v1.project-management.store') }}" method="POST" class="p-4">
+                <form action="{{ isset($project) ? route('v1.project-management.update', $project->obfuscated_id) : route('v1.project-management.store') }}" method="POST" class="p-4">
                     @csrf
+                    {{-- If in edit mode, spoof the PUT/PATCH method --}}
+                    @if(isset($project))
+                        @method('PUT') {{-- Or @method('PATCH') --}}
+                    @endif
+
                     <!-- Project Name -->
                     <div class="row mb-3">
                         <div class="col-md-10">
-                            <label for="projectName" class="form-label">Project Name</label>
-                            <input type="text" name="name" id="name" class="form-control" placeholder="Enter project name">
+                            <label for="name" class="form-label">Project Name</label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="Enter project name" value="{{ old('name', $project->name ?? '') }}">
                         </div>
                     </div>
 
                     <!-- Project Start Date & End Date -->
                     <div class="row mb-3">
                         <div class="col-md-3">
-                            <label for="projectStartDate" class="form-label">Start Date</label>
-                            <input type="date" name="start_at" id="start_at" class="form-control">
+                            <label for="start_at" class="form-label">Start Date</label>
+                            <input type="date" name="start_at" id="start_at" class="form-control" value="{{ old('start_at', $project->start_at?->format('Y-m-d') ?? '') }}">
                         </div>
                         <div class="col-md-3">
-                            <label for="projectEndDate" class="form-label">End Date</label>
-                            <input type="date" name="end_at" id="end_at" class="form-control">
+                            <label for="end_at" class="form-label">End Date</label>
+                            <input type="date" name="end_at" id="end_at" class="form-control" value="{{ old('end_at', $project->end_at?->format('Y-m-d') ?? '') }}">
                         </div>
                     </div>
 
                     <!-- Project Description -->
                     <div class="mb-3">
-                        <label for="projectDescription" class="form-label">Project Description</label>
-                        <textarea name="description" id="description" rows="4" class="form-control" placeholder="Enter description..."></textarea>
+                        <label for="description" class="form-label">Project Description</label>
+                        <textarea name="description" id="description" rows="4" class="form-control" placeholder="Enter description...">{{ old('description', $project->description ?? '') }}</textarea>
                     </div>
+
+                    {{-- Custom Select2 Styles (keep them here or in a separate CSS file) --}}
                     <style>
+                        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+                            background-color: #e9ecef; border: 1px solid #ced4da; border-radius: 0.25rem;
+                            padding: 0.2rem 0.6rem; margin-top: 0; margin-bottom: 0; margin-right: 0;
+                            color: #212529; display: flex; align-items: center;
+                        }
+                        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+                            color: #6c757d; margin-right: 0.3rem;
+                        }
+                        .select2-container .select2-selection--multiple {
+                            min-height: 38px; border: 1px solid #ced4da; border-radius: 0.375rem;
+                            padding: 0.375rem 0.75rem; line-height: 1.5; display: flex; flex-wrap: wrap;
+                            align-content: flex-start; gap: 0.3rem;
+                        }
+                        .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+                            border: none; outline: none; box-shadow: none; padding: 0; margin: 0;
+                            height: auto; min-width: 50px; flex-grow: 1;
+                        }
+                        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+                            background-color: #0d6efd; color: #fff;
+                        }
+                        .select2-container--default .select2-results__option--selected {
+                            background-color: #f8f9fa; color: #495057;
+                        }
+                        .select2-user-option .rounded-circle, .select2-user-selection .rounded-circle {
+                            width: 28px; /* For dropdown list items */
+                            height: 28px;
+                            object-fit: cover;
+                            vertical-align: middle;
+                            border: 1px solid #e9ecef; /* Light border */
+                        }
+                        /* Adjust for selected items in the input box if needed */
+                        .select2-user-selection .rounded-circle {
+                            width: 20px;
+                            height: 20px;
+                        }
+                    </style>
 
-/* Style for individual selected tags (THE KEY PART FOR SELECTED OPTION HEIGHT) */
-.select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    
-    /* --- CUSTOMIZE THESE PROPERTIES FOR HEIGHT --- */
-    padding: 0.2rem 0.6rem; /* Adjust vertical padding (0.2rem) and horizontal padding (0.6rem) */
-    /* You can also use fixed height, but padding is more flexible: */
-    /* height: 30px; */ 
-    
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-right: 0;
-    color: #212529;
-    display: flex;
-    align-items: center; /* Ensures content (avatar, text, x) is vertically centered */
-}
-
-/* Style for the remove 'x' button on selected tags */
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    color: #6c757d;
-    margin-right: 0.3rem;
-}
-
-/* Style for the search input within the multiple select */
-.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
-    border: none;
-    outline: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-    height: auto;
-    min-width: 50px;
-    flex-grow: 1;
-}
-/* Style for search results highlight */
-.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-    background-color: #0d6efd;
-    color: #fff;
-}
-/* Style for already selected options in the dropdown */
-.select2-container--default .select2-results__option--selected {
-    background-color: #f8f9fa;
-    color: #495057;
-}
-
-                        </style>
                     <!-- Members and Manager -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="addProjectMembers" class="form-label">Add Project Members</label>
                             <select name="addProjectMembers[]" id="addProjectMembers" class="form-select" multiple="multiple">
                                 @foreach($users as $user)
-                        <option value="{{ $user->id }}"
-                                data-avatar-url="{{ $user->avatar_url }}"
-                                data-initials="{{ $user->name }}"
-                                >{{ $user->name }}</option>
+                                    <option value="{{ $user->id }}"
+                                            data-avatar-url="{{ $user->avatar_url }}"
+                                            data-initials="{{ $user->initials }}"
+                                            @if(isset($project) && $project->projectMembers->contains($user->id)) selected @endif
+                                    >{{ $user->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Project Manager</label>
                             <div class="d-flex align-items-center p-2 border rounded bg-white">
-                                <img src="{{ asset(auth()->user()->avatar_url) }}" alt="Manager" class="rounded-circle me-2" width="40" height="40">
+                                {{-- Display current authenticated user as manager (cannot be changed directly from here) --}}
+                                <img src="{{ auth()->user()->avatar_url }}" alt="Manager" class="rounded-circle me-2" width="40" height="40">
                                 <span class="fw-semibold text-dark">You</span>
+                                {{-- Keep a hidden input for the manager ID --}}
+                                <input type="hidden" name="project_manager_id" value="{{ auth()->user()->id }}">
                             </div>
                         </div>
                     </div>
 
                     <!-- Buttons -->
-                    <div class="col-12">
-                            <a href="{{ route('v1.project-management')}}" class="btn btn-warning">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Create Project</button>
+                    <div class="col-12 mt-4">
+                        <a href="{{ route('v1.project-management.list') }}" class="btn btn-warning me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {{ isset($project) ? 'Update Project' : 'Create Project' }}
+                        </button>
                     </div>
                 </form>
-
             </div>
         </div>
     </div>
-</div>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- jQuery (Select2 depends on jQuery) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>

@@ -72,6 +72,7 @@
                                         <th>Project Manager</th>
                                         <th>Members</th>
                                         <th>Progress</th>
+                                        <th>Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -92,6 +93,7 @@
                                         <th>Project Manager</th>
                                         <th>Members</th>
                                         <th>Progress</th>
+                                        <th>Status</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -137,6 +139,7 @@
                             `;
                         }
                     },
+                    { data: 'project_status', name: 'project_status', orderable: false },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ];
             }
@@ -145,7 +148,7 @@
                     processing: true,
                     serverSide: true,
                     scrollX: true,
-                    responsive: false,
+                    responsive: false, 
                     ajax: {
                         url: '{{ route("v1.project-management.data") }}',
                         data: { type: 'others' }

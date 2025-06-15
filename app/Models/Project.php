@@ -105,4 +105,23 @@ class Project extends Model
             return null;
         }
     }
+
+    public function projectStages() // <--- ADD THIS RELATIONSHIP
+    {
+        return $this->hasMany(ProjectStage::class);
+    }
+
+    public function getCanCompleteAttribute(): int
+    {
+        if($this->projectStages->where('data_status', '!=', 2)->count() > 0)
+        {
+            return false;
+        } else {
+            if($this->data_status==2){
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
 }

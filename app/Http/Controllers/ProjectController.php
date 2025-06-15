@@ -51,14 +51,50 @@ class ProjectController extends Controller
         return $this->projectService->store($request);
     }
 
+    public function edit($id)
+    {
+        $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
+        $project = $this->projectService->getProject($id);
+        return view('projects.edit',compact('project','users'))->with('title', 'Edit Project')->with('breadcrumb', ['Home', 'Project Management','Edit Project']);
+    }
+
+    public function update(Request $request,$id)
+    {
+        return $this->projectService->update($request,$id);
+    }
+
     public function detail($id)
     {
         $project = $this->projectService->getProject($id);
         if (!$project) {
                 return redirect()->route('v1.project-management.list')->with('errors', 'Data not finded');
         }
+        
+        $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
         $kanbanStages = $this->commonService->getKanbanStages();
-        return view('projects.detail',compact('project','kanbanStages'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        return view('projects.detail',compact('project','kanbanStages','users'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+    }
+
+    public function addMember(Request $request, $id)
+    {
+        return $this->projectService->addMember($request,$id);
+    }
+
+    public function removeMember($project_id, $user_id)
+    {
+        return $this->projectService->removeMember($project_id, $user_id);
+    }
+
+    public function markComplete(Request $request, $project_id, $project_stage_id)
+    {
+        return $this->projectService->markComplete($request, $project_id, $project_stage_id);
+    }
+
+    public function markProjectComplete(Request $request, $project_id)
+    {
+        return $this->projectService->markProjectComplete($request, $project_id);
     }
 
     public function getProjectsData(Request $request)
