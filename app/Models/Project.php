@@ -120,7 +120,13 @@ class Project extends Model
             if($this->data_status==2){
                 return false;
             } else {
+if($this->data_status==1)
+                {
+                    return false;
+                } else {
+                    
                 return true;
+                }
             }
         }
     }
