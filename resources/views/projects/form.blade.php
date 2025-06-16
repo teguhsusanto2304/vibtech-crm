@@ -198,7 +198,7 @@
             // Create a jQuery object for the option HTML
             const $container = $(
                 `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" />
+                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
                     <span>${user.text}</span>
                 </span>`
             );
@@ -216,7 +216,7 @@
             // Create a jQuery object for the selected tag HTML
             const $container = $(
                 `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" />
+                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
                     <span>${user.text}</span>
                 </span>`
             );
