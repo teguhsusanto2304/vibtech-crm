@@ -103,7 +103,10 @@ class ProjectService {
             $projectsQuery->where('project_manager_id', $userId);
         } elseif ($request->type === 'others') {
             // Filter projects where the authenticated user is NOT the project manager
-            $projectsQuery->where('project_manager_id', '!=', $userId);
+            //$projectsQuery->where('project_manager_id', '!=', $userId);
+            $projectsQuery->whereHas('showProjectMembers', function ($subQuery) use ($userId) {
+                    $subQuery->where('member_id', $userId); // <--- Use the column name on the pivot table/model
+            });
         }
         $projects = $projectsQuery->orderBy('created_at', 'ASC')->get();
 
