@@ -227,6 +227,11 @@
                             // !$isDisabledByPreviousStage && // Cannot complete if previous stage is not done
                             // !$isDisabledByKanbanStatus
                             );
+        if($project->can_create_task==0){
+            $createButton = 'disabled';
+        } else {
+            $createButton = '';
+        }
         @endphp
         <div class="col">
             <div class="card h-100y position-relative border border-dark {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
@@ -235,7 +240,7 @@
                         <p class="card-text mb-0 flex-grow-1 me-3">{{ $kanbanStage->name }}</p> {{-- Text takes available space --}}
                         <div class="btn-group btn-group-sm btn-group-vertical" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
                             {{-- Create Task Button --}}
-                        <button type="button" class="btn btn-outline-primary btn-sm create-task-btn"
+                        <button type="button" class="btn btn-outline-primary btn-sm create-task-btn" 
                                 data-bs-toggle="modal"
                                 data-bs-target="#createTaskModal"
                                 data-project-id="{{ $project->obfuscated_id }}" {{-- Pass obfuscated project ID --}}
@@ -244,6 +249,7 @@
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="top"
                                 title="Add a new task for this stage"
+                                {{ $createButton }}
                                 >Create</button>
                            @if($project->project_manager_id == auth()->user()->id)
                             @if($canCompleteStage) {{-- Use the pre-calculated $canCompleteStage variable --}}
@@ -451,7 +457,7 @@ if (percentage < 30) {
     }
 
     progressBar({{ round(($project->remaining_days/$project->start_at->diffInDays($project->end_at))*100) }},'#dayProgress','d',{{ $project->remaining_days }})
-    progressBar({{ rand(0, 100) }},'#workProgress','%',{{ rand(0, 100) }})
+    progressBar({{ $project->work_progress_percentage }},'#workProgress','%',{{ $project->work_progress_percentage }})
     
     </script>
 </div>

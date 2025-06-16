@@ -127,7 +127,7 @@ class ProjectService {
             ->addColumn('total_project_members', fn($project) => 
                 $project->showProjectMembers()->count().' Person(s)' 
             )
-            ->addColumn('progress_percentage',fn($project) => rand(0, 100) )
+            ->addColumn('progress_percentage',fn($project) => $project->work_progress_percentage )
            ->addColumn('action', function ($row) {
     // Start with the vertical button group container
     $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
@@ -136,7 +136,7 @@ class ProjectService {
     $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail', ['project' => $row->obfuscated_id]) . '">View</a>';
 
     // Conditional Edit and Delete buttons (only for project manager)
-    if ($row->project_manager_id == auth()->user()->id) {
+    if ($row->project_manager_id == auth()->user()->id && $row->data_status==1) {
         // Edit button
         $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.edit', ['id' => $row->obfuscated_id]) . '">Edit</a>';
 

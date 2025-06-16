@@ -130,4 +130,19 @@ if($this->data_status==1)
             }
         }
     }
+
+    public function getWorkProgressPercentageAttribute(): int
+    {
+        return round($this->projectStages->where('data_status', 2)->count() * 12.5);
+    }
+
+    public function getCanCreateTaskAttribute(): int
+    {
+        if($this->showProjectMembers->where('member_id',auth()->user()->id)->count() > 0)
+        {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
