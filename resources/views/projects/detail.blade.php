@@ -64,7 +64,7 @@
                     class="btn btn-success" disabled>Completed</button>
             @else
             <button type="button"
-                    class="btn btn-{{ $project->can_complete ? 'success' : 'danger' }} complete-project-btn" {{-- Added complete-project-btn class --}}
+                    class="btn btn-{{ $project->can_complete ? 'success' : 'danger' }} " {{-- Added complete-project-btn class --}}
                     @if(!$project->can_complete) disabled @endif
                     data-project-id="{{ $project->obfuscated_id }}" {{-- Pass the project's obfuscated ID --}}
                     data-bs-toggle="tooltip" {{-- Add tooltip --}}
