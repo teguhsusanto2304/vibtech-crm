@@ -239,7 +239,7 @@
         if(isset($currentProjectStage->data_status)){
             if($currentProjectStage->data_status==2){
                 $fontClass ='success';
-                $labelStatus ='Complete';
+                $labelStatus ='Completed';
                 $createTask = 'disabled';
                 $completeStage = 'disabled';
             } 
