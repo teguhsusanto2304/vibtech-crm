@@ -64,12 +64,12 @@
                     class="btn btn-success" disabled>Completed</button>
             @else
             <button type="button"
-                    class="btn btn-{{ $project->can_complete ? 'success' : 'danger' }} " {{-- Added complete-project-btn class --}}
-                    
+                    class="btn btn-{{ $project->work_progress_percentage==100 ? 'success' : 'danger' }} complete-project-btn" {{-- Added complete-project-btn class --}}
+                    @if($project->work_progress_percentage < 100) disabled @endif
                     data-project-id="{{ $project->obfuscated_id }}" {{-- Pass the project's obfuscated ID --}}
                     data-bs-toggle="tooltip" {{-- Add tooltip --}}
                     data-bs-placement="top"
-                    title="{{ $project->can_complete ? 'Mark this project as complete' : 'All stages must be completed first' }}" {{-- Dynamic tooltip --}}
+                    title="{{ $project->work_progress_percentage==100 ? 'Mark this project as complete' : 'All stages must be completed first' }}" {{-- Dynamic tooltip --}}
                     >
                 Complete Entire Project
             </button>
@@ -232,6 +232,19 @@
         } else {
             $createButton = '';
         }
+        $fontClass ='primary';
+        $labelStatus ='Active';
+        $createTask = '';
+        $completeStage = '';
+        if(isset($currentProjectStage->data_status)){
+            if($currentProjectStage->data_status==2){
+                $fontClass ='success';
+                $labelStatus ='Complete';
+                $createTask = 'disabled';
+                $completeStage = 'disabled';
+            } 
+        }
+        
         @endphp
         <div class="col">
             <div class="card h-100y position-relative border border-dark {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
@@ -249,7 +262,7 @@
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="top"
                                 title="Add a new task for this stage"
-                                {{ $createButton }}
+                                {{ $createTask }}
                                 >Create</button>
                            @if($project->project_manager_id == auth()->user()->id)
                             @if($canCompleteStage) {{-- Use the pre-calculated $canCompleteStage variable --}}
@@ -257,24 +270,21 @@
                                         data-project-id="{{ $project->obfuscated_id }}"
                                         data-project-stage-id="{{ $currentProjectStage->obfuscated_id }}" {{-- Pass obfuscated project stage ID --}}
                                         data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
+                                        {{ $completeStage }}
                                         >Complete</button>
                             @else
                                 {{-- Optionally show a disabled button with a tooltip explaining why --}}
-                                <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        disabled
-                                        data-bs-toggle="tooltip" data-bs-placement="top"
-                                        title="{{ 
-                                            (!$currentProjectStage ? 'Stage not initialized' : 
-                                            ($currentProjectStage->tasks->count() == 0 ? 'No tasks yet' : 
-                                            ($currentProjectStage->status == 'completed' ? 'Already completed' : 
-                                            ($isDisabledByPreviousStage ? 'Previous stage not completed' : '')))) 
-                                        }}"
+                                <button type="button" class="btn btn-outline-secondary btn-sm mark-stage-complete-btn"
+                                        data-project-id="{{ $project->obfuscated_id }}"
+                                        data-project-stage-id="{{ $currentProjectStage->obfuscated_id??'-' }}" {{-- Pass obfuscated project stage ID --}}
+                                        data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
+                                        {{ $completeStage }}
                                         >Complete</button>
                             @endif
                         @endif
                         </div>
                     </div>
-                    <strong class="text-primary">{{ $ProjectStageStatus }}</strong>
+                    <small class="text-{{ $fontClass }}">{{ $labelStatus }}</small>
                 </div>
                     @php
                         // Fetch tasks for this specific project's stage
@@ -306,7 +316,7 @@
                                     $task->data_status == 2 ? 'bg-success' : 
                                     ($task->data_status == 1 ? 'bg-primary' : 
                                     ($task->data_status == 0 ? 'bg-danger' : 'bg-secondary'))
-                                }} ms-2">{{ Str::title($task->data_status==1 ? 'On Progress':'Completed') }}</span>
+                                }} ms-2"><small>{{ Str::title($task->data_status==1 ? 'On Progress':'Completed') }}</small></span>
                                     <div class="task-assignee-wrapper ms-auto">
                                         <img src="{{ $task->assignedTo->avatar_url }}"
                                             alt="{{ $task->assignedTo->name }}"
@@ -589,6 +599,9 @@ if (percentage < 30) {
                 type: 'PUT', // Use PUT method
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // CSRF token
+                },
+                data: {
+                    'kanban_stage_id': kanbanStageId
                 },
                 success: function(response) {
                     if (response.success) {

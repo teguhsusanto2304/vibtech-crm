@@ -344,65 +344,98 @@ class ProjectService {
     {
         $decodedId = IdObfuscator::decode($project_id);
         $project = Project::find($decodedId);
-        $decodedProjectStageId = IdObfuscator::decode($project_stage_id);
-        $projectStage = ProjectStage::find($decodedProjectStageId);
-        // 1. Authorization Check:
-        // Only the project manager should be able to mark stages complete.
-        if ($project->project_manager_id !== Auth::id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized: Only the project manager can complete stages.'
-            ], 403); // Forbidden
+        if($project_stage_id=='-'){
+            \DB::beginTransaction();
+            try {
+                $projectStage = new ProjectStage;
+                // 5. Update the ProjectStage status and completed_at timestamp
+                $projectStage->data_status = 2;
+                $projectStage->completed_at = Carbon::now();
+                $projectStage->kanban_stage_id = $request->input('kanban_stage_id');
+                $projectStage->project_id = $decodedId;
+                $projectStage->notes = 'N/A';
+                $projectStage->save();
+
+                \DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Project stage marked as completed successfully!',
+                    'project_stage' => $projectStage->load('kanbanStage'), // Return updated stage data
+                ]);
+
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                \Log::error("Error completing project stage {$projectStage->id} for project {$project->id}: " . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while marking the stage complete. Please try again.'
+                ], 500); // Internal Server Error
+            }
+
+        } else {
+            $decodedProjectStageId = IdObfuscator::decode($project_stage_id);
+            $projectStage = ProjectStage::find($decodedProjectStageId);
+            // 1. Authorization Check:
+            // Only the project manager should be able to mark stages complete.
+            if ($project->project_manager_id !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized: Only the project manager can complete stages.'
+                ], 403); // Forbidden
+            }
+
+            // 2. Ensure the ProjectStage belongs to the correct Project
+            if ($projectStage->project_id !== $project->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The specified project stage does not belong to this project.'
+                ], 404); // Not Found
+            }
+
+            // 3. Prevent marking complete if it's already complete
+            if ($projectStage->data_status === 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This project stage is already marked as completed.'
+                ], 400); // Bad Request
+            }
+
+            // 4. (Optional but Recommended) Check if all tasks within this stage are completed.
+            // You might want to enforce this before allowing stage completion.
+            //if ($projectStage->tasks()->where('status', '!=', 2)->exists()) {
+            //     return response()->json([
+            //        'success' => false,
+            //        'message' => 'All tasks in this stage must be completed before marking the stage as complete.'
+            //    ], 400); // Bad Request
+            //}
+
+            \DB::beginTransaction();
+            try {
+                // 5. Update the ProjectStage status and completed_at timestamp
+                $projectStage->data_status = 2;
+                $projectStage->completed_at = Carbon::now();
+                $projectStage->save();
+
+                \DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Project stage marked as completed successfully!',
+                    'project_stage' => $projectStage->load('kanbanStage'), // Return updated stage data
+                ]);
+
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                \Log::error("Error completing project stage {$projectStage->id} for project {$project->id}: " . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while marking the stage complete. Please try again.'
+                ], 500); // Internal Server Error
+            }
+
         }
-
-        // 2. Ensure the ProjectStage belongs to the correct Project
-        if ($projectStage->project_id !== $project->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The specified project stage does not belong to this project.'
-            ], 404); // Not Found
-        }
-
-        // 3. Prevent marking complete if it's already complete
-        if ($projectStage->data_status === 2) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This project stage is already marked as completed.'
-            ], 400); // Bad Request
-        }
-
-        // 4. (Optional but Recommended) Check if all tasks within this stage are completed.
-        // You might want to enforce this before allowing stage completion.
-        //if ($projectStage->tasks()->where('status', '!=', 2)->exists()) {
-        //     return response()->json([
-        //        'success' => false,
-        //        'message' => 'All tasks in this stage must be completed before marking the stage as complete.'
-        //    ], 400); // Bad Request
-        //}
-
-        \DB::beginTransaction();
-        try {
-            // 5. Update the ProjectStage status and completed_at timestamp
-            $projectStage->data_status = 2;
-            $projectStage->completed_at = Carbon::now();
-            $projectStage->save();
-
-            \DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Project stage marked as completed successfully!',
-                'project_stage' => $projectStage->load('kanbanStage'), // Return updated stage data
-            ]);
-
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            \Log::error("Error completing project stage {$projectStage->id} for project {$project->id}: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while marking the stage complete. Please try again.'
-            ], 500); // Internal Server Error
-        }
+        
     }
 
     /**
@@ -427,7 +460,7 @@ class ProjectService {
 
         // 2. Business Logic Check:
         // Use the can_complete accessor logic to ensure all stages are complete.
-        if (!$project->can_complete) {
+        if ($project->work_progress_percentage < 100) {
             return response()->json([
                 'success' => false,
                 'message' => 'All project stages must be completed before marking the entire project complete.'

@@ -44,8 +44,8 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Current Projects</h5>
-                                <a href="{{ route('v1.project-management.list')}}" class="btn btn_primary mt-auto">View Current Projects</a>
+                                <h5 class="card-title">All Projects</h5>
+                                <a href="{{ route('v1.project-management.list')}}" class="btn btn_primary mt-auto">View All Projects</a>
                             </div>
                         </div>
                     </div>

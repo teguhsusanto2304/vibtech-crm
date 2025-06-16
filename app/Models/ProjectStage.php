@@ -74,4 +74,13 @@ class ProjectStage extends Model
     {
         return IdObfuscator::encode($this->attributes['id']); // <--- Call your encoder
     }
+
+    public function getStatusStageAttribute(): string
+    {
+        if($this->data_status==1){
+            return 'Active';
+        } else {
+            return 'Complete';
+        }
+    }
 }

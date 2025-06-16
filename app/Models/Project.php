@@ -145,4 +145,13 @@ if($this->data_status==1)
             return false;
         }
     }
+
+    public function getStatusProjectAttribute(): string
+    {
+        if($this->data_status==1){
+            return 'Active';
+        } else {
+            return 'Complete';
+        }
+    }
 }
