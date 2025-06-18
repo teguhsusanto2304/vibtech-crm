@@ -57,10 +57,9 @@ class JobAssignmentController extends Controller
             ->join('departments', 'departments.id', '=', 'users.department_id')
             ->select('users.*', 'departments.name as department_name');
 
-        $users4 = User::where('department_id', $authDepartment2nd)
-            ->orWhere('2nd_department_id', $authDepartment2nd)
+        $users4 = User::where(['department_id'=> $authDepartment2nd,'user_status'=>1])
+            ->orWhere(['2nd_department_id'=> $authDepartment2nd,'user_status'=>1])
             ->where('position_level_id', 2)
-            ->where('user_status', 1)
             ->join('departments', 'departments.id', '=', 'users.department_id')
             ->select('users.*', 'departments.name as department_name');
 
