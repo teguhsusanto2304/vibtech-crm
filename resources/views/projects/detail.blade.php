@@ -213,7 +213,7 @@
                                     data-file-name="{{ $file->file_name }}"
                                     data-file-url="{{ Storage::url($file->file_path) }}" {{-- THIS IS THE IMPORTANT PART for the PDF URL --}}
                                     data-mime-type="{{ $file->mime_type }}">
-                                View
+                                Download
                             </button>
                                 {{-- Delete functionality via AJAX --}}
                                 @if($project->project_manager_id == auth()->user()->id || $file->uploaded_by_user_id == auth()->user()->id)

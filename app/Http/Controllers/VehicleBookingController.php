@@ -278,7 +278,7 @@ class VehicleBookingController extends Controller
                 ->get();
 
             //dd($availableVehiclesAllSelf->toSql());
-            dd($availableVehiclesAllSelf->getBindings());
+            //dd($availableVehiclesAllSelf->getBindings());
        
             // Append image URL (assuming image field exists)
             $availableVehiclesAllSelf->each(function ($vehicle) {
