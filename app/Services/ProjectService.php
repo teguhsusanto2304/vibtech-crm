@@ -185,7 +185,7 @@ class ProjectService {
                 return $project->start_at->format('d M Y') ;
             })
             ->addColumn('end_at', function ($project) {
-                return $project->end_at->addDays(60)->format('d M Y');
+                return $project->end_at->format('d M Y');
 
             })
             ->addColumn('project_status', function ($project) {
