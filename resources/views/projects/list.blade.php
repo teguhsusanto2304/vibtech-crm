@@ -153,7 +153,8 @@
                         url: '{{ route("v1.project-management.data") }}',
                         data: { type: 'others' }
                     },
-                    columns: getProjectColumns()
+                    columns: getProjectColumns(),
+                    order: [[ 0, 'asc' ]]
                 });
 
                 $('#my-projects-table').DataTable({
@@ -165,8 +166,17 @@
                         url: '{{ route("v1.project-management.data") }}',
                         data: { type: 'my' }
                     },
-                    columns: getProjectColumns()
+                    columns: getProjectColumns(),
+                    order: [[ 0, 'asc' ]]
                 });
+            });
+            $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                // Check if the shown tab contains your DataTable
+                if ($(e.target).attr('href') === '#my' || $(e.target).attr('href') === '#others') {
+                    // Adjust column widths and redraw the table
+                    $('#my-projects-table').DataTable().columns.adjust().draw();
+                    $('#others-projects-table').DataTable().columns.adjust().draw();
+                }
             });
         </script>
 @endsection

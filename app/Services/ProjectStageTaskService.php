@@ -8,6 +8,7 @@ use App\Models\KanbanStage;
 use Auth;
 use DB;
 use App\Helpers\IdObfuscator;
+use App\Models\ProjectFile;
 
 class ProjectStageTaskService {
     /**
@@ -20,6 +21,7 @@ class ProjectStageTaskService {
      */
     public function store(Request $request, $project_id, $stage_id)
     {
+        //dd($request->hasFile('task_file'));
         $project_id =  IdObfuscator::decode($project_id);
         // 2. Validate the incoming request
         $validatedData = $request->validate([
@@ -28,6 +30,8 @@ class ProjectStageTaskService {
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'assigned_to_user_id' => 'nullable|integer|exists:users,id',
+            'project_files' => 'nullable', // Max 3 files for a task
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:5120',
             // 'status' => 'required|string|in:pending,in_progress,completed,blocked', // If status is user-selectable
         ]);
 
@@ -58,6 +62,29 @@ class ProjectStageTaskService {
             $task->data_status = 1; // Default status for a new task
             $task->save();
 
+            if ($request->hasFile('task_file')) {
+                $file = $request->file('task_file'); // Get the single UploadedFile object directly
+
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/tasks/{task_id}/files
+                    $path = $file->store('tasks/' . $task->id . '/files', 'public');
+
+                    $taskFile = new ProjectFile();
+                    // Save file details to project_files table, linking to the task
+                    $taskFile->project_id = $project_id;
+                    $taskFile->project_stage_task_id = $task->id;
+                    $taskFile->file_name = $originalFileName;
+                    $taskFile->file_path = $path;
+                    $taskFile->mime_type = $fileMimeType;
+                    $taskFile->file_size = $fileSize;
+                    $taskFile->uploaded_by_user_id = Auth::id();
+                        // 'project_id' is nullable, so we don't set it here if files belong to tasks
+                    $taskFile->save();
+            }
+
             DB::commit();
 
             // 5. Return success response
@@ -74,6 +101,40 @@ class ProjectStageTaskService {
                 'success' => false,
                 'message' => 'An error occurred while creating the task. Please try again.'.$e->getMessage()
             ], 500); // Internal Server Error
+        }
+    }
+
+    /**
+     * Display the specified project stage task.
+     *
+     * @param  \App\Models\Project  $project (resolved via obfuscated ID)
+     * @param  \App\Models\ProjectStageTask  $task (resolved via obfuscated ID)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($task_id)
+    {
+        $task = ProjectStageTask::find($task_id);
+
+        try {
+            // Eager load necessary relationships for the task details
+            $task->load([
+                'projectStage.kanbanStage', // To show stage name
+                'assignedTo',               // To show assignee details
+                'createdBy',                // To show creator details
+                'files'                     // To show associated files
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'task' => $task,
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("Error fetching task details for task {$task->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching task details.'
+            ], 500);
         }
     }
 }

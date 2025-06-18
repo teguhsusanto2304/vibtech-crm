@@ -3,82 +3,9 @@
 @section('title', 'Dashboard')
 
 @section('content')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />    
-
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="row">
-            <!-- custom-icon Breadcrumb-->
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb breadcrumb-custom-icon">
-                    @foreach ($breadcrumb as $item)
-                        <li class="breadcrumb-item">
-                            @if($item == 'Job Assignment Form')
-                                <a href="{{ route('v1.job-assignment-form')}}">{{ $item }}</a>
-                            @else
-                                <a href="javascript:void(0);">{{ $item }}</a>
-                            @endif
-                            <i class="breadcrumb-icon icon-base bx bx-chevron-right align-middle"></i>
-                        </li>
-                    @endforeach
-                </ol>
-            </nav>
-        </div>
-
-        <h3>{{ $title }}</h3>
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Oops! Something went wrong:</strong>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if (session()->has('error_import'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>Error:</strong> {{ session('error_import') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-        <div class="card">
-            <div class="card-body">
-                <form action="{{ route('v1.project-management.store') }}" method="POST" class="p-4">
-                    @csrf
-                    <!-- Project Name -->
-                    <div class="row mb-3">
-                        <div class="col-md-10">
-                            <label for="projectName" class="form-label">Project Name</label>
-                            <input type="text" name="name" id="name" class="form-control" placeholder="Enter project name">
-                        </div>
-                    </div>
-
-                    <!-- Project Start Date & End Date -->
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label for="projectStartDate" class="form-label">Start Date</label>
-                            <input type="date" name="start_at" id="start_at" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="projectEndDate" class="form-label">End Date</label>
-                            <input type="date" name="end_at" id="end_at" class="form-control">
-                        </div>
-                    </div>
-
-                    <!-- Project Description -->
-                    <div class="mb-3">
-                        <label for="projectDescription" class="form-label">Project Description</label>
-                        <textarea name="description" id="description" rows="4" class="form-control" placeholder="Enter description..."></textarea>
-                    </div>
-                    <style>
+<style>
 
 /* Style for individual selected tags (THE KEY PART FOR SELECTED OPTION HEIGHT) */
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
@@ -128,6 +55,80 @@
 }
 
                         </style>
+    <div class="container-xxl flex-grow-1 container-p-y">
+        <div class="row">
+            <!-- custom-icon Breadcrumb-->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb breadcrumb-custom-icon">
+                    @foreach ($breadcrumb as $item)
+                        <li class="breadcrumb-item">
+                            @if($item == 'Job Assignment Form')
+                                <a href="{{ route('v1.job-assignment-form')}}">{{ $item }}</a>
+                            @else
+                                <a href="javascript:void(0);">{{ $item }}</a>
+                            @endif
+                            <i class="breadcrumb-icon icon-base bx bx-chevron-right align-middle"></i>
+                        </li>
+                    @endforeach
+                </ol>
+            </nav>
+        </div>
+
+        <h3>{{ $title }}</h3>
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Oops! Something went wrong:</strong>
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if (session()->has('error_import'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error:</strong> {{ session('error_import') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+        <div class="card">
+            <div class="card-body">
+                <form action="{{ route('v1.project-management.store') }}" method="POST" class="p-4" enctype="multipart/form-data">
+                    @csrf
+                    <!-- Project Name -->
+                    <div class="row mb-3">
+                        <div class="col-md-10">
+                            <label for="projectName" class="form-label">Project Name</label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="Enter project name">
+                        </div>
+                    </div>
+
+                    <!-- Project Start Date & End Date -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="projectStartDate" class="form-label">Start Date</label>
+                            <input type="date" name="start_at" id="start_at" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="projectEndDate" class="form-label">End Date</label>
+                            <input type="date" name="end_at" id="end_at" class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- Project Description -->
+                    <div class="mb-3">
+                        <label for="projectDescription" class="form-label">Project Description</label>
+                        <textarea name="description" id="description" rows="4" class="form-control" placeholder="Enter description..."></textarea>
+                    </div>
+                    
                     <!-- Members and Manager -->
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -141,13 +142,134 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Project Manager</label>
                             <div class="d-flex align-items-center p-2 border rounded bg-white">
                                 <img src="{{ asset(auth()->user()->avatar_url) }}" alt="Manager" class="rounded-circle me-2" width="40" height="40">
                                 <span class="fw-semibold text-dark">You</span>
                             </div>
                         </div>
+                        <!-- Project Files Upload Field ADDED HERE -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                            <div id="new-file-upload-container">
+                                {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
+                                @if(old('project_files'))
+                                    @foreach(old('project_files') as $index => $oldFile)
+                                        <div class="input-group mb-2 file-upload-item">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    {{-- This is the initial input if no old data --}}
+                                    <div class="input-group mb-2 file-upload-item">
+                                        <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                @endif
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                            <small class="form-text text-muted d-block mt-2">Max file size: 10MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                        </div>
+                        <script>
+                            $(document).ready(function() {
+                                // ... (Your existing JavaScript code for Select2, modals, tooltips, etc.) ...
+
+                                const $newFileUploadContainer = $('#new-file-upload-container');
+                                const $addMoreFilesBtn = $('#add-more-files-btn');
+
+                                // Function to update the visibility of "Remove" buttons
+                                function updateRemoveButtonVisibility() {
+                                    // Show remove button if there's more than one file input field in the NEW upload section
+                                    if ($newFileUploadContainer.children('.file-upload-item').length > 1) {
+                                        $newFileUploadContainer.find('.remove-file-input').show();
+                                    } else {
+                                        $newFileUploadContainer.find('.remove-file-input').hide(); // Hide if only one remains
+                                    }
+                                }
+
+                                // Function to add a new file input field group
+                                function addFileInputField() {
+                                    const newFileInputHtml = `
+                                        <div class="input-group mb-2 file-upload-item">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    `;
+                                    $newFileUploadContainer.append(newFileInputHtml);
+                                    updateRemoveButtonVisibility();
+                                }
+
+                                // Initial setup on page load:
+                                // If no file input fields are present (e.g., fresh create form), add one.
+                                // Otherwise, just adjust visibility of existing remove buttons (e.g., after validation error).
+                                if ($newFileUploadContainer.children('.file-upload-item').length === 0) {
+                                    addFileInputField();
+                                } else {
+                                    updateRemoveButtonVisibility();
+                                }
+
+                                // Event listener for "Add Another File" button
+                                $addMoreFilesBtn.on('click', function() {
+                                    addFileInputField();
+                                });
+
+                                // Event listener for "Remove" button on dynamically added file inputs
+                                // Using event delegation because buttons are added dynamically
+                                $newFileUploadContainer.on('click', '.remove-file-input', function() {
+                                    $(this).closest('.file-upload-item').remove(); // Remove the entire parent .input-group
+                                    updateRemoveButtonVisibility();
+                                });
+
+                                // --- Handle File Deletion via AJAX (for existing files) ---
+                                // (Keep your existing delete-file-btn logic, ensure project obfuscated_id is passed)
+                                $(document).on('click', '.delete-file-btn', function() { // Use event delegation for dynamically added buttons
+                                    const $button = $(this);
+                                    const fileId = $button.data('file-id');
+                                    const projectId = "{{ $project->obfuscated_id ?? '' }}"; // Get project ID from Blade
+
+                                    if (!projectId) {
+                                        alert('Project ID not found for file deletion.');
+                                        return;
+                                    }
+
+                                    if (!confirm('Are you sure you want to delete this file? This cannot be undone.')) {
+                                        return;
+                                    }
+
+                                    $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...'); // Add spinner
+
+                                    $.ajax({
+                                        url: `/api/projects/${projectId}/files/${fileId}`, // Adjust API endpoint
+                                        type: 'DELETE',
+                                        headers: {
+                                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                        },
+                                        success: function(response) {
+                                            if (response.success) {
+                                                alert(response.message || 'File deleted.');
+                                                $button.closest('.list-group-item').remove(); // Remove the list item from UI
+                                            } else {
+                                                alert(response.message || 'Failed to delete file.');
+                                                $button.prop('disabled', false).html('<i class="fas fa-trash"></i>'); // Reset button
+                                            }
+                                        },
+                                        error: function(xhr) {
+                                            let errorMessage = 'An error occurred. Please try again.';
+                                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                                errorMessage = xhr.responseJSON.message;
+                                            } else if (xhr.status === 403) {
+                                                errorMessage = 'You are not authorized to delete this file.';
+                                            }
+                                            alert(errorMessage);
+                                            console.error('Error deleting file:', xhr.responseText);
+                                            $button.prop('disabled', false).html('<i class="fas fa-trash"></i>'); // Reset button
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
                     </div>
 
                     <!-- Buttons -->

@@ -77,7 +77,7 @@ class ProjectStage extends Model
 
     public function getStatusStageAttribute(): string
     {
-        if($this->data_status==1){
+        if ($this->data_status == 1) {
             return 'Active';
         } else {
             return 'Complete';

@@ -22,16 +22,19 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use function PHPUnit\Framework\isEmpty;
 use function PHPUnit\Framework\isNull;
+use App\Services\CommonService;
 
 class ClientController extends Controller
 {
-    public function __construct()
+    protected $commonService;
+    public function __construct(CommonService $commonService)
     {
         $this->middleware('auth');
         $this->middleware('permission:view-client-database', ['only' => ['index', 'show']]);
         $this->middleware('permission:create-client-database', ['only' => ['create', 'store']]);
         $this->middleware('permission:edit-client-database', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-client-database', ['only' => ['destroy']]);
+        $this->commonService = $commonService;
     }
 
     function getSortedCountries()
@@ -113,7 +116,7 @@ class ClientController extends Controller
         return view('client_database.form', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPeople' => User::all(),
+            'salesPeople' => $this->commonService->getUsers(),
         ])->with('title', 'Create Client Database')->with('breadcrumb', ['Home', 'Client Database', 'Create a Client Data']);
     }
 
@@ -125,7 +128,7 @@ class ClientController extends Controller
             'client' => $client,
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPeople' => User::all(),
+            'salesPeople' =>$this->commonService->getUsers(),
             'title' => 'Edit Client Database',
             'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
         ]);
@@ -363,7 +366,7 @@ class ClientController extends Controller
             'client' => $client,
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPeople' => User::all(),
+            'salesPeople' => $this->commonService->getUsers(),
             'title' => 'Edit Client Database',
             'breadcrumb' => ['Home', 'Client Database', 'Edit a Client Data'],
         ]);
@@ -421,7 +424,7 @@ class ClientController extends Controller
         return view('client_database.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPersons' => User::all(),
+            'salesPersons' => $this->commonService->getUsers(),
             'downloadFile' => $downloadFile,
             'editClientDatabase' => $this->checkPermission('edit-client-database'),
             'viewClientDatabase' => $this->checkPermission('view-client-database'),
@@ -483,7 +486,7 @@ class ClientController extends Controller
         return view('client_database.request.download_list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPersons' => User::all(),
+            'salesPersons' => $this->commonService->getUsers(),
             'downloadFile' => null
         ])->with('title', 'List of Download Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Download Request']);
 
@@ -510,7 +513,7 @@ class ClientController extends Controller
         return view('client_database.assignment_list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPersons' => User::all(),
+            'salesPersons' => $this->commonService->getUsers(),
         ])->with('title', 'List of Salesperson Assignment')->with('breadcrumb', ['Home', 'Client Database', 'List of Salesperson Assignment']);
 
     }
@@ -535,7 +538,7 @@ class ClientController extends Controller
         return view('client_database.recycle_bin.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPersons' => User::all(),
+            'salesPersons' => $this->commonService->getUsers(),
         ])->with('title', 'List of Client Database Recycle Bin')->with('breadcrumb', ['Home', 'Client Database', 'List of Client Database Recycle Bin']);
 
     }
@@ -560,7 +563,7 @@ class ClientController extends Controller
         return view('client_database.request.list', [
             'industries' => IndustryCategory::all(),
             'countries' => $this->getSortedCountries(),
-            'salesPersons' => User::all(),
+            'salesPersons' => $this->commonService->getUsers(),
         ])->with('title', 'List of Edit Request')->with('breadcrumb', ['Home', 'Client Database', 'List of Edit Request']);
 
     }
@@ -591,7 +594,7 @@ class ClientController extends Controller
             'activity' => "Client Information delete on " . now()->format('d M Y') . " at " . now()->format('g:i a') . " by " . auth()->user()->name
         ]);
 
-        $allUsers = User::all();
+        $allUsers = $this->commonService->getUsers();
         $users = \App\Models\User::permission('view-client-recycle')->get();
         if ($users) {
             foreach ($users as $user) {
@@ -1448,7 +1451,7 @@ class ClientController extends Controller
     public function getClientDetail(Request $request, $id)
     {
         if ($id == 0) {
-            $users = User::all();
+            $users = $this->commonService->getUsers();
             return view('client_database.partials.detail', compact('users'));
         } else {
             $client = Client::with(['industryCategory', 'country', 'salesPerson'])->findOrFail($id);
@@ -1456,7 +1459,7 @@ class ClientController extends Controller
             $assign = $request->query('assign');
             $users = null;
             if (!empty($assign)) {
-                $users = User::all();
+                $users = $this->commonService->getUsers();
 
                 return view('client_database.partials.detail', compact('users'));
             } else {

@@ -44,7 +44,7 @@ class CommonService
 
     public function getUsers()
     {
-        return User::orderBy('name','ASC')->get();
+        return User::where('user_status', 1)->orderBy('name','ASC')->get();
     }
 
     public function getKanbanStages()

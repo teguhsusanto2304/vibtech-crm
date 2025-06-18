@@ -276,6 +276,9 @@ class VehicleBookingController extends Controller
             }    
             $availableVehiclesAllSelf->where('data_status', 0)
                 ->get();
+
+            //dd($availableVehiclesAllSelf->toSql());
+            dd($availableVehiclesAllSelf->getBindings());
        
             // Append image URL (assuming image field exists)
             $availableVehiclesAllSelf->each(function ($vehicle) {

@@ -37,12 +37,12 @@ class JobAssignmentController extends Controller
     {
         $job_no = $this->generate_autonumber('JA'.date('ym'));
         $users1 = User::whereNot('position_level_id', 2)
-            // ->whereNotIn('users.id', [auth()->id()])
+            ->where('user_status', 1)
             ->join('departments', 'departments.id', '=', 'users.department_id') // Join 1st dept
             ->select('users.*', 'departments.name as department_name'); // Select necessary fields
 
         $users2 = User::whereNot('position_level_id', 2)
-            // ->whereNotIn('users.id', [auth()->id()])
+            ->where('user_status', 1)
             ->join('departments', 'departments.id', '=', 'users.2nd_department_id') // Join 1st dept
             ->select('users.*', 'departments.name as department_name'); // Select necessary fields
 
@@ -53,12 +53,14 @@ class JobAssignmentController extends Controller
         $users3 = User::where('department_id', $authDepartment)
             ->orWhere('2nd_department_id', $authDepartment)
             ->where('position_level_id', 2)
+            ->where('user_status', 1)
             ->join('departments', 'departments.id', '=', 'users.department_id')
             ->select('users.*', 'departments.name as department_name');
 
         $users4 = User::where('department_id', $authDepartment2nd)
             ->orWhere('2nd_department_id', $authDepartment2nd)
             ->where('position_level_id', 2)
+            ->where('user_status', 1)
             ->join('departments', 'departments.id', '=', 'users.department_id')
             ->select('users.*', 'departments.name as department_name');
 

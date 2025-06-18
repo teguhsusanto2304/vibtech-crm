@@ -37,6 +37,7 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {
             Route::post('/{project_id}/stages/{stage_id}/tasks', 'store')->name('v1.project-management.stage.tasks');
+            Route::get('/stage/{task_id}/tasks', 'show')->name('v1.project-management.stage.tasks');
         });
 });
 

@@ -28,6 +28,8 @@ class ProjectService {
             'end_at' => 'required|date|after_or_equal:start_at', // End date must be on or after start date
             'addProjectMembers' => 'required|array', // Expecting an array of user IDs
             'addProjectMembers.*' => 'integer|exists:users,id', // Each member ID must be an integer and exist in users table
+            'project_files' => 'nullable|array|max:5', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
         ]);
 
         try {
@@ -50,6 +52,27 @@ class ProjectService {
             } else {
                 // If no members are selected, ensure no previous members are attached
                 $project->projectMembers()->detach(); // Or sync([])
+            }
+
+            // 4. Handle File Uploads
+            if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $project->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $project->files()->create([
+                        'file_name' => $originalFileName,
+                        'file_path' => $path, // The path returned by store()
+                        'mime_type' => $fileMimeType,
+                        'file_size' => $fileSize,
+                        'uploaded_by_user_id' => Auth::id(),
+                    ]);
+                }
             }
 
 

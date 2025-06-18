@@ -29,4 +29,8 @@ class ProjectStageTaskController extends Controller
     {
         return $this->projectStageTaskService->store($request, $project_id, $stage_id);
     }
+    public function show($task_id)
+    {
+        return $this->projectStageTaskService->show($task_id);
+    }
 }

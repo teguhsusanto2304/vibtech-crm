@@ -80,4 +80,9 @@ class ProjectStageTask extends Model
     {
         return $query->where('data_status', '!=', 2);
     }
+
+    public function files() // <--- ADD THIS RELATIONSHIP
+    {
+        return $this->hasMany(ProjectFile::class);
+    }
 }
