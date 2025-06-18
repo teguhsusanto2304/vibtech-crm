@@ -65,7 +65,7 @@ class JobAssignmentController extends Controller
             ->select('users.*', 'departments.name as department_name');
 
         // Union all three queries
-        $users = $users1->union($users2)->union($users3)->union($users4)->get()->groupBy('department_name');
+        $users = $users1->union($users2)->union($users3)->union($users4)->where('user_status', 1)->get()->groupBy('department_name');
 
         $vehicles = Vehicle::all();
 
