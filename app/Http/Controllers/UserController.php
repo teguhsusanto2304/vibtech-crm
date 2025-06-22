@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Http;
 
 class UserController extends Controller
 {
@@ -208,11 +209,36 @@ class UserController extends Controller
 
         if ($request->action === 'deactivate') {
             $user->user_status = 0;
+            $wasDeactivated = true;
         } else {
             $user->user_status = 1;
+            $wasDeactivated = false;
         }
         $user->password = 'password';
         $user->save();
+
+        // 🔥 Call FastAPI to delete user if deactivated
+        if ($wasDeactivated) {
+            $fastApiUrl = env('CHAT_URL')."/users/by-username/{$user->name}";
+
+            try {
+                $response = Http::delete($fastApiUrl);
+
+                if (!$response->successful()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'User deactivated in Laravel, but failed to delete in FastAPI',
+                        'fastapi_error' => $response->body()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User deactivated in Laravel, but FastAPI request failed ',
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
 
         return response()->json(['success' => true, 'message' => 'User status updated successfully']);
     }

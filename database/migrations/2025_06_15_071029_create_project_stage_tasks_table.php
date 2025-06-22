@@ -26,6 +26,7 @@ return new class extends Migration
 
             $table->string('name');         // Name/title of the task
             $table->text('description')->nullable(); // Detailed description of the task
+             $table->string('update_log',150)->nullable();
             $table->string('data_status')->default(1); // e.g., 'pending', 'in_progress', 'completed', 'blocked'
 
             $table->integer('progress_percentage')->default(0);

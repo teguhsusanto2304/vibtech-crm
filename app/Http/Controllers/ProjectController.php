@@ -64,6 +64,11 @@ class ProjectController extends Controller
         return $this->projectService->update($request,$id);
     }
 
+    public function destroy($id)
+    {
+        return $this->projectService->destroy($id);
+    }
+
     public function detail($id)
     {
         $project = $this->projectService->getProject($id);
@@ -100,5 +105,10 @@ class ProjectController extends Controller
     public function getProjectsData(Request $request)
     {
         return $this->projectService->getProjectsData($request);
+    }
+
+    public function getAssignableUsers($id)
+    {
+        return $this->projectService->getAssignableUsers($id);
     }
 }

@@ -102,7 +102,79 @@
                     </div>
                 </div>
             </div>
+        <!-- Generic Confirmation Modal -->
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="confirmationModalBody">
+                            Are you sure you want to proceed with this action?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+            $(document).ready(function() {
+                // ... (Your other existing JavaScript code) ...
 
+                let formToSubmit = null; // Variable to hold the form that needs to be submitted after confirmation
+
+                // --- Event listener for when a delete button is clicked ---
+                $(document).on('click', '.delete-project-btn', function() {
+                    const projectId = $(this).data('project-id');
+                    const confirmMessage = $(this).data('confirm-message') || 'Are you sure you want to delete this item?';
+
+                    // Set the dynamic message in the modal body
+                    $('#confirmationModalBody').text(confirmMessage);
+
+                    // Prepare the form that will be submitted
+                    // We'll dynamically create a form for submission
+                    formToSubmit = $('<form>', {
+                        'action': `/v1/project-management/${projectId}/destroy`, // Your delete route
+                        'method': 'POST',
+                        'style': 'display:none;'
+                    });
+                    
+                    formToSubmit.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '_method',
+                        'value': 'DELETE' // Spoof DELETE method
+                    }));
+                    
+                    formToSubmit.append($('<input>', {
+                        'type': 'hidden',
+                        'name': '_token',
+                        'value': $('meta[name="csrf-token"]').attr('content') // CSRF token
+                    }));
+
+                    // Append the form to the body so it's part of the DOM
+                    $('body').append(formToSubmit);
+                });
+
+                // --- Event listener for when the "Confirm" button in the modal is clicked ---
+                $('#confirmActionBtn').on('click', function() {
+                    if (formToSubmit) {
+                        formToSubmit.submit(); // Submit the prepared form
+                    }
+                    $('#confirmationModal').modal('hide'); // Hide the modal
+                });
+
+                // --- Clean up the dynamically created form when modal is hidden ---
+                $('#confirmationModal').on('hidden.bs.modal', function () {
+                    if (formToSubmit) {
+                        formToSubmit.remove(); // Remove the form from the DOM
+                        formToSubmit = null; // Clear the reference
+                    }
+                });
+            });
+            </script>
         <script>
             function getProjectColumns() {
                 return [

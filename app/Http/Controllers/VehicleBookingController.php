@@ -260,32 +260,22 @@ class VehicleBookingController extends Controller
                         ->where('end_at', '>=', $endAt);
                 });
         })
-            ->pluck('vehicle_id');
+           ->pluck('vehicle_id');
         $bookedVehicleId = VehicleBooking::where('id', $id)
             ->pluck('vehicle_id');
 
         if (! empty($id)) {
-            $availableVehiclesAllSelf = Vehicle::where(function ($query) use ($bookedVehicleId, $bookedVehicleIds) {
-                $query->where('id', $bookedVehicleId)
-                    ->orWhere(function ($subQuery) use ($bookedVehicleIds) {
-                        $subQuery->whereNotIn('id', $bookedVehicleIds);
-                    });
-            });
+            $availableVehiclesAllSelf = Vehicle::whereNotIn('id',$bookedVehicleId);
             if (auth()->check() && !auth()->user()->can('view-vehicle-booking-sedan')) {
                 $availableVehiclesAllSelf->where(\DB::raw('UPPER(name)'), 'NOT LIKE', '%' . Str::upper('sedan') . '%');
-            }    
-            $availableVehiclesAllSelf->where('data_status', 0)
-                ->get();
+            }  
+            $finalAvailableVehicles = $availableVehiclesAllSelf->where('data_status', 0)->get();           
 
-            //dd($availableVehiclesAllSelf->toSql());
-            //dd($availableVehiclesAllSelf->getBindings());
-       
-            // Append image URL (assuming image field exists)
-            $availableVehiclesAllSelf->each(function ($vehicle) {
+            $finalAvailableVehicles->each(function ($vehicle) {
                 $vehicle->image_url = asset($vehicle->path_image ?? 'default-image.jpg');
             });
 
-            return response()->json($availableVehiclesAllSelf);
+            return response()->json($finalAvailableVehicles);
         } else {
             $availableVehiclesAllQuery = Vehicle::whereNotIn('id', $bookedVehicleIds)
                 ->where('data_status', 0);

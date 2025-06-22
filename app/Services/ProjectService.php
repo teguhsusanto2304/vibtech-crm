@@ -118,7 +118,7 @@ class ProjectService {
            // })
             //->orderBy('created_at', 'ASC')
             //->get();
-        $projectsQuery = Project::with(['projectManager', 'showProjectMembers.member']); // Assuming projectMembers is the correct relationship name
+        $projectsQuery = Project::whereNot('data_status',0)->with(['projectManager', 'showProjectMembers.member']); // Assuming projectMembers is the correct relationship name
 
         // Apply conditional filtering based on $request->type
         if ($request->type === 'my') {
@@ -167,11 +167,17 @@ class ProjectService {
         $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.edit', ['id' => $row->obfuscated_id]) . '">Edit</a>';
 
         // Delete button (using a form for proper DELETE request)
-        $btn .= '<form action="' . route('v1.project-management.destroy', ['project' => $row->obfuscated_id]) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this project?\');">';
-        $btn .= csrf_field(); // Laravel CSRF token
-        $btn .= method_field('DELETE'); // Spoof DELETE method for Laravel
-        $btn .= '<button type="submit" class="btn btn-danger btn-sm">Delete</button>'; // Use btn-danger for styling
-        $btn .= '</form>';
+        //$btn .= '<form action="' . route('v1.project-management.destroy', ['project' => $row->obfuscated_id]) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this project?\');">';
+        //$btn .= csrf_field(); // Laravel CSRF token
+        //$btn .= method_field('DELETE'); // Spoof DELETE method for Laravel
+        //$btn .= '<button type="submit" class="btn btn-danger btn-sm">Delete</button>'; // Use btn-danger for styling
+        //$btn .= '</form>';
+        $btn .= '<button type="button" class="btn btn-danger btn-sm delete-project-btn"';
+        $btn .= ' data-bs-toggle="modal"';
+        $btn .= ' data-bs-target="#confirmationModal"'; // Target our custom modal
+        $btn .= ' data-project-id="' . $row->obfuscated_id . '"'; // Pass the project ID
+        $btn .= ' data-confirm-message="Are you sure you want to delete the project \'' . htmlspecialchars($row->name) . '\'? This action cannot be undone."'; // Custom message
+        $btn .= '>Delete</button>';
     }
 
     // Close the button group container
@@ -210,13 +216,12 @@ class ProjectService {
 
         $decodedId = IdObfuscator::decode($id);
         $project = Project::with(['projectMembers', 'projectManager'])->find($decodedId);
-
         // Update project details
         $project->update([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
-            'start_date' => $validatedData['start_at'], // Assuming your DB columns are 'start_date'
-            'end_date' => $validatedData['end_at'],     // and 'end_date'
+            'start_at' => $validatedData['start_at'], // Assuming your DB columns are 'start_date'
+            'end_at' => $validatedData['end_at'],     // and 'end_date'
         ]);
 
         // Sync project members (this works if projectMembers is belongsToMany)
@@ -228,6 +233,20 @@ class ProjectService {
 
         return redirect()->route('v1.project-management.detail', ['project' => $project->obfuscated_id])
                          ->with('success', 'Project updated successfully!');
+    }
+
+    public function destroy($id)
+    {       
+
+        $decodedId = IdObfuscator::decode($id);
+        $project = Project::find($decodedId);
+        // Update project details
+        $project->update([
+            'data_status' => 0
+        ]);
+
+        return redirect()->route('v1.project-management.list')
+                         ->with('success', 'Project deleted successfully!');
     }
 
     public function addMember(Request $request, $id)
@@ -523,6 +542,60 @@ class ProjectService {
                 'message' => 'An error occurred while marking the project complete. Please try again.'
             ], 500); // Internal Server Error
         }
+    }
+
+    /**
+     * Get a list of users assignable to tasks for a specific project.
+     * This includes the project manager and all project members.
+     *
+     * @param  \App\Models\Project  $project (resolved via obfuscated ID)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAssignableUsers($id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+        $project = Project::find($decodedId);
+        // Eager load project manager and members for efficiency
+        $project->load(['projectManager', 'projectMembers']);
+
+        // --- Step 1: Collect all actual User models ---
+        $userIdsToInclude = collect();
+
+        // Add the Project Manager (if exists)
+        if ($project->projectManager) {
+           $userIdsToInclude->push($project->projectManager->id);
+        }
+
+        // Add all project members (loop through ProjectMember pivot models
+        // and extract the associated User model via ->member)
+        foreach ($project->showProjectMembers as $projectMember) {
+            if ($projectMember->member) { // Ensure the member relationship loaded successfully
+                $userIdsToInclude->push($projectMember->member->id);
+            }
+        }
+        //$userIdsToInclude = $userIdsToInclude->unique()->values();
+
+        
+
+        $assignableUsersQuery = User::whereIn('id', $userIdsToInclude);
+
+        // Execute the query and sort the results
+        $assignableUsers = $assignableUsersQuery->orderBy('name')->get();
+
+        // --- Step 3: Map to desired format for frontend (optional but good practice) ---
+        $formattedUsers = $assignableUsers->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar_url' => $user->avatar_url, // Make sure User model has this accessor/property
+                'initials' => $user->initials,     // Make sure User model has this accessor/property
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'users' => $formattedUsers,
+        ]);
     }
 
     

@@ -30,13 +30,16 @@ Route::prefix('v1')->group(function () {
             Route::put('/{project_id}/complete', 'markProjectComplete')->name('v1.project-management.complete');
             Route::put('/{project_id}/stages/{project_stage_id}/complete', 'markComplete')->name('v1.project-management.stages.complete');
             Route::get('/{id}/edit', 'edit')->name('v1.project-management.edit');
-            Route::delete('/{project}/destroy', 'detail')->name('v1.project-management.destroy');
+            Route::delete('/{project}/destroy', 'destroy')->name('v1.project-management.destroy');
             Route::post('/store', 'store')->name('v1.project-management.store');
             Route::get('/data', 'getProjectsData')->name('v1.project-management.data');
+            Route::get('/{id}/assignable-users','getAssignableUsers')->name('v1.project-management.assignable-users');
         });
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {
             Route::post('/{project_id}/stages/{stage_id}/tasks', 'store')->name('v1.project-management.stage.tasks');
+            Route::post('/stages/{task_id}/tasks-update-status', 'updateStatus')->name('v1.project-management.stage.tasks-update-status');
+             Route::post('/stages/{task_id}/tasks-add-log', 'addLog')->name('v1.project-management.stage.tasks-add-log');
             Route::get('/stage/{task_id}/tasks', 'show')->name('v1.project-management.stage.tasks');
         });
 });

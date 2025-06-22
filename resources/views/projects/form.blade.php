@@ -170,7 +170,7 @@
                                 @endif
                             </div>
                             <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                            <small class="form-text text-muted d-block mt-2">Max file size: 10MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
                         </div>
                         <script>
                             $(document).ready(function() {
@@ -178,6 +178,7 @@
 
                                 const $newFileUploadContainer = $('#new-file-upload-container');
                                 const $addMoreFilesBtn = $('#add-more-files-btn');
+                                let indexNewFileUpload = 0;
 
                                 // Function to update the visibility of "Remove" buttons
                                 function updateRemoveButtonVisibility() {
@@ -191,14 +192,21 @@
 
                                 // Function to add a new file input field group
                                 function addFileInputField() {
-                                    const newFileInputHtml = `
-                                        <div class="input-group mb-2 file-upload-item">
-                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
-                                        </div>
-                                    `;
-                                    $newFileUploadContainer.append(newFileInputHtml);
-                                    updateRemoveButtonVisibility();
+                                    indexNewFileUpload++;
+                                    if(indexNewFileUpload<=4){
+                                        const newFileInputHtml = `
+                                            <div class="input-group mb-2 file-upload-item">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        `;
+                                        $newFileUploadContainer.append(newFileInputHtml);
+                                        updateRemoveButtonVisibility();
+                                    } else {
+                                        alert('you can not add more than 5 files !');
+                                    }
+                                    
+                                    
                                 }
 
                                 // Initial setup on page load:

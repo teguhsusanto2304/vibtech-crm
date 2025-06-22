@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Helpers\IdObfuscator;
-use Illuminate\Support\Facades\Storage;
 
 class Project extends Model
 {

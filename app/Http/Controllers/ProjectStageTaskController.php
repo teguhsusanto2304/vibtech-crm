@@ -29,8 +29,20 @@ class ProjectStageTaskController extends Controller
     {
         return $this->projectStageTaskService->store($request, $project_id, $stage_id);
     }
+
     public function show($task_id)
     {
         return $this->projectStageTaskService->show($task_id);
     }
+
+    public function updateStatus(Request $request, $task_id)
+    {
+        return $this->projectStageTaskService->updateStatus($request,$task_id);
+    }
+
+    public function addLog(Request $request, $task_id)
+    {
+        return $this->projectStageTaskService->addLog($request,$task_id);
+    }
+
 }

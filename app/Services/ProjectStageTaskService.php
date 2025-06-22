@@ -1,10 +1,8 @@
 <?php
 namespace App\Services;
 use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\ProjectStageTask;
 use App\Models\ProjectStage;
-use App\Models\KanbanStage;
 use Auth;
 use DB;
 use App\Helpers\IdObfuscator;
@@ -21,7 +19,6 @@ class ProjectStageTaskService {
      */
     public function store(Request $request, $project_id, $stage_id)
     {
-        //dd($request->hasFile('task_file'));
         $project_id =  IdObfuscator::decode($project_id);
         // 2. Validate the incoming request
         $validatedData = $request->validate([
@@ -30,8 +27,9 @@ class ProjectStageTaskService {
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'assigned_to_user_id' => 'nullable|integer|exists:users,id',
-            'project_files' => 'nullable', // Max 3 files for a task
-            'project_files.*' => 'file|mimes:pdf,doc,docx|max:5120',
+            'update_log' => 'nullable|string',
+            'project_files' => 'nullable|array|max:3', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
             // 'status' => 'required|string|in:pending,in_progress,completed,blocked', // If status is user-selectable
         ]);
 
@@ -59,19 +57,21 @@ class ProjectStageTaskService {
             $task->start_at = $validatedData['start_date'];
             $task->end_at = $validatedData['end_date'];
             $task->assigned_to_user_id = $validatedData['assigned_to_user_id'];
+            $task->update_log = $validatedData['update_log'];
             $task->data_status = 1; // Default status for a new task
             $task->save();
 
-            if ($request->hasFile('task_file')) {
-                $file = $request->file('task_file'); // Get the single UploadedFile object directly
-
+            // 4. Handle File Uploads
+            if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $file) {
                     $originalFileName = $file->getClientOriginalName();
                     $fileMimeType = $file->getClientMimeType();
                     $fileSize = $file->getSize(); // Size in bytes
 
-                    // Store file in storage/app/public/tasks/{task_id}/files
-                    $path = $file->store('tasks/' . $task->id . '/files', 'public');
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $task->id . '/files', 'public');
 
+                    // Save file details to project_files table
                     $taskFile = new ProjectFile();
                     // Save file details to project_files table, linking to the task
                     $taskFile->project_id = $project_id;
@@ -83,6 +83,7 @@ class ProjectStageTaskService {
                     $taskFile->uploaded_by_user_id = Auth::id();
                         // 'project_id' is nullable, so we don't set it here if files belong to tasks
                     $taskFile->save();
+                }
             }
 
             DB::commit();
@@ -113,14 +114,14 @@ class ProjectStageTaskService {
      */
     public function show($task_id)
     {
+        $task_id =  IdObfuscator::decode($task_id);
         $task = ProjectStageTask::find($task_id);
 
         try {
             // Eager load necessary relationships for the task details
             $task->load([
                 'projectStage.kanbanStage', // To show stage name
-                'assignedTo',               // To show assignee details
-                'createdBy',                // To show creator details
+                'assignedTo',               // To show assignee details               // To show creator details
                 'files'                     // To show associated files
             ]);
 
@@ -133,7 +134,115 @@ class ProjectStageTaskService {
             \Log::error("Error fetching task details for task {$task->id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while fetching task details.'
+                'message' => 'An error occurred while fetching task details.'. $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the status and add a log entry for a specific task.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Project  $project (resolved via obfuscated ID)
+     * @param  \App\Models\ProjectStageTask  $task (resolved via obfuscated ID)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Request $request, $task_id)
+    {
+        $task_id =  IdObfuscator::decode($task_id);
+        $task = ProjectStageTask::find($task_id);
+        // 2. Validate Request Data
+        $validatedData = $request->validate([
+            'status' => 'required',
+        ]);
+
+        
+
+        DB::beginTransaction();
+        try {
+            // Update task status
+            $task->data_status = $validatedData['status'];           
+
+            // If status is 'completed', set completed_at timestamp
+            if ($task->data_status === 4 && is_null($task->completed_at)) {
+                $task->completed_at = now();
+            } 
+
+            $task->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task status updated successfully!',
+                'new_status' => $task->status, // Send back updated log for possible UI refresh
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error updating task status for task {$task->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating task status. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a new log entry to a specific task.
+     * Assumes 'update_log' column in project_stage_tasks is JSON type and cast to array in model.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Project  $project (resolved via obfuscated ID)
+     * @param  \App\Models\ProjectStageTask  $task (resolved via obfuscated ID)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addLog(Request $request, $task_id)
+    {
+        $task_id =  IdObfuscator::decode($task_id);
+        $task = ProjectStageTask::find($task_id);
+
+        // 2. Validate Request Data
+        $validatedData = $request->validate([
+            'new_log_entry' => 'required|string|max:1000', // Validate the new log entry text
+        ]);
+
+        DB::beginTransaction();
+        try {
+
+
+            $task->update_log =$validatedData['new_log_entry']; // Assign the updated array back
+            $task->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Log entry added successfully!',
+                'new_log_entry_added' => $validatedData['new_log_entry'],
+                'updated_logs' => $task->update_log, // Send back full updated logs
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error adding log to task {$task->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while adding the log entry. Please try again.'
             ], 500);
         }
     }
