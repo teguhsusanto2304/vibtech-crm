@@ -39,6 +39,9 @@ Route::prefix('v1')->group(function () {
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {
             Route::post('/{project_id}/stages/{stage_id}/tasks', 'store')->name('v1.project-management.stage.tasks');
             Route::post('/stages/{task_id}/tasks-update-status', 'updateStatus')->name('v1.project-management.stage.tasks-update-status');
+            Route::post('/stages/{task_id}/tasks-update', 'update')->name('v1.project-management.stage.tasks-update');
+            Route::delete('/stages/{task_id}/tasks-delete', 'destroy')->name('v1.project-management.stage.tasks-delete');
+            Route::delete('/stages/{task_id}/tasks-destroy', 'destroy')->name('v1.project-management.stage.tasks-destroy');
              Route::post('/stages/{task_id}/tasks-add-log', 'addLog')->name('v1.project-management.stage.tasks-add-log');
             Route::get('/stage/{task_id}/tasks', 'show')->name('v1.project-management.stage.tasks');
         });

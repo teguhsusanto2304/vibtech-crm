@@ -481,7 +481,11 @@
                                                         data-task-id="{{ $task->task_obfuscated_id }}" 
                                                 ><small>View</small></button>
                                                 @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1)                                                
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary"><small>Edit</small></button>
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary view-task-edit-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskEditModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        ><small>Edit</small></button>
                                                 @endif
                                                 @if($project->data_status==1 && $task->data_status!=4)
                                                     <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-warning add-logs-btn"
@@ -521,7 +525,11 @@
                                                         data-task-status="{{ $task->task_status }}" 
                                                         data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
                                                 
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger"><small>Delete</small></button>
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskDeleteModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
                                                 @endif
                                             </div>
                                         </div>
@@ -539,6 +547,72 @@
                                 @endforeach
                             </div>
                         @endforeach
+                    </div>
+                </div>
+
+                <!-- Task Delete Confirmation Modal -->
+                <div class="modal fade" id="taskDeleteModal" tabindex="-1" aria-labelledby="taskDeleteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm modal-dialog-centered"> {{-- modal-sm for a smaller, focused modal --}}
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white"> {{-- Red header for danger --}}
+                                <h5 class="modal-title" id="taskDeleteModalLabel">Confirm Deletion</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="deleteModalTaskId">
+                                <input type="hidden" id="deleteModalProjectId"> {{-- Hidden input for project_id --}}
+                                <p>Are you sure you want to delete the task named "<strong id="deleteModalTaskName"></strong>"?</p>
+                                <p class="text-muted"><small>This action cannot be undone.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteTaskButton">Delete Task</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Edit Modal -->
+                <div class="modal fade" id="taskEditModal" tabindex="-1" aria-labelledby="taskEditModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="taskEditModalLabel">Edit Task: <span id="editModalTaskName"></span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="editTaskForm" >
+                                @csrf
+                                <div class="modal-body">
+                                    <input type="hidden" name="project_id" id="editModalProjectId">
+                                    <input type="hidden" name="task_id" id="editModalTaskId">
+
+                                    <div class="mb-3">
+                                        <label for="taskName" class="form-label">Task Name</label>
+                                        <input type="text" class="form-control" id="editTaskName" name="name" required placeholder="e.g., Design UI Mockups">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="taskDescription" class="form-label">Description</label>
+                                        <textarea class="form-control" id="editTaskDescription" name="description" rows="3" placeholder="Detailed description of the task..."></textarea>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        
+                                        <div class="col-md-6">
+                                            <label for="editTaskEndDate" class="form-label">Due Date</label>
+                                            <input type="date" class="form-control" id="editTaskEndDate" name="end_date">
+                                        </div>                                    
+                                        
+                                    </div>
+                                    
+                                        
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="saveEditTaskButton">Update Task</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
@@ -668,6 +742,201 @@
                 <script>
                     $(document).ready(function() {
 
+                    // --- Task Delete Confirmation Modal Logic ---
+                    $('#taskDeleteModal').on('show.bs.modal', function (event) {
+                        const button = $(event.relatedTarget); // Button that triggered the modal
+                        const taskId = button.data('task-id'); // Task obfuscated ID
+                        const taskName = button.data('task-name'); // Project obfuscated ID
+
+                        const $modal = $(this);
+                        const $deleteModalTaskId = $modal.find('#deleteModalTaskId');
+                        const $deleteModalTaskName = $modal.find('#deleteModalTaskName');
+                        const $confirmDeleteTaskButton = $modal.find('#confirmDeleteTaskButton');
+
+                        // Reset UI
+                        $deleteModalTaskName.text(taskName);
+
+                        // Set hidden IDs
+                        $deleteModalTaskId.val(taskId);
+
+                        
+                        // --- Attach DELETE action to the confirm button ---
+                        // IMPORTANT: Use .off('click') to prevent multiple event listeners
+                        // if the modal is opened multiple times without page refresh.
+                        $confirmDeleteTaskButton.off('click').on('click', function() {
+                            $(this).prop('disabled', true).text('Deleting...');
+
+                            const taskIdToDelete = $deleteModalTaskId.val();
+
+                            $.ajax({
+                                url: `/v1/project-management/stages/${taskIdToDelete}/tasks-delete`, // API endpoint for deletion
+                                type: 'DELETE', // Use DELETE HTTP method
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Ensure you have CSRF token in meta tag
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        alert(response.message || 'Task deleted successfully!');
+                                        $('#taskDeleteModal').modal('hide');
+                                        location.reload(true); // Refresh page to reflect deletion
+                                    } else {
+                                        alert(response.message || 'Failed to delete task.');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    let errorMessage = 'An error occurred while deleting task.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    }
+                                    alert(errorMessage);
+                                    console.error('Error deleting task:', xhr.responseText);
+                                }
+                            }).always(function() {
+                                // Re-enable and reset button text in case of error
+                                $confirmDeleteTaskButton.prop('disabled', false).text('Delete Task');
+                            });
+                        });
+                    });
+
+                    // Reset modal content when hidden
+                    $('#taskDeleteModal').on('hidden.bs.modal', function () {
+                        const $modal = $(this);
+                        $modal.find('#deleteModalTaskName').text('');
+                        $modal.find('#deleteModalTaskId').val('');
+                        $modal.find('#deleteModalProjectId').val('');
+                        $modal.find('#confirmDeleteTaskButton').off('click'); // Remove the click handler
+                    });
+
+
+                    // --- Task Edit Modal Logic ---
+                    $('#taskEditModal').on('show.bs.modal', function (event) {
+                        const button = $(event.relatedTarget); // Button that triggered the modal
+                        const taskId = button.data('task-id'); // Task obfuscated ID
+                        const projectId = button.data('project-id'); // Project obfuscated ID
+
+                        const $modal = $(this);
+                        const $form = $modal.find('#editTaskForm');
+                        const $editModalTaskId = $modal.find('#editModalTaskId');
+                        const $editModalProjectId = $modal.find('#editModalProjectId');
+                        const $editTaskName = $modal.find('#editTaskName');
+                        const $editTaskDescription = $modal.find('#editTaskDescription');
+                        const $editTaskEndDate = $modal.find('#editTaskEndDate');
+                        const $editModalTaskName = $modal.find('#editModalTaskName');
+                        const $saveEditTaskButton = $modal.find('#saveEditTaskButton');
+
+                        
+                        
+                        // Clear previous validation feedback
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback').text('');                  
+
+                        // Set hidden IDs
+                        $editModalTaskId.val(taskId);
+                        $editModalProjectId.val(projectId);
+
+                        // Fetch task details for editing
+                        $.ajax({
+                            url: `/v1/project-management/stage/${taskId}/tasks`, // Use your task detail API endpoint
+                            type: 'GET',
+                            success: function(response) {
+                                if (response.success) {
+                                    const task = response.task;
+                                    $editModalTaskName.text(task.name);
+
+                                    // Populate form fields
+                                    $editTaskName.val(task.name);
+                                    $editTaskDescription.val(task.description);
+                                    $editTaskEndDate.val(task.end_at ? new Date(task.end_at).toISOString().split('T')[0] : '');
+                                    
+
+                                } else {
+                                    alert('Failed to load task details for edit: ' + (response.message || 'Unknown error'));
+                                    $modal.modal('hide');
+                                }
+                            },
+                            error: function(xhr) {
+                                alert('Error loading task details for edit: ' + (xhr.responseJSON && xhr.responseJSON.message || 'Server error'));
+                                $modal.modal('hide');
+                                console.error('Error fetching task details for edit:', xhr.responseText);
+                            }
+                        });
+                    });
+
+                    // --- Handle form submission for updating task ---
+                    $('#editTaskForm').on('submit', async function(e) {
+                        e.preventDefault();
+
+                        const $form = $(this);
+                        const taskId = $form.find('#editModalTaskId').val();
+                        const projectId = $form.find('#editModalProjectId').val();
+                        const $saveButton = $form.find('#saveEditTaskButton');
+
+                        alert(taskId);
+
+                        // Reset validation feedback
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback').text('');
+
+                        $saveButton.prop('disabled', true).text('Saving...');
+
+                        // IMPORTANT: For PUT/PATCH requests with FormData (especially with files),
+                        // you need to manually append _method=PUT to simulate it in PHP.
+                        // Also, if you use a hidden input for assigned_to_user_id (when select is disabled),
+                        // ensure its value is picked up by FormData.
+                        const formData = new FormData(this);
+                        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+                        // If the Select2 is disabled, its value won't be sent. Use the hidden input.
+                        if ($('#editTaskAssignee').prop('disabled') && $('#editAssignedToUserIdHidden').val()) {
+                            formData.set('assigned_to_user_id', $('#editAssignedToUserIdHidden').val());
+                        }
+
+                        try {
+                            const response = await fetch(`/v1/project-management/stages/${taskId}/tasks-update`, {
+                                method: 'POST', // Always POST for FormData with _method spoofing
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                },
+                                body: formData
+                            });
+
+                            const result = await response.json();
+
+                            if (response.ok && result.success) { // Check both HTTP status and custom 'success' flag
+                                alert(result.message || 'Task updated successfully!');
+                                $('#taskEditModal').modal('hide');
+                                location.reload(true); // Refresh page to reflect changes
+                            } else {
+                                // Handle validation errors or other API errors
+                                let errorMessage = result.message || 'Failed to update task.';
+                                if (result.errors) {
+                                    errorMessage = 'Validation Errors:\n';
+                                    for (const field in result.errors) {
+                                        const inputField = $form.find(`[name="${field}"]`);
+                                        inputField.addClass('is-invalid');
+                                        inputField.next('.invalid-feedback').text(result.errors[field][0]);
+                                        errorMessage += `- ${result.errors[field][0]}\n`;
+                                    }
+                                }
+                                alert(errorMessage);
+                            }
+                        } catch (error) {
+                            console.error('Error updating task:', error);
+                            alert('An unexpected error occurred. Please try again.');
+                        } finally {
+                            $saveButton.prop('disabled', false).text('Save Changes');
+                        }
+                    });
+
+                    // Reset modal content when hidden
+                    $('#taskEditModal').on('hidden.bs.modal', function () {
+                        const $modal = $(this);
+                        //$modal.find('#editTaskForm')[0].reset();
+                        //$modal.find('#editModalTaskName').text('');
+                        //$modal.find('#saveEditTaskButton').prop('disabled', false).text('Save Changes');
+                        
+                    });
+
                     // --- Task Add/View Logs Modal Logic ---
                     $('#taskAddLogsModal').on('show.bs.modal', function (event) {
                         const button = $(event.relatedTarget); // Button that triggered the modal
@@ -711,10 +980,6 @@
                         // Append CSRF token
                         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
-                        // Send AJAX request
-                        // You might reuse your updateStatus endpoint or create a new one for just logs
-                        // For simplicity, let's use the updateStatus endpoint by also sending current status
-                        // OR create a dedicated 'add-log' endpoint. A dedicated endpoint is cleaner.
                         $.ajax({
                             url: `/v1/project-management/stages/${taskId}/tasks-add-log`, // New API endpoint for adding logs
                             type: 'POST',
@@ -805,10 +1070,6 @@
                             );
                         }
 
-                        // Assuming you've fetched the 'task' object and have its current status
-                        // Example: const taskCurrentStatus = task.status; // from your AJAX response
-
-                        // --- Step 3: Loop through data and append options ---
                         statusOptions.forEach(option => {
                             const optionHtml = `
                                 <option value="${option.value}" >
@@ -1098,10 +1359,6 @@
                         overflow-y: hidden;
                         /* Hide vertical scrollbar if it appears (optional) */
                         padding-bottom: 1rem;
-                        /* Add some padding at the bottom for the scrollbar to not cut off content */
-                        /* Optional: Add some padding-left/right if you want space before/after the first/last card */
-                        /* padding-left: 15px; */
-                        /* padding-right: 15px; */
                     }
 
                     /* Optional: Hide scrollbar in webkit browsers (Chrome, Safari) */
@@ -1560,14 +1817,6 @@
             // *** THIS IS THE KEY FIX: Remove $.param() ***
             const formData = new FormData(this); // Correctly creates FormData from the form
 
-            // The hidden inputs (project_id, kanban_stage_id) and CSRF token
-            // will automatically be included if they are part of the form.
-            // You generally DO NOT need to manually append them if they are standard hidden inputs.
-            // If your CSRF token is NOT a hidden input in the form, you'd still append it:
-            // formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-            // Retrieve project and kanban stage IDs directly from formData
-            // This is a robust way to get them as they are part of the sent data.
             
             const projectId = $('#modalProjectId').val();
             const kanbanStageId = $('#modalKanbanStageId').val();

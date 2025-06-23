@@ -7,6 +7,7 @@ use Auth;
 use DB;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectFile;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectStageTaskService {
     /**
@@ -243,6 +244,97 @@ class ProjectStageTaskService {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while adding the log entry. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the specified task in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $project_obfuscated_id
+     * @param  string  $task_obfuscated_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, string $task_obfuscated_id)
+    {
+        $taskId = IdObfuscator::decode($task_obfuscated_id);
+        $task = ProjectStageTask::findOrFail($taskId);
+
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'end_date' => 'nullable|date|after_or_equal:start_date'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Update basic task fields
+            $task->name = $validatedData['name'];
+            $task->description = $validatedData['description'] ?? null;
+            $task->end_at = $validatedData['end_date'] ?? null;
+            $task->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task updated successfully!',
+                'task' => $task->load(['assignedTo', 'files']) // Reload relationships for fresh data
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422); // Unprocessable Entity
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error updating task {$taskId}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the task: ' . $e->getMessage()
+            ], 500); // Internal Server Error
+        }
+    }
+
+    /**
+     * Remove the specified task from storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $project_obfuscated_id
+     * @param  string  $task_obfuscated_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy(Request $request, string $task_obfuscated_id)
+    {
+        // Decode IDs (if using obfuscated IDs)
+        $taskId = IdObfuscator::decode($task_obfuscated_id);
+        $task = ProjectStageTask::findOrFail($taskId);
+
+        DB::beginTransaction();
+        try {
+            // Delete associated files from storage and database first
+            $task->data_status = 0;
+            // Now delete the task itself
+            $task->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task deleted successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error deleting task {$taskId}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the task. Please try again.'
             ], 500);
         }
     }

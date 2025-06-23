@@ -45,4 +45,14 @@ class ProjectStageTaskController extends Controller
         return $this->projectStageTaskService->addLog($request,$task_id);
     }
 
+    public function update(Request $request, string $task_id)
+    {
+        return $this->projectStageTaskService->update($request,$task_id);
+    }
+
+    public function destroy(Request $request, string $task_id)
+    {
+        return $this->projectStageTaskService->destroy($request,$task_id);
+    }
+
 }
