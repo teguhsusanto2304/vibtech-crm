@@ -449,10 +449,12 @@
                                 @php
                                 // Fetch tasks for this specific project's stage
                                 // Assuming you have $project->projectStages eager loaded with tasks
-                                $projectStageTasks = $project->projectStages
-                                ->where('kanban_stage_id', $kanbanStage->id)
-                                ->first()
-                                ?->tasks ?? collect();
+                                $projectStage = $project->projectStages() // Access the relationship as a Query Builder
+                                    ->where('kanban_stage_id', $kanbanStage->id)
+                                    ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
+                                    ->first();
+
+                                $projectStageTasks = $projectStage ? $projectStage->tasks ->where('data_status', '!=', 0) : collect();
                                 @endphp
 
                                 @foreach($projectStageTasks as $task)
