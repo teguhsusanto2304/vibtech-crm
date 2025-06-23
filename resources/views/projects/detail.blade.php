@@ -871,8 +871,6 @@
                         const projectId = $form.find('#editModalProjectId').val();
                         const $saveButton = $form.find('#saveEditTaskButton');
 
-                        alert(taskId);
-
                         // Reset validation feedback
                         $form.find('.is-invalid').removeClass('is-invalid');
                         $form.find('.invalid-feedback').text('');
