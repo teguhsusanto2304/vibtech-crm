@@ -507,6 +507,13 @@
                                                         data-task-log="{{ $task->update_log }}" 
                                                         data-task-status="{{ $task->task_status }}" 
                                                         data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
+                                                        @if($task->assigned_to_user_id==$project->project_manager_id)
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskDeleteModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
+                                                        @endif
                                                 @endif
                                                 @if($task->assigned_to_user_id==auth()->user()->id 
                                                 && $project->data_status==1 
