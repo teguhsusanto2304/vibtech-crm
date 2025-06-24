@@ -7,7 +7,7 @@ use Auth;
 use DB;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectFile;
-use Illuminate\Support\Facades\Storage;
+use App\Models\ProjectTaskLog;
 
 class ProjectStageTaskService {
     /**
@@ -87,6 +87,12 @@ class ProjectStageTaskService {
                 }
             }
 
+            $taskLog = new ProjectTaskLog();
+            $taskLog->task_id = $task->id; // Link to the task
+            $taskLog->description = $validatedData['update_log'];
+            $taskLog->user_id = Auth::id(); // Record who created the log
+            $taskLog->save();
+
             DB::commit();
 
             // 5. Return success response
@@ -123,7 +129,11 @@ class ProjectStageTaskService {
             $task->load([
                 'projectStage.kanbanStage', // To show stage name
                 'assignedTo',               // To show assignee details               // To show creator details
-                'files'                     // To show associated files
+                'files',                   // To show associated files
+                'logs' => function ($query) { // Apply constraints to the 'logs' relationship query
+                    $query->orderBy('created_at', 'desc'); // Order by created_at in ascending order
+                },
+                'logs.user'
             ]);
 
             return response()->json([
@@ -218,9 +228,11 @@ class ProjectStageTaskService {
         DB::beginTransaction();
         try {
 
-
-            $task->update_log =$validatedData['new_log_entry']; // Assign the updated array back
-            $task->save();
+            $taskLog = new ProjectTaskLog();
+            $taskLog->task_id = $task->id; // Link to the task
+            $taskLog->description = $validatedData['new_log_entry'];
+            $taskLog->user_id = Auth::id(); // Record who created the log
+            $taskLog->save();
 
             DB::commit();
 
@@ -265,7 +277,9 @@ class ProjectStageTaskService {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'end_date' => 'nullable|date|after_or_equal:start_date'
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'project_files' => 'nullable|array|max:3', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
         ]);
 
         DB::beginTransaction();
@@ -275,6 +289,30 @@ class ProjectStageTaskService {
             $task->description = $validatedData['description'] ?? null;
             $task->end_at = $validatedData['end_date'] ?? null;
             $task->save();
+
+            if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $task->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $taskFile = new ProjectFile();
+                    // Save file details to project_files table, linking to the task
+                    $taskFile->project_id = $task->projectStage->project_id;
+                    $taskFile->project_stage_task_id = $task->id;
+                    $taskFile->file_name = $originalFileName;
+                    $taskFile->file_path = $path;
+                    $taskFile->mime_type = $fileMimeType;
+                    $taskFile->file_size = $fileSize;
+                    $taskFile->uploaded_by_user_id = Auth::id();
+                        // 'project_id' is nullable, so we don't set it here if files belong to tasks
+                    $taskFile->save();
+                }
+            }
 
             DB::commit();
 

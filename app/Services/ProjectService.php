@@ -4,10 +4,12 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\ProjectStage;
+use App\Models\ProjectFile;
 use Auth;
 use Yajra\DataTables\DataTables;
 use App\Helpers\IdObfuscator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectService {
 
@@ -15,6 +17,20 @@ class ProjectService {
     {
         $decodedId = IdObfuscator::decode($id);
         $project = Project::with(['projectMembers', 'projectManager'])->find($decodedId);
+        $projectStage = $project->projectStages() // Access the relationship as a Query Builder
+                                    ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
+                                    ->first();
+
+        $tasks = $projectStage ? $projectStage->tasks->where('data_status', '!=', 0) : collect();
+
+        foreach($tasks as $task)
+        {
+            if ($task->end_at->isPast() && $task->data_status==1)
+            {
+                $task->data_status = 3;
+                $task->save();
+            }
+        }
         return $project;
     }
     public function store(Request $request)
@@ -598,5 +614,43 @@ class ProjectService {
         ]);
     }
 
+    /**
+     * Remove the specified project file from storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $project_obfuscated_id // The project ID from the route
+     * @param  string  $projectFile_obfuscated_id // The ProjectFile ID from the route
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function fileDestroy(string $projectFileId)
+    {
+        $projectFile = ProjectFile::findOrFail($projectFileId); // Find the file
+
+        \DB::beginTransaction();
+        try {
+            // Delete the file from storage
+            if (Storage::disk('public')->exists($projectFile->file_path)) {
+                Storage::disk('public')->delete($projectFile->file_path);
+            }
+
+            // Delete the file record from the database
+            $projectFile->delete();
+
+            \DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'File deleted successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error("Error deleting project file {$projectFile->id}: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the file. Please try again.'
+            ], 500);
+        }
+    }
     
 }

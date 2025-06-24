@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Helpers\IdObfuscator;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProjectStageTask extends Model
 {
@@ -161,6 +162,11 @@ class ProjectStageTask extends Model
         }
 
         return $result;
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(ProjectTaskLog::class, 'task_id');
     }
 
     

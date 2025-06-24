@@ -31,6 +31,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/{project_id}/stages/{project_stage_id}/complete', 'markComplete')->name('v1.project-management.stages.complete');
             Route::get('/{id}/edit', 'edit')->name('v1.project-management.edit');
             Route::delete('/{project}/destroy', 'destroy')->name('v1.project-management.destroy');
+            Route::delete('/{projectFileId}/file-destroy', 'fileDestroy')->name('v1.project-management.file-destroy');
             Route::post('/store', 'store')->name('v1.project-management.store');
             Route::get('/data', 'getProjectsData')->name('v1.project-management.data');
             Route::get('/{id}/assignable-users','getAssignableUsers')->name('v1.project-management.assignable-users');

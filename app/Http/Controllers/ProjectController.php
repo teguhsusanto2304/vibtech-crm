@@ -111,4 +111,9 @@ class ProjectController extends Controller
     {
         return $this->projectService->getAssignableUsers($id);
     }
+
+    public function fileDestroy(string $projectFileId)
+    {
+        return $this->projectService->fileDestroy($projectFileId);
+    }
 }
