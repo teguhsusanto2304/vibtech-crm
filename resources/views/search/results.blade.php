@@ -113,7 +113,7 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <h5 class="mb-1">
-                                            <a href="{{ route('v1.job-assignment-form.list', $jr->id) }}" class="text-decoration-none">
+                                            <a href="{{ route('v1.job-assignment-form.view', ['id'=>$jr->id,'respond'=>'no']) }}" class="text-decoration-none">
                                                 {{ $jr->job_type }}
                                             </a>
                                         </h5>
