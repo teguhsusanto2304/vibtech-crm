@@ -114,10 +114,10 @@
                                     <div>
                                         <h5 class="mb-1">
                                             <a href="{{ route('v1.job-assignment-form.list', $jr->id) }}" class="text-decoration-none">
-                                                {{ $jr->title }}
+                                                {{ $jr->job_type }}
                                             </a>
                                         </h5>
-                                        <small class="text-muted">{{ Str::limit($jr->description, 100) }}</small>
+                                        <small class="text-muted">{{ Str::limit($jr->scope_of_work, 100) }}</small>
                                     </div>
                                     {{-- Add any relevant badges or info for JR --}}
                                 </li>
