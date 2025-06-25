@@ -207,7 +207,7 @@ class DashboardController extends Controller
         $results['projects'] = $projects->map(function ($project) {
             return [
                 'name' => $project->name,
-                'url' => route('v1.project-management.list', $project->obfuscated_id ?? $project->id), // Adjust to your project detail route
+                'url' => route('v1.project-management.detail', ['project' => $project->obfuscated_id]), // Adjust to your project detail route
                 'meta_info' => 'Project'
             ];
         });
@@ -222,10 +222,7 @@ class DashboardController extends Controller
         $results['tasks'] = $tasks->map(function ($task) {
             return [
                 'name' => $task->name,
-                'url' => route('tasks.show', [ // Assuming a task show route with project and task ID
-                    'project' => $task->projectStage->project->obfuscated_id ?? $task->projectStage->project->id,
-                    'task' => $task->task_obfuscated_id ?? $task->id
-                ]),
+                'url' => route('v1.project-management.detail', ['project' => $task->projectStage->project->obfuscated_id]),
                 'meta_info' => 'Task in ' . ($task->projectStage->project->name ?? 'N/A')
             ];
         });
@@ -255,9 +252,10 @@ class DashboardController extends Controller
              $results['job_requisitions'] = $jobRequisitions->map(function ($jr) {
                  return [
                      'name' => $jr->job_type,
-                     'url' => route('v1.job-assignment-form.history', $jr->id), // Adjust to your JR detail route
+                     'url' => route('v1.job-assignment-form.view', ['id'=>$jr->id,'respond'=>'no']), // Adjust to your JR detail route
                      'meta_info' => 'Job Requisition'
                  ];
+                 
              });
         }
 
