@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\JobAssignment;
 use App\Models\JobAssignmentPersonnel;
 use App\Models\VehicleBooking;
+use App\Models\Project;
+use App\Models\User;
+use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -177,4 +181,130 @@ class DashboardController extends Controller
 
         return json_encode($arr);
     }
+
+    /**
+     * Handle autocomplete search requests.
+     * Returns categorized results.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function autocomplete(Request $request)
+    {
+        $query = $request->input('query');
+        $results = [];
+
+        if (empty($query)) {
+            return response()->json(['success' => true, 'results' => []]);
+        }
+
+        // Search Projects
+        $projects = Project::where('name', 'like', '%' . $query . '%')
+                           ->orWhere('description', 'like', '%' . $query . '%')
+                           ->limit(5)
+                           ->whereNot('data_status',0)
+                           ->get(['id', 'name']); // Select only necessary fields
+        $results['projects'] = $projects->map(function ($project) {
+            return [
+                'name' => $project->name,
+                'url' => route('v1.project-management.list', $project->obfuscated_id ?? $project->id), // Adjust to your project detail route
+                'meta_info' => 'Project'
+            ];
+        });
+
+        // Search Tasks
+        $tasks = ProjectStageTask::where('name', 'like', '%' . $query . '%')
+                                 ->orWhere('description', 'like', '%' . $query . '%')
+                                 ->with('projectStage.project') // Eager load project to get project ID
+                                 ->limit(5)
+                                 ->whereNot('data_status',0)
+                                 ->get(['id', 'name', 'project_stage_id']); // Select necessary fields
+        $results['tasks'] = $tasks->map(function ($task) {
+            return [
+                'name' => $task->name,
+                'url' => route('tasks.show', [ // Assuming a task show route with project and task ID
+                    'project' => $task->projectStage->project->obfuscated_id ?? $task->projectStage->project->id,
+                    'task' => $task->task_obfuscated_id ?? $task->id
+                ]),
+                'meta_info' => 'Task in ' . ($task->projectStage->project->name ?? 'N/A')
+            ];
+        });
+
+
+        // Search Users
+        $users = User::where('name', 'like', '%' . $query . '%')
+                     ->orWhere('email', 'like', '%' . $query . '%')
+                     ->limit(5)
+                     ->get(['id', 'name', 'email']); // Select necessary fields
+        $results['users'] = $users->map(function ($user) {
+            return [
+                'name' => $user->name,
+                'email' => $user->email, // Display email for users
+                'url' => route('users.profile', $user->id), // Adjust to your user profile route
+                'meta_info' => $user->email
+            ];
+        });
+
+        // Search Job Requisitions (Example)
+        if (class_exists(JobAssignment::class)) { // Check if the model exists
+             $jobRequisitions = JobAssignment::where('job_type', 'like', '%' . $query . '%')
+                                              ->orWhere('business_name', 'like', '%' . $query . '%')
+                                              ->limit(5)
+                                              ->whereNot('job_status',0)
+                                              ->get(['id', 'job_type']);
+             $results['job_requisitions'] = $jobRequisitions->map(function ($jr) {
+                 return [
+                     'name' => $jr->job_type,
+                     'url' => route('v1.job-assignment-form.history', $jr->id), // Adjust to your JR detail route
+                     'meta_info' => 'Job Requisition'
+                 ];
+             });
+        }
+
+
+        return response()->json(['success' => true, 'results' => $results]);
+    }
+
+    /**
+     * Display a comprehensive search results page.
+     * (Optional: if you have a dedicated results page)
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function searchResult(Request $request)
+    {
+        $query = $request->input('query');
+        $results = [];
+
+        if (!empty($query)) {
+            // Re-run the same search logic, but potentially fetch more results
+            // You might want to paginate these results on the full page
+            $results['projects'] = Project::where('name', 'like', '%' . $query . '%')
+                                         ->orWhere('description', 'like', '%' . $query . '%')
+                                         ->whereNot('data_status',0)
+                                         ->paginate(10, ['*'], 'projects_page');
+
+            $results['tasks'] = ProjectStageTask::where('name', 'like', '%' . $query . '%')
+                                               ->orWhere('description', 'like', '%' . $query . '%')
+                                               ->with('projectStage.project')
+                                               ->whereNot('data_status',0)
+                                               ->paginate(10, ['*'], 'tasks_page');
+
+            $results['users'] = User::where('name', 'like', '%' . $query . '%')
+                                    ->orWhere('email', 'like', '%' . $query . '%')
+                                    ->paginate(10, ['*'], 'users_page');
+
+            // Add other search types
+            if (class_exists(JobAssignment::class)) {
+                $results['job_requisitions'] = JobAssignment::where('job_type', 'like', '%' . $query . '%')
+                                                             ->orWhere('business_name', 'like', '%' . $query . '%')
+                                                             ->whereNot('job_status',0)
+                                                             ->paginate(10, ['*'], 'job_requisitions_page');
+            }
+        }
+
+        return view('search.results', compact('query', 'results'));
+    }
+
 }

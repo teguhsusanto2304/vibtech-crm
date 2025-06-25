@@ -101,6 +101,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/', 'index')->name('v1.dashboard');
             Route::get('/events', 'getEvents')->name('v1.dashboard.events');
             Route::get('/eventsbydate/{eventAt}', 'getEventsByDate')->name('v1.dashboard.eventsbydate');
+            Route::get('/global-search-autocomplete', 'autocomplete')->name('v1.dashboard.global-search-autocomplete');
+            Route::get('/search/search-results', 'searchResult')->name('v1.dashboard.search-results');
         });
 
         // 🔹 User Management Routes

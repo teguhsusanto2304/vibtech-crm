@@ -63,19 +63,36 @@
         <!-- Table -->
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped nowrap w-100" id="user_datatable">
-                    <thead>
-                        <tr>
-                            <th>Picture</th>
-                            <th>Department</th>
-                            <th>Name</th>
-                            <th>Nick Name</th>
-                            <th>Position</th>
-                            <th>Email</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                </table>
+                <!-- Nav tabs for Active/Inactive users -->
+                <ul class="nav nav-tabs mb-3" id="userStatusTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="active-users-tab" data-bs-toggle="tab" data-bs-target="#active-users-pane" type="button" role="tab" aria-controls="active-users-pane" aria-selected="true" data-status="1">Active Staffs</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="inactive-users-tab" data-bs-toggle="tab" data-bs-target="#inactive-users-pane" type="button" role="tab" aria-controls="inactive-users-pane" aria-selected="false" data-status="0">Inactive Staffs</button>
+                    </li>
+                </ul>
+
+                <!-- Only one table shared for both tabs -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped nowrap w-100" id="user_datatable">
+                        <thead>
+                            <tr>
+                                <th>Picture</th>
+                                <th>Department</th>
+                                <th>Name</th>
+                                <th>Nick Name</th>
+                                <th>Position</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- DataTables will populate this tbody -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
@@ -110,6 +127,7 @@
                         {data: 'nick_name', name: 'nick_name'},
                         {data: 'position', name: 'position'},
                         {data: 'email', name: 'email'},
+                        {data: 'user_status', name: 'user_status'},
                         {data: 'action', name: 'action', orderable: false, searchable: false},
                     ],
                     scrollX: true, // Enable horizontal scrolling
@@ -118,6 +136,32 @@
             leftColumns: 0, // Number of columns to fix on the left
             rightColumns: 1  // Fix the last column (action column) on the right
         }
+                });
+                table.column(6).search(1).draw();
+
+                // --- Bootstrap Tab Event Listener ---
+                $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                    const selectedStatus = $(e.target).data('status'); // Get 'active' or 'inactive' from data-status attribute
+                    // Update DataTable's AJAX URL dynamically
+                    // DataTables redraws the table and re-sends AJAX request with the new data parameter.
+                    table.column(6).search(selectedStatus).draw();
+                    //$('#user_datatable').DataTable().ajax.reload(null, false); // Reload data, don't reset pagination
+                });
+
+                // --- (Optional) Handle the highlighting of rows with checkboxes ---
+                // Ensure your individual checkbox and "check-all" logic is set up as discussed before.
+                // This part should already be generic and work with the new data.
+                $(document).on('change', '#user_datatable .row-checkbox', function() {
+                    if ($(this).is(':checked')) {
+                        $(this).closest('tr').addClass('selected-row');
+                    } else {
+                        $(this).closest('tr').removeClass('selected-row');
+                    }
+                });
+                // And if you have a "check-all" checkbox:
+                $(document).on('change', '#check-all-rows', function() {
+                    const isChecked = $(this).is(':checked');
+                    $('#user_datatable .row-checkbox').prop('checked', isChecked).trigger('change');
                 });
 
                 // Filter by department

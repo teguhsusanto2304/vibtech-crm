@@ -9,30 +9,170 @@
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <!-- Search -->
-        <div class="navbar-nav align-items-center">
-            <div class="nav-item d-flex align-items-center">
-                <i class="bx bx-search bx-md"></i>
-                <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2" placeholder="Search..."
-                    aria-label="Search..." />
+        <form id="global-search-form" class="d-flex w-100 me-3" role="search">
+            <div class="navbar-nav align-items-center">
+                <div class="nav-item d-flex align-items-center">
+                    <i class="bx bx-search bx-md"></i>
+                    <style>
+                        #global-search-input {
+                            color: #FFFFFF; /* Sets the font color to white */
+                        }
+                    </style>
+                    <input type="text" class="form-control border-0 shadow-none ps-1 ps-sm-2" 
+                    placeholder="Search..."
+                    id="global-search-input"
+                    autocomplete="off"
+                        aria-label="Search..." />
+                </div>
             </div>
+            <button type="submit" class="btn btn-primary d-none">Search</button>
+        </form>
+        <div id="global-search-suggestions" class="list-group position-absolute bg-white shadow-lg rounded" style="z-index: 1000; width: 300px; max-height: 400px; overflow-y: auto; display: none;">
+            <!-- Suggestions will be appended here -->
         </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                const $globalSearchInput = $('#global-search-input');
+                const $globalSearchForm = $('#global-search-form');
+                const $globalSearchSuggestions = $('#global-search-suggestions');
+
+                let searchTimeout;
+                const MIN_CHARS_FOR_SEARCH = 3; // Minimum characters before triggering search
+
+                // --- Autocomplete/AJAX Search (as user types) ---
+                $globalSearchInput.on('keyup', function() {
+                    clearTimeout(searchTimeout); // Clear previous timeout
+                    const query = $(this).val().trim();
+
+                    if (query.length >= MIN_CHARS_FOR_SEARCH) {
+                        searchTimeout = setTimeout(function() {
+                            performAjaxSearch(query);
+                        }, 300); // Debounce: wait 300ms after last keypress
+                    } else {
+                        $globalSearchSuggestions.hide().empty(); // Hide and clear suggestions if query is too short
+                    }
+                });
+
+                // Handle suggestion click (navigate to specific item)
+                $globalSearchSuggestions.on('click', '.list-group-item', function(e) {
+                    e.preventDefault();
+                    const url = $(this).data('url');
+                    if (url) {
+                        window.location.href = url;
+                        $globalSearchSuggestions.hide().empty(); // Hide suggestions after selection
+                        $globalSearchInput.val(''); // Clear search input
+                    }
+                });
+
+                // Hide suggestions when clicking outside
+                $(document).on('click', function(e) {
+                    if (!$globalSearchInput.is(e.target) && $globalSearchInput.has(e.target).length === 0 && !$globalSearchSuggestions.is(e.target) && $globalSearchSuggestions.has(e.target).length === 0) {
+                        $globalSearchSuggestions.hide().empty();
+                    }
+                });
+
+                // --- Function to perform AJAX search for autocomplete ---
+                function performAjaxSearch(query) {
+                    $.ajax({
+                        url: "{{ route('v1.dashboard.global-search-autocomplete') }}", // Create this route
+                        method: 'GET',
+                        data: { query: query },
+                        success: function(response) {
+                            if (response.success && response.results) {
+                                displaySearchResults(response.results);
+                            } else {
+                                $globalSearchSuggestions.hide().empty();
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Global search AJAX error:', xhr.responseText);
+                            $globalSearchSuggestions.hide().empty();
+                        }
+                    });
+                }
+
+                // --- Function to display search results in the suggestion dropdown ---
+                function displaySearchResults(results) {
+                    $globalSearchSuggestions.empty();
+                    let hasResults = false;
+
+                    // Iterate through categories (e.g., projects, tasks, users)
+                    for (const category in results) {
+                        if (results[category].length > 0) {
+                            hasResults = true;
+                            $globalSearchSuggestions.append(`<h6 class="dropdown-header px-3 py-2 bg-light text-primary fw-bold">${capitalizeFirstLetter(category)}</h6>`);
+                            results[category].forEach(item => {
+                                // Assuming each item has 'name' (or title) and 'url'
+                                let name = item.name || item.title || item.email || 'Untitled'; // Fallback
+                                let url = item.url || '#'; // Fallback
+
+                                $globalSearchSuggestions.append(`
+                                    <a href="${url}" data-url="${url}" class="list-group-item list-group-item-action py-2">
+                                        <i class="${getIconForCategory(category)} me-2 text-muted"></i>
+                                        ${name}
+                                        ${item.meta_info ? `<br><small class="text-muted ms-4">${item.meta_info}</small>` : ''}
+                                    </a>
+                                `);
+                            });
+                        }
+                    }
+
+                    if (hasResults) {
+                        $globalSearchSuggestions.css({
+                            top: $globalSearchInput.outerHeight() + $globalSearchInput.position().top + 5, // Position below input
+                            left: $globalSearchInput.position().left,
+                            width: $globalSearchInput.outerWidth()
+                        }).show();
+                    } else {
+                        $globalSearchSuggestions.html('<div class="list-group-item text-muted text-center py-3">No results found.</div>').show();
+                        $globalSearchSuggestions.css({
+                            top: $globalSearchInput.outerHeight() + $globalSearchInput.position().top + 5,
+                            left: $globalSearchInput.position().left,
+                            width: $globalSearchInput.outerWidth()
+                        }).show();
+                    }
+                }
+
+                // Helper function to capitalize first letter
+                function capitalizeFirstLetter(string) {
+                    return string.charAt(0).toUpperCase() + string.slice(1);
+                }
+
+                // Helper function to get icon based on category (customize as needed)
+                function getIconForCategory(category) {
+                    switch (category) {
+                        case 'projects': return 'fas fa-folder';
+                        case 'tasks': return 'fas fa-tasks';
+                        case 'users': return 'fas fa-user';
+                        case 'job_requisitions': return 'fas fa-file-contract';
+                        default: return 'fas fa-info-circle';
+                    }
+                }
+
+                // --- Full Page Search (when user hits Enter or explicitly submits the form) ---
+                $globalSearchForm.on('submit', function(e) {
+                    // Only prevent default if we want to handle the search entirely via JS
+                    // If you want a dedicated search results page, remove e.preventDefault()
+                    // and let the browser submit the form to the route defined by form action.
+                    e.preventDefault();
+                    const query = $globalSearchInput.val().trim();
+                    if (query.length > 0) {
+                        window.location.href = "{{ route('v1.dashboard.search-results') }}?query=" + encodeURIComponent(query);
+                    }
+                });
+
+            });
+            </script>
         <!-- /Search -->
 
         <ul class="navbar-nav flex-row align-items-center ms-auto">
-            <!-- Place this tag where you want the button to render. -->
-            <li class="nav-item navbar-dropdown dropdown-user dropdown">
-                <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
-                    <i class="bx bx-user bx-md" style="color: #fff; font-size: 24px; margin-right: 25px;"></i>
-                </a>
-            </li>
-
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <i class="bx bx-bell bx-md" style="color: #fff; font-size: 24px; margin-right: 25px;"></i>
                     <span class="badge bg-danger rounded-circle position-absolute" id="notification-count"
                         style="top: 5px; right: 30px; font-size: 12px;">0</span>
                 </a>
-
 
                 <ul class="dropdown-menu dropdown-menu-end" id="notification-list">
 
@@ -149,10 +289,6 @@
                     <li>
                         <a class="dropdown-item" href="{{ route('profile') }}">
                             <i class="bx bx-user bx-md me-3"></i><span>My Profile</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#"> <i class="bx bx-cog bx-md me-3"></i><span>Settings</span>
                         </a>
                     </li>
                     <li>

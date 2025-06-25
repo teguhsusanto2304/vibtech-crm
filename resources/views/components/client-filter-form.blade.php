@@ -35,6 +35,10 @@
     </div>
     <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
         <div class="btn-group" role="group">
+                @if(Route::currentRouteName() == 'v1.client-database.list')
+                <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
+                <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+            @else
                 @php $pdf = 0; $csv=0; @endphp
                 @forelse ($downloadFile as $row )
                     @if($row->file_type=='csv' && $row->data_status==0)
@@ -65,6 +69,7 @@
                 @if($csv == 0)
                     <<button id="download-csv1" class="btn btn-outline-primary">Request To Download CSV</button>
                 @endif
+            @endif
                 <button type="button" id="reset-filters" class="btn btn-secondary">Reset Filters</button>
         </div>
     </div>

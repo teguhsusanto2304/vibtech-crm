@@ -54,6 +54,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'dob' => 'date',
+        'joined_at' => 'date',
         'password' => 'hashed',
     ];
 

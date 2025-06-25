@@ -44,25 +44,60 @@
 
         <style>
             .remarks-scroll-container {
-    max-height: 100px; /* Adjust this value as needed */
-    overflow-y: auto;  /* Enables vertical scrolling if content exceeds max-height */
-    padding-right: 5px; /* Adds a little space for the scrollbar */
-    /* Optional styling for better appearance */
-    border: 1px solid #eee; /* Light border */
-    background-color: #f9f9f9; /* Light background */
-    margin: 0; /* Remove default margins from paragraphs if any */
-}
+                max-height: 100px; /* Adjust this value as needed */
+                overflow-y: auto;  /* Enables vertical scrolling if content exceeds max-height */
+                padding-right: 5px; /* Adds a little space for the scrollbar */
+                /* Optional styling for better appearance */
+                border: 1px solid #eee; /* Light border */
+                background-color: #f9f9f9; /* Light background */
+                margin: 0; /* Remove default margins from paragraphs if any */
+            }
 
-/* Optional: Style for the paragraphs inside to reduce spacing if needed */
-.remarks-scroll-container p {
-    margin-bottom: 5px; /* Reduce space between remarks */
-    padding: 0;
-}
+            /* Optional: Style for the paragraphs inside to reduce spacing if needed */
+            .remarks-scroll-container p {
+                margin-bottom: 5px; /* Reduce space between remarks */
+                padding: 0;
+            }
 
-.remarks-scroll-container p:last-child {
-    margin-bottom: 0; /* No margin on the last paragraph */
-}
-            </style>
+            .remarks-scroll-container p:last-child {
+                margin-bottom: 0; /* No margin on the last paragraph */
+            }
+
+            .selected-row td {
+                color:#5f82f5 !important; /* Apply to td elements */
+            }
+
+            /* Custom styles for the client remarks modal body */
+            #clientRemarksModalBody {
+                max-height: 400px; /* Adjust this value as needed. For larger screens, maybe 500px, smaller screens 300px. */
+                overflow-y: auto;  /* This enables vertical scrolling when content exceeds max-height */
+                padding: 20px;     /* Add some padding for better aesthetics */
+            }
+
+            /* Optional: Some styling for individual remark items if you use Option 2 (Detailed Display) in JS */
+            .remark-item {
+                margin-bottom: 15px; /* Space between remarks */
+                padding-bottom: 15px; /* Padding before the border */
+                border-bottom: 1px solid #eee; /* Light separator line */
+            }
+
+            .remark-item:last-child {
+                border-bottom: none; /* No border for the last item */
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .remark-item p {
+                margin-bottom: 5px; /* Space between text and small tag */
+                line-height: 1.5;
+            }
+
+            .remark-item small {
+                font-size: 0.85em;
+                color: #777;
+                display: block; /* Ensures it's on its own line */
+            }
+        </style>
 
         <!-- Card -->
         <div class="card">
@@ -142,40 +177,6 @@
                 </div>
             </div>
         </div>
-
-        <style>
-            /* Custom styles for the client remarks modal body */
-            #clientRemarksModalBody {
-                max-height: 400px; /* Adjust this value as needed. For larger screens, maybe 500px, smaller screens 300px. */
-                overflow-y: auto;  /* This enables vertical scrolling when content exceeds max-height */
-                padding: 20px;     /* Add some padding for better aesthetics */
-            }
-
-            /* Optional: Some styling for individual remark items if you use Option 2 (Detailed Display) in JS */
-            .remark-item {
-                margin-bottom: 15px; /* Space between remarks */
-                padding-bottom: 15px; /* Padding before the border */
-                border-bottom: 1px solid #eee; /* Light separator line */
-            }
-
-            .remark-item:last-child {
-                border-bottom: none; /* No border for the last item */
-                margin-bottom: 0;
-                padding-bottom: 0;
-            }
-
-            .remark-item p {
-                margin-bottom: 5px; /* Space between text and small tag */
-                line-height: 1.5;
-            }
-
-            .remark-item small {
-                font-size: 0.85em;
-                color: #777;
-                display: block; /* Ensures it's on its own line */
-            }
-        </style>
-
         <div class="modal fade" id="clientDetailModal" tabindex="-1" aria-labelledby="clientDetailModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -394,6 +395,40 @@
 
         <script>
             let assignForm;
+
+                $(document).on('change', '#check-all-rows', function() {
+                    const isChecked = $(this).is(':checked');
+                    $('#clients-table .row-checkbox').prop('checked', isChecked).trigger('change');
+                });
+
+                function updateCheckAllCheckbox() {
+                    const totalCheckboxes = $('#clients-table .row-checkbox').length;
+                    const checkedCheckboxes = $('#clients-table .row-checkbox:checked').length;
+                    const $masterCheckbox = $('#check-all-rows');
+
+                    if (totalCheckboxes === 0) {
+                        $masterCheckbox.prop('checked', false).prop('indeterminate', false);
+                    } else if (checkedCheckboxes === totalCheckboxes) {
+                        $masterCheckbox.prop('checked', true).prop('indeterminate', false);
+                    } else if (checkedCheckboxes > 0) {
+                        $masterCheckbox.prop('checked', false).prop('indeterminate', true);
+                    } else {
+                        $masterCheckbox.prop('checked', false).prop('indeterminate', false);
+                    }
+                }
+
+                $(document).on('change', '#clients-table .row-checkbox', function() {
+                    if ($(this).is(':checked')) {
+                        // If checked, add the highlight class to the parent row
+                        $(this).closest('tr').addClass('selected-row');
+                    } else {
+                        // If unchecked, remove the highlight class
+                        $(this).closest('tr').removeClass('selected-row');
+                    }
+
+                    // Optional: Update master "Check All" checkbox status
+                    //updateCheckAllCheckbox();
+                });
 
                 $(document).on("submit", "#assignClientForm", function (e) {
                     e.preventDefault(); // Stop normal form submission
@@ -668,6 +703,7 @@
                     const isChecked = this.checked;
                     // Select/Deselect all visible row checkboxes
                     $('.row-checkbox').prop('checked', isChecked);
+                    $('#clients-table .row-checkbox').prop('checked', isChecked).trigger('change');
 
                     // Update the selectedClientIds map for the current page
                     table.rows({ page: 'current' }).data().each(function(row) {
