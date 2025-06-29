@@ -18,10 +18,9 @@ use Illuminate\Support\Facades\Storage;
 use App\Notifications\UserNotification;
 use Auth;
 use App\Models\ClientRemark;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use function PHPUnit\Framework\isEmpty;
-use function PHPUnit\Framework\isNull;
+use Illuminate\Support\Facades\Log;
+use Exception;
 use App\Services\CommonService;
 
 class ClientController extends Controller
@@ -243,33 +242,88 @@ class ClientController extends Controller
 
     public function import(Request $request)
     {
-
         $i = 0;
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
-            'contact_for_id' => 'required|exists:users,id'
-        ]);
+        $processedRecords = 0; // Untuk melacak jumlah baris yang diproses
+        $successfulImports = 0; // Untuk melacak impor yang berhasil
+
+        try { // Mulai blok try-catch untuk menangani exception secara umum
+            $request->validate([
+                'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+                'contact_for_id' => 'required|exists:users,id'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Log jika validasi input gagal
+            Log::error('CSV Import Validation Error: ' . $e->getMessage(), [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return redirect()
+                ->back() // Atau route lain yang sesuai
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         $file = $request->file('csv_file');
         $duplicates = [];
+        $failedRows = []; // Untuk melacak baris yang gagal diimport
+
+        // Mulai transaksi database jika Anda ingin semua atau tidak sama sekali
+        // \DB::beginTransaction(); // Pastikan Anda mengimport DB fasad jika menggunakan ini
 
         if (($handle = fopen($file->getRealPath(), 'r')) !== false) {
             $header = fgetcsv($handle, 1000, ',');
 
+            if ($header === false) {
+                Log::error('CSV Import Error: Could not read header from CSV file.', [
+                    'file_name' => $file->getClientOriginalName()
+                ]);
+                fclose($handle);
+                return redirect()->back()->with('error_import', 'Failed to read CSV header. File might be empty or corrupted.');
+            }
+
+            $lineNumber = 1; // Mulai dari 1 untuk header, lalu 2 untuk baris data pertama
             while (($row = fgetcsv($handle, 1000, ',')) !== false) {
+                $lineNumber++; // Baris saat ini
+                $processedRecords++;
+
+                if (count($header) !== count($row)) {
+                    // Log jika jumlah kolom tidak cocok
+                    Log::warning('CSV Import Warning: Mismatched column count on line ' . $lineNumber, [
+                        'file_name' => $file->getClientOriginalName(),
+                        'header_count' => count($header),
+                        'row_count' => count($row),
+                        'row_data' => $row
+                    ]);
+                    $failedRows[] = ['line' => $lineNumber, 'reason' => 'Mismatched column count', 'data' => implode(',', $row)];
+                    continue; // Lewati baris ini
+                }
+
                 $data = array_combine($header, $row);
 
-                if (!empty($data['name']) && !empty($data['email'])) {
+                // Periksa apakah kolom 'name' atau 'email' ada dan tidak kosong
+                if (empty($data['name']) || empty($data['email'])) {
+                    Log::warning('CSV Import Warning: Skipping row due to missing name or email on line ' . $lineNumber, [
+                        'file_name' => $file->getClientOriginalName(),
+                        'row_data' => $data
+                    ]);
+                    $failedRows[] = ['line' => $lineNumber, 'reason' => 'Missing name or email', 'data' => implode(',', $row)];
+                    continue; // Lewati baris ini
+                }
+
+                try {
                     // Check if email already exists
                     $exists = Client::where('email', $data['email'])->exists();
 
                     if ($exists) {
                         $duplicates[] = $data['email']; // Track duplicates
+                        Log::info('CSV Import Info: Skipping duplicate email ' . $data['email'] . ' on line ' . $lineNumber, [
+                            'file_name' => $file->getClientOriginalName(),
+                            'email' => $data['email']
+                        ]);
                         continue; // Skip insertion
                     }
 
                     // Store data
-                    $i++;
                     $newClient = Client::create([
                         'name' => $data['name'] ?? null,
                         'position' => $data['position'] ?? null,
@@ -281,6 +335,7 @@ class ClientController extends Controller
                         'contact_for_id' => $request->input('contact_for_id'),
                         'created_id' => auth()->user()->id,
                     ]);
+                    $successfulImports++;
 
                     if ($request->upload_remarks) {
                         $remark = new ClientRemark([
@@ -288,34 +343,84 @@ class ClientController extends Controller
                             'user_id' => auth()->id(),
                         ]);
 
+                        // Pastikan relasi remarks() ada di model Client
                         $newClient->remarks()->save($remark);
                     }
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Tangkap error yang terkait dengan database (misalnya, batasan NOT NULL, batasan unik lainnya selain email yang sudah ditangani)
+                    Log::error('CSV Import Database Error on line ' . $lineNumber . ': ' . $e->getMessage(), [
+                        'file_name' => $file->getClientOriginalName(),
+                        'row_data' => $data,
+                        'error_code' => $e->getCode(),
+                        'error_sql_state' => $e->errorInfo[0] ?? null, // <<< PERBAIKAN DI SINI
+                        'error_driver_code' => $e->errorInfo[1] ?? null, // Tambahkan ini juga jika perlu
+                        'error_driver_message' => $e->errorInfo[2] ?? null, // Tambahkan ini juga jika perlu
+                    ]);
+                    $failedRows[] = ['line' => $lineNumber, 'reason' => 'Database error: ' . $e->getMessage(), 'data' => implode(',', $row)];
+                    // \DB::rollBack(); // Rollback transaksi jika terjadi error fatal dalam iterasi ini
+                    // return redirect()->back()->with('error_import', 'A database error occurred during import. Check logs.');
+                    continue; // Lanjutkan ke baris berikutnya meskipun ada error
+                } catch (\Exception $e) {
+                    // Tangkap error umum lainnya selama proses import baris
+                    Log::error('CSV Import General Error on line ' . $lineNumber . ': ' . $e->getMessage(), [
+                        'file_name' => $file->getClientOriginalName(),
+                        'row_data' => $data
+                    ]);
+                    $failedRows[] = ['line' => $lineNumber, 'reason' => 'General error: ' . $e->getMessage(), 'data' => implode(',', $row)];
+                    continue; // Lanjutkan ke baris berikutnya meskipun ada error
                 }
             }
 
             fclose($handle);
+        } else {
+            // Log jika file gagal dibuka
+            Log::error('CSV Import Error: Could not open uploaded CSV file.', [
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $file->getRealPath()
+            ]);
+            return redirect()->back()->with('error_import', 'Failed to open CSV file for reading.');
         }
 
-        // Redirect with duplicate email info
+        // \DB::commit(); // Commit transaksi jika semua berhasil
+
+        // Redirect dengan info email duplikat
         if (!empty($duplicates)) {
+            Log::info('CSV Import Summary: Skipped ' . count($duplicates) . ' duplicate emails.', ['duplicates' => $duplicates]);
             return redirect()
                 ->route('v1.client-database.create')
                 ->with('error_import', 'Some emails were duplicated and skipped: ' . implode(', ', $duplicates));
         }
 
-        $users = \App\Models\User::permission('view-salesperson-assignment')
-            ->get(); // example
-        foreach ($users as $user) {
-            $user->notify(new UserNotification(
-                'There are ' . $i . ' new client data inserted, please assign salesperson/s to the data/s',
-                'accept',
-                route('v1.client-database.assignment-salesperson.list')
-            ));
+        try {
+            $users = User::permission('view-salesperson-assignment')->get();
+            foreach ($users as $user) {
+                $user->notify(new UserNotification(
+                    'There are ' . $successfulImports . ' new client data inserted, please assign salesperson/s to the data/s',
+                    'accept',
+                    route('v1.client-database.assignment-salesperson.list')
+                ));
+            }
+            Log::info('CSV Import Notification Sent: ' . $successfulImports . ' clients inserted, notification sent to relevant users.');
+        } catch (\Exception $e) {
+            Log::error('CSV Import Notification Error: Failed to send notification after ' . $successfulImports . ' successful imports.', [
+                'error' => $e->getMessage(),
+                'stack_trace' => $e->getTraceAsString()
+            ]);
+            // Anda bisa memilih untuk tetap mengarahkan ke sukses jika import berhasil meskipun notifikasi gagal
         }
+
+        // Log ringkasan keseluruhan import
+        Log::info('CSV Import Completed: ' . $successfulImports . ' records imported successfully, ' . count($duplicates) . ' duplicates skipped, ' . count($failedRows) . ' rows failed.', [
+            'file_name' => $file->getClientOriginalName(),
+            'total_processed_rows' => $processedRecords,
+            'successful_imports' => $successfulImports,
+            'skipped_duplicates' => $duplicates,
+            'failed_rows_details' => $failedRows
+        ]);
 
         return redirect()
             ->route('v1.client-database.my-list')
-            ->with('success', 'CSV imported successfully!');
+            ->with('success', 'CSV imported successfully! ' . $successfulImports . ' records added.');
     }
 
 
@@ -1504,9 +1609,16 @@ class ClientController extends Controller
             ->when($request->industry, fn($q) => $q->whereHas('industryCategory', fn($q) => $q->where('name', $request->industry)))
             ->when($request->country, fn($q) => $q->whereHas('country', fn($q) => $q->where('name', $request->country)))
             ->get();**/
-        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
-            ->get();
+
+        if (!Auth::user()->can('view-vibtech-database')) {
+            $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+                ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
+                ->get();
+        } else {
+            $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+                ->where(['data_status'=>1])
+                ->get();
+        }
 
 
 
@@ -1557,20 +1669,20 @@ class ClientController extends Controller
 
     public function exportPdf(Request $request)
     {
-        /**$clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->when($request->sales_person, fn($q) => $q->whereHas('salesPerson', fn($q) => $q->where('name', $request->sales_person)))
-            ->when($request->industry, fn($q) => $q->whereHas('industryCategory', fn($q) => $q->where('name', $request->industry)))
-            ->when($request->country, fn($q) => $q->whereHas('country', fn($q) => $q->where('name', $request->country)))
-            ->get();
-            **/
-
-        $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
-            ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
-            ->get();
-
+        if (!Auth::user()->can('view-vibtech-database')) {
+            $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+                ->where(['sales_person_id'=> auth()->user()->id,'data_status'=>1])
+                ->get();
+        } else {
+            $clients = Client::with(['industryCategory', 'country', 'salesPerson'])
+                ->where(['data_status'=>1])
+                ->get();
+        }
         $pdf = PDF::loadView('client_database.partials.export_pdf', ['clients' => $clients]);
         $pdf->setPaper('A4', 'landscape');
-        return $pdf->download('clients_export.pdf');
+        return $pdf->stream('clients_export_' . date('Y-m-d_H-i-s') . '.pdf');
+
+        //return $pdf->download('clients_export.pdf');
     }
 
     public function requestBulkAction(Request $request)

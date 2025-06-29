@@ -287,7 +287,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach($project->files as $file)
-                                    <tr>
+                                    <tr data-table-file-id="{{ $file->id }}">
                                         <td>
                                             <i class="fas fa-file-alt me-2"></i> <label class="file-name-text">{{ $file->file_name }}</label><br>
                                             <small class="text-muted">({{ number_format($file->file_size / 1024 / 1024, 2) }} MB)</small>
@@ -482,13 +482,6 @@
                                         <div class="col-9">
                                             <label class="detail-label">{{ $task->name }}</label>
                                             <p><small>{{ $task->description }}</small></p>
-                                            <p><small class="
-                                            @if ($task->end_at->isPast())
-                                                text-danger
-                                            @else
-                                                text-warning
-                                           @endif
-                                            ">{{ $task->end_at->format('d M Y') }}</small></p>
                                         </div>
                                         <div class="col-3">
                                             <img src="{{ $task->assignedTo->avatar_url }}" alt="{{ $task->assignedTo->name }}'s avatar"
@@ -570,6 +563,13 @@
                                         </div>
                                         <div class="col-6 ">
                                             <div class="d-flex flex-column align-items-end justify-content-end h-100 pe-4">
+                                                <p><small>Due Date : </small><small class="
+                                            @if ($task->end_at->isPast())
+                                                text-danger
+                                            @else
+                                                text-warning
+                                           @endif
+                                            ">{{ $task->end_at->format('d M Y') }}</small></p>
                                                 <a href="#" class="download-files-link mb-2 view-task-details-btn"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#taskDetailModal"
@@ -841,6 +841,7 @@
                     // --- Project File Delete Modal Logic ---
                     $(document).on('click', '.delete-file-btn', function() {
                         const fileId = $(this).data('file-id');
+                        const tableFileId = $(this).closest('tr').data('table-file-id');
                         const projectId = $(this).data('project-id'); // Get project ID
                         const fileName = $(this).data('file-name'); // Get file name from the row
 
@@ -859,6 +860,7 @@
 
                         const fileIdToDelete = $('#deleteFileId').val();
                         const projectIdForFile = $('#deleteFileProjectId').val(); // Get project ID
+                        //const tableFileId = $(this).closest('tr').data('table-file-id');
 
                         $.ajax({
                             url: `/v1/project-management/${fileIdToDelete}/file-destroy`, // API endpoint for file deletion
@@ -870,9 +872,15 @@
                                 if (response.success) {
                                     alert(response.message || 'File deleted successfully!');
                                     $('#deleteProjectFileModal').modal('hide');
-                                    location.reload(true); // Refresh the page to reflect changes
+                                    //location.reload(true); // Refresh the page to reflect changes
                                     // Or, for a smoother UX, remove the row from the DOM:
-                                    // $(`tr[data-file-id="${fileIdToDelete}"]`).remove();
+                                    $(`tr[data-table-file-id="${fileIdToDelete}"]`).remove();
+                                    const filesTabButton = document.getElementById('project-files');
+                                    if (filesTabButton) { // Check if the element exists
+                                        const bsTab = new bootstrap.Tab(filesTabButton);
+                                        bsTab.show();
+                                    }
+                                    //window.location.href = window.location.origin + window.location.pathname + window.location.search + '#project-files';
                                 } else {
                                     alert(response.message || 'Failed to delete file.');
                                 }

@@ -63,9 +63,36 @@
                 margin-bottom: 0; /* No margin on the last paragraph */
             }
 
-            .selected-row td {
-                color:#5f82f5 !important; /* Apply to td elements */
-            }
+            /* Your existing striped table styling */
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color:#9bc6f1; /* Example: light gray for odd rows */
+}
+.table-striped > tbody > tr:nth-of-type(even) {
+    background-color: #fff; /* Example: white for even rows */
+}
+
+/* Base selected row style */
+.selected-row {
+    outline: 2px solid #007bff; /* Add a visible outline instead of just background */
+    outline-offset: -1px; /* Pull outline inward */
+    background-color:#dfeef9;
+}
+
+/* Apply specific background colors based on both striped and selected state */
+.table-striped > tbody > tr.selected-row:nth-of-type(odd) {
+    background-color:#9bc6f1; /* Light blue for selected odd rows */
+}
+
+.table-striped > tbody > tr.selected-row:nth-of-type(even) {
+    background-color:#9bc6f1; /* Slightly darker blue for selected even rows */
+}
+
+/* Ensure all cells within these rows also get the background/color */
+.table-striped > tbody > tr.selected-row:nth-of-type(odd) > *,
+.table-striped > tbody > tr.selected-row:nth-of-type(even) > * {
+    background-color: inherit;
+    color: inherit;
+}
 
             /* Custom styles for the client remarks modal body */
             #clientRemarksModalBody {
@@ -108,7 +135,8 @@
             </div>
             <div class="card-body" style="overflow-x: auto;">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped nowrap w-100" id="clients-table">
+                    <!--  table-striped -->
+                    <table class="table table-bordered nowrap w-100" id="clients-table">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="select-all"></th>
@@ -421,6 +449,7 @@
                     if ($(this).is(':checked')) {
                         // If checked, add the highlight class to the parent row
                         $(this).closest('tr').addClass('selected-row');
+
                     } else {
                         // If unchecked, remove the highlight class
                         $(this).closest('tr').removeClass('selected-row');
@@ -599,7 +628,10 @@
                     industry: $('#filter-industry').val(),
                     country: $('#filter-country').val()
                 });
-                window.location.href = `/v1/client-database/export/pdf?${params.toString()}`;
+                const url = `/v1/client-database/export/pdf?${params.toString()}`;
+                // Open the URL in a new tab
+                window.open(url, '_blank');
+                
                 $.ajax({
                     method: 'GET',
                     url: '{{ route('v1.client-download.request-download-complete',['user_id'=>auth()->user()->id,'fileType'=>'pdf']) }}'

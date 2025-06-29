@@ -13,12 +13,16 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
+use App\Helpers\GlobalConfig;
 
 class LoginController extends Controller
 {
     public function showLoginForm()
     {
-        return view('login');
+        $config = GlobalConfig::get(); // Decode as object
+        $imagePath = $config['site_login_image']['value'];
+
+        return view('login',compact('imagePath'));
     }
 
     public function forgot()

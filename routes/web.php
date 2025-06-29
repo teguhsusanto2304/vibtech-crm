@@ -35,9 +35,7 @@ use App\Http\Controllers\V2\ClientController as ClientControllerV2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('login');
-});
+Route::get('/', [LoginController::class, 'showLoginForm']);
 
 // Route to show the form where the user enters their email to request a reset link
 Route::get('/password/reset', [PasswordResetLinkController::class, 'create'])
@@ -55,9 +53,7 @@ Route::get('/password/reset/{token}', [NewPasswordController::class, 'create'])
 Route::post('/password/reset', [NewPasswordController::class, 'store'])
     ->name('password.store');
 
-Route::get('/login', function () {
-    return view('login');
-})->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 
 Route::get('/v1/login', [LoginController::class, 'showLoginForm'])->name('v1.login');
 Route::post('/v1/login/verify', [LoginController::class, 'verifyLogin'])->name('v1.login.verify');

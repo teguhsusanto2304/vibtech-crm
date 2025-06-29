@@ -85,37 +85,32 @@
 			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
 				<h6 class="mb-2 text-primary">Personal Details</h6>
 			</div>
-			<div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="fullName"><small><strong>Staff ID</strong></small></label>
 					<input type="text" class="form-control-plaintext" id="fullName" disabled value="{{ $user->user_number }}">
 				</div>
 			</div>
-      <div class="col-xl-7 col-lg-10 col-md-10 col-sm-10 col-12">
+      <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="eMail"><small><strong>Name</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled id="eMail" value="{{ $user->name }}">
 				</div>
 			</div>
-      <div class="col-xl-3 col-lg-10 col-md-10 col-sm-10 col-12">
-				<div class="form-group">
-					<label for="eMail"><small><strong>Nick Name</strong></small></label>
-					<input type="email" class="form-control-plaintext" disabled id="eMail" value="{{ $user->nick_name }}">
-				</div>
-			</div>
+
 			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="eMail"><small><strong>Email</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled id="eMail" value="{{ $user->email }}">
 				</div>
 			</div>
-			<div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-12">
+			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Phone Number</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled value="{{ $user->phone_number }}">
 				</div>
 			</div>
-			<div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-12">
+			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="eMail"><small><strong>Date of Birth</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled id="eMail" value="{{ $user->dob->format('d M Y') }}">
@@ -126,28 +121,28 @@
 			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
 				<h6 class="mt-3 mb-2 text-primary">Work</h6>
 			</div>
-      <div class="col-xl-5 col-lg-5 col-md-5 col-sm-5 col-12">
+      <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Position</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled value="{{ $user->position }}">
 				</div>
 			</div>
-			<div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
+			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Department</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled value="{{ $user->department }}">
 				</div>
 			</div>
-      <div class="col-xl-3 col-lg-3 col-md-3 col-sm-3 col-12">
+      		<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Joined Date</strong></small></label>
 					<input type="text" class="form-control-plaintext" disabled value="{{ $user->joined_at->format('d M Y') }}">
 				</div>
 			</div>
-			<div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
+			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Location</strong></small></label>
-					<input type="text" class="form-control-plaintext" disabled value="{{ $user->branch_office }}">
+					<textarea class="form-control-plaintext" disabled>{{ $user->branch_office }}</textarea>
 				</div>
 			</div>
 		</div>

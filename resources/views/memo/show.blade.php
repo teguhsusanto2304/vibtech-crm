@@ -82,7 +82,7 @@
 
 
                     <div class="post-content">
-                        {!! $post->content !!}
+                        {{ $post->content }}
                         <hr style="border: #666">
 
                         <div class="form-check mb-3">

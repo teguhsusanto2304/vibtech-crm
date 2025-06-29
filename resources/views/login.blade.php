@@ -40,8 +40,12 @@
             color: white;
             font-weight: bold;
         }
-        .image-container {
+        .image-containerxxxx {
             background: url('{{ asset('assets/img/a01388c1-da64-4861-951c-292fbd7fb3f01x.png') }}') no-repeat center center;
+            background-size: cover;
+        }
+        .image-container {
+            background: url('{{ asset($imagePath) }}') no-repeat center center;
             background-size: cover;
         }
 

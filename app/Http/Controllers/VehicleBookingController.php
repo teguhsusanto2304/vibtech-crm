@@ -267,7 +267,7 @@ class VehicleBookingController extends Controller
         if (! empty($id)) {
             $availableVehiclesAllSelf = Vehicle::whereNotIn('id',$bookedVehicleId);
             if (auth()->check() && !auth()->user()->can('view-vehicle-booking-sedan')) {
-                $availableVehiclesAllSelf->where(\DB::raw('UPPER(name)'), 'NOT LIKE', '%' . Str::upper('sedan') . '%');
+                $availableVehiclesAllSelf->where(\DB::raw('UPPER(name)'), 'NOT LIKE', '%' . \Str::upper('sedan') . '%');
             }  
             $finalAvailableVehicles = $availableVehiclesAllSelf->where('data_status', 0)->get();           
 

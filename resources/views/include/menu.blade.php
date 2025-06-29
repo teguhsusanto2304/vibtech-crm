@@ -665,21 +665,7 @@
             </li>
         @endif
 
-
-        <li class="menu-item">
-            <a href="{{ route('inbox')}}" class="menu-link">
-                <i class="menu-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 27">
-                        <path
-                            d="M2.7,2.7h28.6c1.1,0,2,0.9,2,2v16.6c0,1.1-0.9,2-2,2H19.5l-5.6,4.2c-0.3,0.2-0.7,0.2-1,0l-5.6-4.2H2.7c-1.1,0-2-0.9-2-2V4.7c0-1.1,0.9-2,2-2z"
-                            stroke="#fff" stroke-width="1.4" fill="none" />
-                    </svg>
-                </i>
-                <div class="text-truncate" data-i18n="Dashboards" title="Inbox">Chat
-                    <span class="badge bg-danger rounded-pill">0</span>
-                </div>
-            </a>
-            @php
+        @php
                 $msg_unread = DB::table('message_reads')
                     ->join('messages', 'message_reads.message_id', '=', 'messages.id')
                     ->where('message_reads.user_id', auth()->user()->id)
@@ -692,19 +678,46 @@
                     $count_group++;
                 }
             @endphp
-            <ul>
-                <li class="no-bullet">
-                    <a href="{{ route('chat-groups') }}" class="menu-link">
-                        <div class="text-truncate" data-i18n="Analytics">Chat Group
-                            @if($count_group > 0)
+
+        <li class="menu-item {{ request()->routeIs(
+                'inbox',
+                'chat-groups'
+            ) ? 'active open' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle">
+                    <i class="menu-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 27">
+                        <path
+                            d="M2.7,2.7h28.6c1.1,0,2,0.9,2,2v16.6c0,1.1-0.9,2-2,2H19.5l-5.6,4.2c-0.3,0.2-0.7,0.2-1,0l-5.6-4.2H2.7c-1.1,0-2-0.9-2-2V4.7c0-1.1,0.9-2,2-2z"
+                            stroke="#fff" stroke-width="1.4" fill="none" />
+                    </svg>
+                    </i>
+                    <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Chat </div>
+                    <span class="badge bg-danger rounded-pill">0</span>
+                </a>
+                <ul class="menu-sub">
+                    <li class="no-bullet">
+                            <a href="{{ route('inbox')}}" class="menu-link {{ request()->routeIs(
+                                        'inbox'
+                                    ) ? 'active open' : '' }}">
+                                <div class="text-truncate" data-i18n="Analytics">Individual Chat </div>
+                                <span class="badge bg-danger rounded-pill">0</span>
+                            </a>
+                    </li>  
+                    <li class="no-bullet">
+                            <a href="{{ route('chat-groups') }}" class="menu-link {{ request()->routeIs(
+                                        'chat-groups'
+                                    ) ? 'active open' : '' }}">
+                                <div class="text-truncate" data-i18n="Analytics">Group Chat </div>
+                               @if($count_group > 0)
                                 <span class="badge bg-danger">{{ $count_group }}</span>
                             @endif
-                        </div>
-                    </a>
-                </li>
-            </ul>
+                            </a>
+                    </li>                   
+                </ul>
         </li>
-        @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
+        
+
+       @if(auth()->user()->can('view-role') || auth()->user()->can('view-user') || auth()->user()->can('view-permission'))
                 <li class="menu-item {{ request()->routeIs(
                 'v1.users',
                 'v1.users.create',

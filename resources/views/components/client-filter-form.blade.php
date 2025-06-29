@@ -37,7 +37,7 @@
         <div class="btn-group" role="group">
                 @if(Route::currentRouteName() == 'v1.client-database.list')
                 <button id="download-csv" class="btn btn-outline-primary">Download CSV</button>
-                <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+                <button id="download-pdf" class="btn btn-outline-danger" >Download PDF</button>
             @else
                 @php $pdf = 0; $csv=0; @endphp
                 @forelse ($downloadFile as $row )
@@ -53,7 +53,7 @@
                     @elseif($row->file_type=='pdf' && $row->data_status==1)
                         <button id="download-pdf1" class="btn btn-outline-danger" disabled>Waiting response</button>
                     @elseif($row->file_type=='pdf' && $row->data_status==2)
-                        <button id="download-pdf" class="btn btn-outline-danger">Download PDF</button>
+                        <button id="download-pdf" class="btn btn-outline-danger" >Download PDF</button>
                     @endif
                     @if ($row->file_type=='pdf')
                        @php $pdf ++;  @endphp
