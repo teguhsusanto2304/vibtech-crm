@@ -23,6 +23,10 @@ return new class extends Migration
                     ->nullable()
                   ->constrained('users') // Assumes your users table
                   ->onDelete('set null'); // If user is deleted, assignee becomes null
+            $table->foreignId('created_by')
+                    ->nullable()
+                  ->constrained('users') // Assumes your users table
+                  ->onDelete('set null');
 
             $table->string('name');         // Name/title of the task
             $table->text('description')->nullable(); // Detailed description of the task

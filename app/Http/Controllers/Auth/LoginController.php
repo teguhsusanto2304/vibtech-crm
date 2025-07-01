@@ -27,7 +27,9 @@ class LoginController extends Controller
 
     public function forgot()
     {
-        return view('forgot');
+        $config = GlobalConfig::get(); // Decode as object
+        $imagePath = $config['site_login_image']['value'];
+        return view('forgot',compact('imagePath'));
     }
 
     public function resetLink(Request $request)

@@ -29,6 +29,7 @@ class Client extends Model
         'is_editable',
         'is_deletable',
         'data_status',
+        'client_type'
     ];
 
     protected $casts = [
@@ -36,6 +37,16 @@ class Client extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    public function getClientTypeLabelAttribute()
+    {
+        return match ($this->client_type) {
+            1 => '<span class="badge bg-primary"><small>Vendor</small></span>',
+            2 => '<span class="badge bg-warning"><small>Supplier</small></span>',
+            3 => '<span class="badge bg-success"><small>Client</small></span>',
+            default => '<span class="badge bg-danger"><small>Unknown</small></span>',
+        };
+    }
 
     public function activityLogs()
     {

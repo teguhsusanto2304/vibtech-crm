@@ -160,6 +160,7 @@
                                 <th>Image</th>
                                 <th>Created On</th>
                                 <th>Updated On</th>
+                                <th>Client Type</th>
                                 <th>Action</th>
                                 <th>Quotation</th>
                                 <th>Remark Action</th>
@@ -708,6 +709,7 @@
                         },
                         { data: 'created_on' },
                         { data: 'updated_on' },
+                        { data: 'client_type_label' },
                         { data: 'action', name: 'action', orderable: false, searchable: false },
                         { data: 'quotation', name: 'quotation' },
                         { data: 'remarks_action', name:'remarks_action'}

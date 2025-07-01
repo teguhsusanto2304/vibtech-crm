@@ -32,7 +32,8 @@ class ProjectStageTask extends Model
         'end_at',
         'completed_at',
         'progress_percentage',
-        'update_log'
+        'update_log',
+        'created_by'
     ];
 
     /**
@@ -60,6 +61,14 @@ class ProjectStageTask extends Model
     public function assignedTo()
     {
         return $this->belongsTo(User::class, 'assigned_to_user_id');
+    }
+
+    /**
+     * Get the user who is created this task.
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
     
     /**

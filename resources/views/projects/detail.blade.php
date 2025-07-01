@@ -803,6 +803,10 @@
                                                                                 <div class="col-sm-8" id="taskAssignedTo"></div>
                                                                             </div>
                                                                             <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Created By:</div>
+                                                                                <div class="col-sm-8" id="taskCreatedby"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
                                                                                 <div class="col-sm-4 fw-bold">Created Date:</div>
                                                                                 <div class="col-sm-8" id="taskStartAt"></div>
                                                                             </div>
@@ -1351,6 +1355,7 @@
                                         document.getElementById('taskName').innerText = task.name;
                                         document.getElementById('taskDescription').innerText = task.description;
                                         document.getElementById('taskAssignedTo').innerText = task.assigned_to?.name || 'N/A';
+                                        document.getElementById('taskCreatedby').innerText = task.created_by?.name || 'N/A';
                                         document.getElementById('taskStartAt').innerText = new Date(task.created_at).toLocaleString('en-GB', { // Using 'en-GB' for dd/mm/yyyy hh:mm format
                                             day: '2-digit',
                                             month: '2-digit',

@@ -158,6 +158,7 @@ class ClientController extends Controller
                 }),
             ],
             'company' => 'required|string|max:255',
+            'client_type' => 'required',
             'position' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:clients',
             'office_number' => 'required|numeric',
@@ -207,6 +208,7 @@ class ClientController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company' => 'required|string|max:255',
+            'client_type' => 'required',
             'position' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
             'office_number' => 'required|numeric',
@@ -430,7 +432,7 @@ class ClientController extends Controller
         $clientReq = ClientRequest::where(['client_id' => $id, 'data_status' => 3])->first();
         $clientReq->delete();
 
-        $client = Client::findOrFail($clientReq->client_id);
+        $client = Client::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company' => 'required|string|max:255',
@@ -439,6 +441,7 @@ class ClientController extends Controller
             'office_number' => 'required|numeric',
             'mobile_number' => 'nullable|numeric',
             'job_title' => 'nullable|string|max:255',
+            'client_type' => 'required|numeric',
             'industry_category_id' => 'nullable',
             'country_id' => 'nullable',
             'sales_person_id' => 'nullable',
@@ -1071,8 +1074,13 @@ class ClientController extends Controller
             ->addIndexColumn()
             ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')
             ->addColumn('country', fn($client) => $client->country->name ?? '-')
-            ->addColumn('salesPerson', fn($client) => $client->salesPerson->name ?? '-')
-            ->addColumn('contactFor', fn($client) => $client->contactFor->name ?? '-')
+            ->addColumn('salesPerson',function ($client) {
+                return isset($client->salesPerson->name)==1?'<img src="' . asset($client->salesPerson->avatar_url??'-') . '" alt="User Image"  class="w-px-40 h-auto rounded-circle"> '.$client->salesPerson->name : '-';
+            })
+             ->addColumn('contactFor',function ($client) {
+                return isset($client->contactFor->name)==1?'<img src="' . asset($client->contactFor->avatar_url??'-') . '" alt="User Image"  class="w-px-40 h-auto rounded-circle"> '.$client->contactFor->name : '-';
+            })
+            ->addColumn('contactFor1', fn($client) => $client->contactFor->name ?? '-')
             ->addColumn('sales_person_btn', function ($client) {
                 $btnReasign = '';
                 if (!is_null($client->salesPerson->name ?? null)) {
@@ -1100,6 +1108,7 @@ class ClientController extends Controller
                     return '<svg fill="#000000" width="80px" height="80px" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg"><defs><style>.cls-1{fill:none;}</style></defs><title>no-image</title><path d="M30,3.4141,28.5859,2,2,28.5859,3.4141,30l2-2H26a2.0027,2.0027,0,0,0,2-2V5.4141ZM26,26H7.4141l7.7929-7.793,2.3788,2.3787a2,2,0,0,0,2.8284,0L22,19l4,3.9973Zm0-5.8318-2.5858-2.5859a2,2,0,0,0-2.8284,0L19,19.1682l-2.377-2.3771L26,7.4141Z"/><path d="M6,22V19l5-4.9966,1.3733,1.3733,1.4159-1.416-1.375-1.375a2,2,0,0,0-2.8284,0L6,16.1716V6H22V4H6A2.002,2.002,0,0,0,4,6V22Z"/><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/></svg>';
                 }
             })
+            ->addColumn('client_type_label', fn($client) => $client->client_type_label ?? '-')
             ->addColumn('action', function ($row,Request $request) {
                 $btnEdit = '';
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Basic mixed styles example"><button class="btn btn-info btn-sm view-client" data-id="' . $row->id . '">View</button>';
@@ -1157,7 +1166,7 @@ class ClientController extends Controller
             })
             ->addColumn('quotation', fn($client) => 'Nil')
             ->addColumn('created_on', function ($client) {
-                return $client->created_at->format('d M Y H:i') . '<br><small>' . $client->createdBy->name . '</small>';
+                return $client->created_at->format('d M Y H:i') . '<br><small><img src="' . asset($client->createdBy->avatar_url??'-') . '" alt="User Image"  class="w-px-30 h-auto rounded-circle"> ' . $client->createdBy->name . '</small>';
             })
             ->addColumn('updated_on', function ($client) {
                 if ($client->created_at != $client->updated_at) {

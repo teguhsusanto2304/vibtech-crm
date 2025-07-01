@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('office_number', 20);
             $table->string('mobile_number', 20)->nullable();
             $table->string('job_title', 100)->nullable();
+            $table->integer('client_type')->default(1);
 
             // Relations
             $table->foreignId('industry_category_id')->nullable()->constrained('industry_categories')->onDelete('cascade');

@@ -10,10 +10,14 @@ use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
+use App\Services\CommonService;
+use App\Mail\NewMemoNotification;
+use App\Mail\NewHandbookNotification;
 
 class PostController extends Controller
 {
-    public function __construct()
+    protected $commonService;
+    public function __construct(CommonService $commonService)
     {
         $this->middleware('auth');
         $this->middleware('permission:view-getting-started|create-getting-started|edit-getting-started|delete-getting-started', ['only' => ['index', 'show']]);
@@ -21,6 +25,7 @@ class PostController extends Controller
         $this->middleware('permission:edit-getting-started', ['only' => ['edit', 'update']]);
         $this->middleware('permission:delete-getting-started', ['only' => ['destroy']]);
         $this->middleware('permission:view-employee-handbook', ['only' => ['handbook']]);
+        $this->commonService = $commonService;
     }
 
     public function index()
@@ -142,7 +147,19 @@ class PostController extends Controller
             $data['path_file'] = 'pdfs/'.$filename;
         }
 
-        Post::create($data);
+        $post = Post::create($data);
+
+        $users = User::where(['user_status'=>1])->get();
+        foreach($users as $user)
+        {
+            $data = [
+                'employee_name' => $user->name,
+                'creator_name' => $post->user->name,
+                'id' => $post->id,
+                'email'=> $user->email
+            ];
+            $this->commonService->sendEmail($data,NewHandbookNotification::class);
+        }
 
         return redirect()->route('v1.employee-handbooks.list')
             ->with('success', 'Employee handbook has created!');
@@ -156,13 +173,25 @@ class PostController extends Controller
             'content' => 'required|string',
         ]);
 
-        Post::create([
+        $post = Post::create([
             'title' => $request->title,
             'description' => $request->description,
             'content' => $request->content,
             'post_type' => 2,
             'created_by' => auth()->user()->id,
         ]);
+
+        $users = User::where(['user_status'=>1])->get();
+        foreach($users as $user)
+        {
+            $data = [
+                'employee_name' => $user->name,
+                'creator_name' => $post->user->name,
+                'id' => $post->id,
+                'email'=> $user->email
+            ];
+            $this->commonService->sendEmail($data,NewMemoNotification::class);
+        }
 
         return redirect()->route('v1.management-memo.list')->with('success', 'Management Memo created successfully.');
     }
@@ -236,6 +265,8 @@ class PostController extends Controller
         $post->update($request->all());
 
         EventUserRead::where('event_id', $id)->delete();
+
+        
 
         return redirect()->route('v1.management-memo.list')->with('success', 'Management memo updated successfully.');
     }

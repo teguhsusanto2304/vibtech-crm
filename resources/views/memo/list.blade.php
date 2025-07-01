@@ -80,12 +80,12 @@
                                             </a>
 
                                             @if($post->data_status == 1)
-                                                @can('edit-getting-started')
+                                                @can('edit-management-memo')
                                                     <a href="{{ route('v1.management-memo.edit',['id'=>$post->id]) }}" class="btn btn-info btn-sm" title="Edit">
                                                         Edit
                                                     </a>
                                                 @endcan
-                                                @can('destroy-getting-started')
+                                                @can('delete-management-memo')
                                                     <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ $post->id }}">
                                                         Archive
                                                     </button>

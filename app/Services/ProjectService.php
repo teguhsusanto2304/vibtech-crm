@@ -8,6 +8,7 @@ use App\Models\ProjectFile;
 use Auth;
 use Yajra\DataTables\DataTables;
 use App\Helpers\IdObfuscator;
+use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,13 +23,12 @@ class ProjectService {
                                     ->first();
 
         $tasks = $projectStage ? $projectStage->tasks->where('data_status', '!=', 0) : collect();
-
-        foreach($tasks as $task)
-        {
-            if ($task->end_at->isPast() && $task->data_status==1)
-            {
-                $task->data_status = 3;
-                $task->save();
+        foreach ($project->projectStages as $stage) {
+            foreach ($stage->tasks->where('data_status', '!=', 0) as $task) {
+                if ($task->end_at->isPast() && $task->data_status == 1) {
+                    $task->data_status = 3;
+                    $task->save();
+                }
             }
         }
         return $project;
@@ -402,6 +402,7 @@ class ProjectService {
     {
         $decodedId = IdObfuscator::decode($project_id);
         $project = Project::find($decodedId);
+        
         if($project_stage_id=='-'){
             \DB::beginTransaction();
             try {
@@ -434,12 +435,22 @@ class ProjectService {
         } else {
             $decodedProjectStageId = IdObfuscator::decode($project_stage_id);
             $projectStage = ProjectStage::find($decodedProjectStageId);
+            $countProjectStageTasks = ProjectStageTask::where('project_stage_id', $decodedProjectStageId)
+            ->whereIn('data_status', [1, 3])
+            ->count();
             // 1. Authorization Check:
             // Only the project manager should be able to mark stages complete.
             if ($project->project_manager_id !== Auth::id()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized: Only the project manager can complete stages.'
+                ], 403); // Forbidden
+            }
+
+            if ($countProjectStageTasks > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'there is still task(s) that is not complete, could you complete first'
                 ], 403); // Forbidden
             }
 

@@ -77,7 +77,16 @@
                         <label for="job_title">Job Title</label>
                         <input type="text" name="job_title" class="form-control" value="{{ old('job_title', $client->job_title) }}">
                     </div>
-
+                    <!-- Client Type -->
+                    <div class="form-group col-6">
+                        <label for="company">Client Type *</label>
+                        <select name="client_type" class="form-control" required>
+                            <option value="">Select Client type</option>
+                            <option value="1" @selected($client->client_type == 1)>Vendor</option>
+                            <option value="2" @selected($client->client_type == 2)>Supplier</option>
+                            <option value="3" @selected($client->client_type == 3)>Client</option>
+                        </select>
+                    </div>
                     <!-- Company -->
                     <div class="form-group col-6">
                         <label for="company">Company *</label>

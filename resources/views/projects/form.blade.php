@@ -193,7 +193,7 @@
                                 // Function to add a new file input field group
                                 function addFileInputField() {
                                     indexNewFileUpload++;
-                                    if(indexNewFileUpload<=4){
+                                    if(indexNewFileUpload<=5){
                                         const newFileInputHtml = `
                                             <div class="input-group mb-2 file-upload-item">
                                                 <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">

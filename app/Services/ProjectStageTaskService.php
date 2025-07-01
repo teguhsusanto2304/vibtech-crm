@@ -58,6 +58,7 @@ class ProjectStageTaskService {
             $task->start_at = $validatedData['start_date'];
             $task->end_at = $validatedData['end_date'];
             $task->assigned_to_user_id = $validatedData['assigned_to_user_id'];
+            $task->created_by = auth()->user()->id;
             $task->update_log = $validatedData['update_log'];
             $task->data_status = 1; // Default status for a new task
             $task->save();
@@ -128,7 +129,8 @@ class ProjectStageTaskService {
             // Eager load necessary relationships for the task details
             $task->load([
                 'projectStage.kanbanStage', // To show stage name
-                'assignedTo',               // To show assignee details               // To show creator details
+                'assignedTo',               // To show assignee details     
+                'createdBy',          // To show creator details
                 'files',                   // To show associated files
                 'logs' => function ($query) { // Apply constraints to the 'logs' relationship query
                     $query->orderBy('created_at', 'desc'); // Order by created_at in ascending order

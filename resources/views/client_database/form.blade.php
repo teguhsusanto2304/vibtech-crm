@@ -103,6 +103,16 @@
                         <label for="job_title">Job Title</label>
                         <input type="text" name="job_title" class="form-control">
                     </div>
+                    <!-- Client Type -->
+                    <div class="form-group col-6">
+                        <label for="company">Client Type *</label>
+                        <select name="client_type" class="form-control" required>
+                            <option value="">Select Client type</option>
+                            <option value="1">Vendor</option>
+                            <option value="2">Supplier</option>
+                            <option value="3">Client</option>
+                        </select>
+                    </div>
                     <!-- Company -->
                     <div class="form-group col-6">
                         <label for="company">Company *</label>
