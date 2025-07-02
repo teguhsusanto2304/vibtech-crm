@@ -35,6 +35,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/store', 'store')->name('v1.project-management.store');
             Route::get('/data', 'getProjectsData')->name('v1.project-management.data');
             Route::get('/{id}/assignable-users','getAssignableUsers')->name('v1.project-management.assignable-users');
+            Route::get('/project-stages/{projectStageId}/{projectId}/bulletins/data', 'getStageBulletinsData')->name('v1.project-management.project-stages.bulletins.data');
+            Route::post('/project-stages/{projectStageId}/{projectId}/bulletins/store', 'storeBulletin')->name('v1.project-management.project-stages.bulletins.store');
+            
         });
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {
@@ -43,8 +46,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/stages/{task_id}/tasks-update', 'update')->name('v1.project-management.stage.tasks-update');
             Route::delete('/stages/{task_id}/tasks-delete', 'destroy')->name('v1.project-management.stage.tasks-delete');
             Route::delete('/stages/{task_id}/tasks-destroy', 'destroy')->name('v1.project-management.stage.tasks-destroy');
-             Route::post('/stages/{task_id}/tasks-add-log', 'addLog')->name('v1.project-management.stage.tasks-add-log');
+            Route::post('/stages/{task_id}/tasks-add-log', 'addLog')->name('v1.project-management.stage.tasks-add-log');
             Route::get('/stage/{task_id}/tasks', 'show')->name('v1.project-management.stage.tasks');
+            
         });
-});
+        
+    });
+
+        
+
+        
 

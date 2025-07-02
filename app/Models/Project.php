@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Helpers\IdObfuscator;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
@@ -158,5 +159,10 @@ if($this->data_status==1)
     public function files() // <--- ADD THIS RELATIONSHIP
     {
         return $this->hasMany(ProjectFile::class);
+    }
+
+    public function stageLogs(): HasMany
+    {
+        return $this->hasMany(ProjectStageLog::class, 'project_id');
     }
 }

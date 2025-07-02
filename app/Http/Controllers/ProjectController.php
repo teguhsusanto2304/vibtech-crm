@@ -116,4 +116,14 @@ class ProjectController extends Controller
     {
         return $this->projectService->fileDestroy($projectFileId);
     }
+
+    public function getStageBulletinsData($projectStageId,$projectId)
+    {
+        return $this->projectService->getStageBulletinsData($projectStageId,$projectId);
+    }
+
+    public function storeBulletin(Request $request, $projectStageId,$projectId)
+    {
+        return $this->projectService->storeBulletin($request,$projectStageId,$projectId);
+    }
 }

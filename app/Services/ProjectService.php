@@ -8,6 +8,7 @@ use App\Models\ProjectFile;
 use Auth;
 use Yajra\DataTables\DataTables;
 use App\Helpers\IdObfuscator;
+use App\Models\ProjectStageLog;
 use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -662,6 +663,54 @@ class ProjectService {
                 'message' => 'An error occurred while deleting the file. Please try again.'
             ], 500);
         }
+    }
+
+    /**
+     * Get bulletins for a specific project stage via AJAX.
+     * Returns JSON data.
+     */
+    public function getStageBulletinsData($projectStageId,$projectId)
+    {
+        // Eager load the 'createdBy' relationship to get user names
+        $bulletins = ProjectStageLog::where(['stage_id'=>$projectStageId,'project_id'=>$projectId])->orderBy('created_at','DESC')->get();
+
+        return response()->json([
+            'bulletins' => $bulletins->map(function ($bulletin) {
+                return [
+                    'id' => $bulletin->id,
+                    'description' => $bulletin->description,
+                    'created_at' => $bulletin->created_at, // Will be converted to ISO 8601 string
+                    'updated_at' => $bulletin->updated_at,
+                    'project_stage_id' => $bulletin->project_stage_id,
+                    'created_by' => $bulletin->created_by,
+                    'created_by_user' => $bulletin->createdBy ? ['name' => $bulletin->createdBy->name] : null,
+                ];
+            })
+        ]);
+    }
+
+    /**
+     * Store a new bulletin via AJAX.
+     */
+    public function storeBulletin(Request $request, $projectStageId,$projectId)
+    {
+        // Add authorization check if needed
+        // $this->authorize('create project stage bulletins');
+        $projectStageLog = ProjectStageLog::where(['stage_id'=>$projectStageId,'project_id'=>$projectId])->get();
+
+        $request->validate([
+            'description' => 'required|string|max:1000',
+        ]);
+
+        // Create a NEW ProjectStageLog record
+        $bulletin = ProjectStageLog::create([
+            'project_id' => $projectId,       // Assign the project ID
+            'stage_id' => $projectStageId,   // Assign the stage ID
+            'description' => $request->input('description'),
+            'created_by' => Auth::id(),
+        ]);
+
+        return response()->json(['message' => 'Bulletin added successfully!']);
     }
     
 }

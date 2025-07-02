@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Helpers\IdObfuscator;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProjectStage extends Model
 {
@@ -82,5 +83,10 @@ class ProjectStage extends Model
         } else {
             return 'Complete';
         }
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(ProjectStageLog::class, 'project_stage_id');
     }
 }

@@ -268,6 +268,15 @@
                                     </button>
                                     @endif
                                 </div>
+                                {{-- START: Search Input for Project Members --}}
+                                <div class="mt-5"> {{-- Add margin-top for spacing --}}
+                                    <label for="memberSearch" class="form-label" >Search Task Content</label> {{-- Visually hidden label for accessibility --}}
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="taskSearch" placeholder="Search tasks content...">
+                                        <button class="btn btn-outline-secondary" type="button" id="taskSearchClear"><i class="bi bi-eraser"></i></button>
+                                    </div>
+                                </div>
+                                {{-- END: Search Input for Project Members --}}
                             </div>
                         </div>
                     </div>
@@ -410,9 +419,24 @@
                             <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
                                     <div class="card mb-3" style="max-width: 540px; border: 1px solid #819A91;">
                                         <div class="card-body" style="height:100px;">
-                                            <h5 class="card-title">{{ $kanbanStage->name }}</h5>
-                                            <p><small class="text-{{ $fontClass }}">{{ $labelStatus }}</small></p>                
-                                    </div>
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h5 class="card-title">{{ $kanbanStage->name }}</h5>
+                                                    <p><small class="text-{{ $fontClass }}">{{ $labelStatus }}</small></p>
+                                                </div>
+                                                <button
+                                                    class="btn btn-sm btn-outline-warning"
+                                                    data-bs-toggle="modal"              {{-- Bootstrap 5: data-bs-toggle, Bootstrap 4: data-toggle --}}
+                                                    data-bs-target="#bulletinModal"     {{-- Bootstrap 5: data-bs-target, Bootstrap 4: data-target --}}
+                                                    data-bulletin-stage-id="{{ $kanbanStage->id }}" {{-- Custom attribute to pass stage ID --}}
+                                                    data-bulletin-project-id="{{ $project->id }}"
+                                                    data-bulletin-stage-disable="{{ $completeStage }}" 
+                                                    id="show-bulletin-modal-btn-{{ $kanbanStage->id }}" {{-- Unique ID for individual buttons (optional but good) --}}
+                                                >
+                                                    Bulletin
+                                                </button>
+                                            </div>           
+                                        </div>
                                     <div class="card-footer">
                                         <div class="text-end">
                                             <div class="btn-group btn-group-sm" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
@@ -477,11 +501,11 @@
                                 }
                                 @endphp
                                 
-                                <div class="card text-bg-light mb-3" style="max-width: 540px; border: 1px solid {{ $bgColor }};">
+                                <div class="card text-bg-light mb-3 stage-task-card" style="max-width: 540px; border: 1px solid {{ $bgColor }};">
                                     <div class="row ms-1 mt-4">
                                         <div class="col-9">
-                                            <label class="detail-label">{{ $task->name }}</label>
-                                            <p><small>{{ $task->description }}</small></p>
+                                            <label class="detail-label stage-task-title">{{ $task->name }}</label>
+                                            <p class="stage-task-description"><small>{{ $task->description }}</small></p>
                                         </div>
                                         <div class="col-3">
                                             <img src="{{ $task->assignedTo->avatar_url }}" alt="{{ $task->assignedTo->name }}'s avatar"
@@ -584,6 +608,208 @@
                         @endforeach
                     </div>
                 </div>
+
+                <style>
+                    .bulletins-scroll-area {
+                        max-height: 200px; /* Adjust this value as needed */
+                        overflow-y: auto;  /* Enables vertical scrollbar when content overflows */
+                        margin-bottom: 15px; /* Add some space between bulletins and the form */
+                        padding-right: 5px; /* Add a small padding to prevent scrollbar from touching content */
+                    }
+                </style>
+
+                <div class="modal fade" id="bulletinModal" tabindex="-1" aria-labelledby="bulletinModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg"> {{-- Use modal-lg for a larger modal --}}
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="bulletinModalLabel">Stage Bulletins: <span id="modalStageName"></span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="bulletinsContainer" class="bulletins-scroll-area">
+                                    <p class="text-muted">Loading bulletins...</p>
+                                </div>
+                                <hr>
+                                <div id="addBulletinContainer">
+                                    <h6>Add New Bulletin</h6>
+                                    <form id="addBulletinForm">
+                                        @csrf
+                                        <input type="hidden" name="project_stage_id" id="modalProjectStageId">
+                                        <input type="hidden" name="project_id" id="modalProjectId">
+                                        <div class="mb-3">
+                                            <textarea class="form-control" id="newBulletinDescription" name="description" rows="3" placeholder="Enter new bulletin here..." required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">Add Bulletin</button>
+                                    </form>
+                                </div>
+                                <div id="formMessages" class="mt-2"></div> {{-- For success/error messages --}}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function() {
+                        const taskSearchInput = $('#taskSearch');
+                        const taskCards = $('.stage-task-card'); // Select all elements that represent a task
+                        const taskSearchClearButton = $('#taskSearchClear');
+                        taskSearchInput.on('keyup', function() {
+                            const searchTerm = $(this).val().toLowerCase(); // Get the search term and convert to lowercase
+                            taskCards.each(function() {
+                                const taskCard = $(this);
+                                // Get the text content from the relevant parts of the task card
+                                // You can choose to search in specific elements like title and description
+                                const taskTitle = taskCard.find('.stage-task-title').text().toLowerCase();
+                                const taskDescription = taskCard.find('.stage-task-description').text().toLowerCase();
+                                // Or search the entire text content of the card
+                                // const taskContent = taskCard.text().toLowerCase();
+
+                                // Check if the search term is found in the task's content
+                                if (taskTitle.includes(searchTerm) || taskDescription.includes(searchTerm)) {
+                                    taskCard.show(); // Show the task card if it matches
+                                } else {
+                                    taskCard.hide(); // Hide the task card if it doesn't match
+                                }
+                            });
+                        });
+                        taskSearchClearButton.on('click', function() {
+                            taskSearchInput.val(''); // Clear the input field
+                            taskSearchInput.trigger('keyup'); // Trigger the keyup event to re-filter (show all tasks)
+                            taskSearchInput.focus(); // Optionally, put focus back on the search input
+                        });
+                    });
+                </script>
+                <script>
+                    $(document).ready(function() {
+                        const bulletinModal = $('#bulletinModal');
+                        const bulletinsContainer = $('#bulletinsContainer');
+                        const modalStageName = $('#modalStageName');
+                        const modalProjectStageIdInput = $('#modalProjectStageId');
+                        const modalProjectIdInput = $('#modalProjectId');
+                        const addBulletinForm = $('#addBulletinForm');
+                        const newBulletinDescription = $('#newBulletinDescription');
+                        const formMessages = $('#formMessages');
+
+                        let currentProjectId = null;
+                        let currentStageId = null;
+                        let currentStageName = null;
+
+                        function loadBulletins() {
+                            if (!currentProjectId || !currentStageId) {
+                                bulletinsContainer.html('<p class="text-danger">Error: Missing Project or Stage ID.</p>');
+                                return;
+                            }
+
+                            bulletinsContainer.html('<p class="text-muted">Loading bulletins...</p>'); // Show loading message
+
+                            $.ajax({
+                                // Ensure this URL matches your Laravel route, accommodating both IDs
+                                // Example: /v1/project-management/project-stages/{projectId}/{stageId}/bulletins/data
+                                url: `/v1/project-management/project-stages/${currentStageId}/${currentProjectId}/bulletins/data`,
+                                method: 'GET',
+                                success: function(response) {
+                                    let bulletinsHtml = '';
+                                    if (response.bulletins && response.bulletins.length > 0) {
+                                        response.bulletins.forEach(function(bulletin) {
+                                            const createdBy = bulletin.created_by_user ? bulletin.created_by_user.name : 'System';
+                                            const createdAt = new Date(bulletin.created_at).toLocaleString('en-US', {
+                                                year: 'numeric', month: 'short', day: 'numeric',
+                                                hour: 'numeric', minute: 'numeric', hour12: true
+                                            });
+                                            bulletinsHtml += `
+                                                <div class="card mb-2">
+                                                    <div class="card-body py-2">
+                                                        <h6 class="card-subtitle mb-1 text-muted d-flex justify-content-between align-items-center">
+                                                            <span>${createdBy}</span>
+                                                            <small>${createdAt}</small>
+                                                        </h6>
+                                                        <p class="card-text mb-0">${bulletin.description}</p>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                    } else {
+                                        bulletinsHtml = '<p class="text-muted">No bulletins found for this stage.</p>';
+                                    }
+                                    bulletinsContainer.html(bulletinsHtml);
+                                },
+                                error: function(xhr) {
+                                    console.error('Error fetching bulletins:', xhr.responseText);
+                                    bulletinsContainer.html('<p class="text-danger">Failed to load bulletins. Please try again.</p>');
+                                }
+                            });
+                        }
+
+                        // Listen for the modal to be shown
+                        bulletinModal.on('show.bs.modal', function (event) {
+                            const button = $(event.relatedTarget); // Button that triggered the modal
+                            const bulletinProjectStageId = button.data('bulletin-stage-id');
+                            const bulletinProjectId = button.data('bulletin-project-id');
+                            const stageName = button.closest('.card-body').find('.card-title').text(); // Get stage name from the card
+
+                            modalStageName.text(stageName); // Update modal title
+                            modalProjectStageIdInput.val(bulletinProjectStageId); // Set hidden input for form submission
+                            modalProjectIdInput.val(bulletinProjectId);
+                            bulletinsContainer.html('<p class="text-muted">Loading bulletins...</p>'); // Show loading message
+                            formMessages.empty(); // Clear previous form messages
+                            newBulletinDescription.val(''); // Clear form field
+
+                            if (button.length > 0) {
+                                currentProjectId = button.data('bulletin-project-id');
+                                currentStageId = button.data('bulletin-stage-id');
+                                currentStageDisable = button.data('bulletin-stage-disable');
+                                currentStageName = button.closest('.card-body').find('.card-title').text();
+                            }
+
+                            loadBulletins();
+                            if(currentStageDisable=='disabled'){
+                                $('#addBulletinContainer').hide();
+                            } else {
+                                 $('#addBulletinContainer').show();
+                            }
+                        });
+
+                        // Handle the "Add Bulletin" form submission
+                        addBulletinForm.on('submit', function(e) {
+                            e.preventDefault(); // Prevent default form submission
+
+                            const addBulletinProjectStageId = modalProjectStageIdInput.val();
+                            const addBulletinProjectId = modalProjectIdInput.val();
+                            const description = newBulletinDescription.val();
+
+                            $.ajax({
+                                url: `/v1/project-management/project-stages/${addBulletinProjectStageId}/${addBulletinProjectId}/bulletins/store`, // Route for storing bulletins
+                                method: 'POST',
+                                data: {
+                                    _token: $('meta[name="csrf-token"]').attr('content'), // CSRF token
+                                    description: description
+                                },
+                                success: function(response) {
+                                    formMessages.html('<div class="alert alert-success">' + response.message + '</div>');
+                                    newBulletinDescription.val(''); // Clear the textarea
+                                    // Reload bulletins after successful addition
+                                    loadBulletins(); // Re-trigger show to reload content
+                                },
+                                error: function(xhr) {
+                                    const errors = xhr.responseJSON.errors;
+                                    let errorHtml = '<div class="alert alert-danger"><ul>';
+                                    if (errors) {
+                                        for (const key in errors) {
+                                            errorHtml += '<li>' + errors[key][0] + '</li>';
+                                        }
+                                    } else {
+                                        errorHtml += '<li>' + (xhr.responseJSON.message || 'An error occurred.') + '</li>';
+                                    }
+                                    errorHtml += '</ul></div>';
+                                    formMessages.html(errorHtml);
+                                    console.error('Error adding bulletin:', xhr.responseText);
+                                }
+                            });
+                        });
+                    });
+                </script>
 
                 <!-- Project File Delete Confirmation Modal -->
                 <div class="modal fade" id="deleteProjectFileModal" tabindex="-1" aria-labelledby="deleteProjectFileModalLabel" aria-hidden="true">
@@ -1076,10 +1302,6 @@
 
                         $saveButton.prop('disabled', true).text('Saving...');
 
-                        // IMPORTANT: For PUT/PATCH requests with FormData (especially with files),
-                        // you need to manually append _method=PUT to simulate it in PHP.
-                        // Also, if you use a hidden input for assigned_to_user_id (when select is disabled),
-                        // ensure its value is picked up by FormData.
                         const formData = new FormData(this);
                         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
