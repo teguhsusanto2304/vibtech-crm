@@ -170,7 +170,7 @@
                                                 <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
                                                 <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
                                             </div>
-                                            <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
+                                            <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="Please enter file description">
                                         </div>                                        
                                     @endif
                                 </div>
@@ -205,7 +205,7 @@
                                                     <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                 </div>
-                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
+                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="Please enter file description">
                                             </div>
                                         `;
                                         $newFileUploadContainer.append(newFileInputHtml);
