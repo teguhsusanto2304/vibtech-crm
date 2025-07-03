@@ -54,7 +54,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Vibtech Projects</h5>
+                                <h5 class="card-title">All Projects</h5>
                                 <a href="{{ route('v1.project-management.all')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
