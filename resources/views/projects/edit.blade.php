@@ -3,7 +3,8 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />    
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />  
 
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
@@ -300,14 +301,14 @@
                                         @foreach($projectLevelFiles as $file)
                                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                                 <span>
-                                                    <i class="fas fa-file me-2"></i> {{ $file->file_name }}
+                                                    <i class="fas fa-file me-2"></i> {{ $file->description }}
                                                     <small class="text-muted">({{ number_format($file->file_size / 1024, 2) }} KB)</small>
                                                 </span>
                                                 <div>
                                                     
                                                     {{-- Add a delete button (requires JavaScript and a backend route to handle deletion) --}}
-                                                    <button type="button" class="btn btn-sm btn-danger delete-file-btn" data-file-id="{{ $file->id }}" data-file-name="{{ $file->original_name }}">
-                                                        <i class="fas fa-trash"></i> <small>Delete</small>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-file-btn" data-file-id="{{ $file->id }}" data-file-name="{{ $file->original_name }}">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
                                             </li>

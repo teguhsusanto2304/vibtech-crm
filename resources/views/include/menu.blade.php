@@ -185,13 +185,7 @@
                         </a>
                     </li>
                 @endcan
-                @can('view-getting-started')
-                    <li class="no-bullet">
-                        <a href="{{ route('v1.getting-started')}}" class="menu-link">
-                            <div class="text-truncate" data-i18n="Analytics">Getting Started</div>
-                        </a>
-                    </li>
-                @endcan
+                
             </ul>
         </li>
         @can('view-client-database')

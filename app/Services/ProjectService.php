@@ -842,7 +842,7 @@ class ProjectService {
         return DataTables::eloquent($query)
             ->addColumn('file_name_link', function (ProjectFile $file) {
                 // Generate a clickable link to download/view the file
-                $url = $file->file_url; // Using the accessor you defined in the model
+                $url = Storage::url($file->file_path); // Using the accessor you defined in the model
                 $icon = '';
                 // Add icons based on mime type
                 if (\Str::contains($file->mime_type, ['pdf'])) {
@@ -857,15 +857,14 @@ class ProjectService {
                     $icon = '<i class="fas fa-file text-muted me-1"></i>';
                 }
 
-                return '<a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->file_name) . '</a>';
+                return $file->description.'<p><small><a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->file_name) . '</a> ('.number_format($file->file_size / 1024, 2).' KB)</small></p>';
             })
             ->addColumn('uploaded_by', function (ProjectFile $file) {
-                //return $file->uploadedBy->name ?? 'N/A';
-                return '-';
+                return $file->uploadedBy->name.'<p><small>'.$file->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
             })
             ->addColumn('associated_task', function (ProjectFile $file) {
-                //return !is_null($file->task->name) ? 'Task':'Project'; // Display task name or 'Project-level'
-                return '-';
+                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>Task</small></span>':'<span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
+                
             })
             ->addColumn('file_size_formatted', function (ProjectFile $file) {
                 // Convert bytes to KB, MB, etc.
@@ -879,12 +878,15 @@ class ProjectService {
                 return round($bytes, 2) . ' ' . $units[$i];
             })
             ->addColumn('action', function (ProjectFile $file) {
-                $buttons = '<a href="'. $file->file_url .'" target="_blank" download class="btn btn-sm btn-info me-1" title="Download"><i class="fas fa-download"></i></a>';
-                // Add a delete button (requires AJAX and a delete route)
-                $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-project-file-btn" data-file-id="'.$file->id.'" data-file-name="'.e($file->file_name).'" title="Delete"><i class="fas fa-trash"></i></button>';
+                $buttons = '<a href="'. Storage::url($file->file_path) .'" target="_blank" download class="btn btn-sm btn-outline-info me-1" title="Download"><i class="fas fa-download"></i></a>';
+                if($file->project->project_manager_id == auth()->user()->id || $file->uploaded_by_user_id == auth()->user()->id){
+                    $buttons .= '<button type="button" class="btn btn-sm btn-outline-danger delete-project-file-btn" 
+                    data-file-id="'.$file->id.'" data-file-name="'.e($file->file_name).'" title="Delete"><i class="fas fa-trash"></i></button>';
+                }
+                
                 return $buttons;
             })
-            ->rawColumns(['file_name_link', 'action']) // Tell DataTables these columns contain raw HTML
+            ->escapeColumns([])
             ->make(true);
     }
     

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 use App\Services\CommonService;
 use App\Mail\NewMemoNotification;
-use App\Mail\NewHandbookNotification;
+use App\Mail\UpdateMemoNotification;
 
 class PostController extends Controller
 {
@@ -188,7 +188,8 @@ class PostController extends Controller
                 'employee_name' => $user->name,
                 'creator_name' => $post->user->name,
                 'id' => $post->id,
-                'email'=> $user->email
+                'email'=> $user->email,
+                'method'=> 'insert'
             ];
             $this->commonService->sendEmail($data,NewMemoNotification::class);
         }
@@ -263,6 +264,19 @@ class PostController extends Controller
         ]);
 
         $post->update($request->all());
+
+        $users = User::where(['user_status'=>1,'id'=>18])->get();
+        foreach($users as $user)
+        {
+            $data = [
+                'employee_name' => $user->name,
+                'creator_name' => $post->user->name,
+                'id' => $post->id,
+                'email'=> $user->email,
+                'method'=> 'update'
+            ];
+            $this->commonService->sendEmail($data,NewMemoNotification::class);
+        }
 
         EventUserRead::where('event_id', $id)->delete();
 

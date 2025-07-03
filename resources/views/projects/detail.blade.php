@@ -294,11 +294,8 @@
             <thead>
                 <tr>
                     <th>File Name</th>
-                    <th>Description</th>
                     <th>Uploaded By</th>
-                    <th>Associated Task</th>
-                    <th>Size</th>
-                    <th>Uploaded At</th>
+                    <th>Section</th>
                     <th width="100px">Action</th>
                 </tr>
             </thead>
@@ -306,6 +303,26 @@
                 {{-- Data will be loaded by DataTables --}}
             </tbody>
         </table>
+        <style>
+    /* Custom CSS to truncate text in DataTable cells */
+    .dataTables_wrapper table.dataTable tbody td {
+        white-space: nowrap; /* Prevent wrapping by default */
+        overflow: hidden;     /* Hide overflowing content */
+        text-overflow: ellipsis; /* Show ellipsis for truncated text */
+    }
+
+    /* Override for specific columns where content must wrap or actions */
+    .dataTables_wrapper table.dataTable tbody td.dt-body-wrap {
+        white-space: normal; /* Allow wrapping for description or other long text */
+    }
+
+    /* Ensure Action column doesn't truncate buttons */
+    .dataTables_wrapper table.dataTable tbody td:last-child {
+        white-space: nowrap; /* Keep buttons on one line */
+        overflow: visible;   /* Ensure buttons are not cut off */
+        text-overflow: initial;
+    }
+</style>
                         <script>
     $(document).ready(function() {
         // Get the project ID from a hidden input or data attribute on your page
@@ -332,14 +349,11 @@
             },
             columns: [
                 {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
-                {data: 'description', name: 'description', orderable: true, searchable: true},
                 {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
                 {data: 'associated_task', name: 'task.name', orderable: true, searchable: true}, // 'task.name' for relationship
-                {data: 'file_size_formatted', name: 'file_size', orderable: true, searchable: false},
-                {data: 'created_at', name: 'created_at', orderable: true, searchable: false},
                 {data: 'action', name: 'action', orderable: false, searchable: false},
             ],
-            order: [[5, 'desc']] // Default sort by 'Uploaded At' descending
+            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
         });
 
         // --- JavaScript for Delete Button (from previous discussion) ---
@@ -977,12 +991,15 @@
                                             <div class="col-md-12 mt-3">
                                                     <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
                                                     <div id="new-file-upload-container">
-                                                            <div class="input-group mb-2 file-upload-item">
-                                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                                            <div class="file-upload-item">
+                                                                <div class="input-group mb-2">
+                                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                                </div>
+                                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                                             </div>
                                                     </div>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="update-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
                                                     <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
                                             </div>
                                             <div class="col-sm-12" id="editTaskStageFiles"></div>
@@ -1794,10 +1811,13 @@
                                          <div class="col-md-12 mt-3">
                                             <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
                                             <div id="create-new-file-upload-container">
-                                                    <div class="input-group mb-2 file-upload-item">
+                                                <div class="file-upload-item">
+                                                    <div class="input-group mb-2">
                                                         <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                     </div>
+                                                    <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
+                                                </div>
                                             </div>
                                             <button type="button" class="btn btn-outline-primary btn-sm" id="create-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
                                             <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
@@ -1814,6 +1834,7 @@
                 <script>
                                 const $newFileUploadContainer = $('#create-new-file-upload-container');
                                 const $addMoreFilesBtn = $('#create-add-more-files-btn');
+                                const $updateAddMoreFilesBtn = $('#update-add-more-files-btn');
                                 let indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
 
                                 // Function to update the visibility of "Remove" buttons
@@ -1832,9 +1853,12 @@
                                     const currentFileInputCount = $newFileUploadContainer.children('.file-upload-item').length;
                                     if(indexNewFileUpload<=3){
                                         const newFileInputHtml = `
-                                            <div class="input-group mb-2 file-upload-item">
-                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            <div class="file-upload-item">
+                                                <div class="input-group mb-2">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                             </div>
                                         `;
                                         $newFileUploadContainer.append(newFileInputHtml);
@@ -1857,6 +1881,15 @@
 
                                 // Event listener for "Add Another File" button
                                 $addMoreFilesBtn.on('click', function() {
+                                    indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
+                                    if(indexNewFileUpload>2){
+                                        alert('you can not add more than 3 files !')
+                                    } else {                                        
+                                        addFileInputField();
+                                    }
+                                });
+
+                                $updateAddMoreFilesBtn.on('click', function() {
                                     indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
                                     if(indexNewFileUpload>2){
                                         alert('you can not add more than 3 files !')
@@ -2338,54 +2371,54 @@
 
             // Handle the "Create Task" form submission via AJAX
             $('#createTaskForm').on('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
+                e.preventDefault(); // Prevent default form submission
 
-            const $form = $(this);
-            // *** THIS IS THE KEY FIX: Remove $.param() ***
-            const formData = new FormData(this); // Correctly creates FormData from the form
+                const $form = $(this);
+                // *** THIS IS THE KEY FIX: Remove $.param() ***
+                const formData = new FormData(this); // Correctly creates FormData from the form
 
-            
-            const createProjectId = $('#createModalProjectId').val();
-            const createKanbanStageId = $('#createModalKanbanStageId').val();
-            
-            @if($project->project_manager_id!=auth()->user()->id)
-                const selectElement = document.querySelector('select[name="assigned_to_user_id"]');
-                formData.append('assigned_to_user_id', selectElement.value);
-            @endif
+                
+                const createProjectId = $('#createModalProjectId').val();
+                const createKanbanStageId = $('#createModalKanbanStageId').val();
+                
+                @if($project->project_manager_id!=auth()->user()->id)
+                    const selectElement = document.querySelector('select[name="assigned_to_user_id"]');
+                    formData.append('assigned_to_user_id', selectElement.value);
+                @endif
 
-            // Send AJAX request
-            $.ajax({
-                url: `/v1/project-management/${createProjectId}/stages/${createKanbanStageId}/tasks`, // API endpoint to create task
-                type: 'POST',
-                data: formData, // Pass FormData object directly
-                processData: false, // IMPORTANT: Tells jQuery not to process the data (essential for files)
-                contentType: false, // IMPORTANT: Tells jQuery not to set the Content-Type header (essential for files)
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message || 'Task created successfully!');
-                        $('#createTaskModal').modal('hide'); // Close modal
-                        location.reload(true); // Refresh page to see new task
-                    } else {
-                        alert(response.message || 'Failed to create task.');
-                        // Display validation errors if available
-                        if (response.errors) {
-                            let errorMessages = Object.values(response.errors).flat().join('\n');
-                            alert('Validation Errors:\n' + errorMessages);
+                // Send AJAX request
+                $.ajax({
+                    url: `/v1/project-management/${createProjectId}/stages/${createKanbanStageId}/tasks`, // API endpoint to create task
+                    type: 'POST',
+                    data: formData, // Pass FormData object directly
+                    processData: false, // IMPORTANT: Tells jQuery not to process the data (essential for files)
+                    contentType: false, // IMPORTANT: Tells jQuery not to set the Content-Type header (essential for files)
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message || 'Task created successfully!');
+                            $('#createTaskModal').modal('hide'); // Close modal
+                            location.reload(true); // Refresh page to see new task
+                        } else {
+                            alert(response.message || 'Failed to create task.');
+                            // Display validation errors if available
+                            if (response.errors) {
+                                let errorMessages = Object.values(response.errors).flat().join('\n');
+                                alert('Validation Errors:\n' + errorMessages);
+                            }
                         }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'An error occurred. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        }
+                        alert(errorMessage);
+                        console.error('Error creating task:', xhr.responseText);
                     }
-                },
-                error: function(xhr) {
-                    let errorMessage = 'An error occurred. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
-                    }
-                    alert(errorMessage);
-                    console.error('Error creating task:', xhr.responseText);
-                }
+                });
             });
-    });
 
 
             $('#addMemberForm').on('submit', function(e) {

@@ -9,9 +9,10 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class NewMemoNotification extends Mailable
+class UpdateHandbookNotification extends Mailable
 {
     use Queueable, SerializesModels;
+
     public $post;
 
     /**
@@ -24,14 +25,9 @@ class NewMemoNotification extends Mailable
 
     public function build()
     {
-        if($this->post['method']=='insert'){
-            $method ='New';
-        } else {
-            $method = 'Update';
-        }
         return $this->from(env('MAIL_FROM_ADDRESS'))
-            ->subject('Vibtech Genesis Staff Portal :: '.$method.' Memo')
-            ->view('emails.new_memo')
+            ->subject('Vibtech Genesis Staff Portal :: Update Handbook')
+            ->view('emails.update_handbook')
             ->with(['post' => $this->post]);
     }
 }

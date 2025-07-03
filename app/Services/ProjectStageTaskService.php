@@ -65,7 +65,7 @@ class ProjectStageTaskService {
 
             // 4. Handle File Uploads
             if ($request->hasFile('project_files')) {
-                foreach ($request->file('project_files') as $file) {
+                foreach ($request->file('project_files') as $index => $file) {
                     $originalFileName = $file->getClientOriginalName();
                     $fileMimeType = $file->getClientMimeType();
                     $fileSize = $file->getSize(); // Size in bytes
@@ -79,6 +79,7 @@ class ProjectStageTaskService {
                     $taskFile->project_id = $project_id;
                     $taskFile->project_stage_task_id = $task->id;
                     $taskFile->file_name = $originalFileName;
+                    $taskFile->description = $request->input('project_file_descriptions')[$index] ?? null;
                     $taskFile->file_path = $path;
                     $taskFile->mime_type = $fileMimeType;
                     $taskFile->file_size = $fileSize;
@@ -293,7 +294,7 @@ class ProjectStageTaskService {
             $task->save();
 
             if ($request->hasFile('project_files')) {
-                foreach ($request->file('project_files') as $file) {
+                foreach ($request->file('project_files') as $index => $file) {
                     $originalFileName = $file->getClientOriginalName();
                     $fileMimeType = $file->getClientMimeType();
                     $fileSize = $file->getSize(); // Size in bytes
@@ -307,6 +308,7 @@ class ProjectStageTaskService {
                     $taskFile->project_id = $task->projectStage->project_id;
                     $taskFile->project_stage_task_id = $task->id;
                     $taskFile->file_name = $originalFileName;
+                    $taskFile->description = $request->input('project_file_descriptions')[$index] ?? null;
                     $taskFile->file_path = $path;
                     $taskFile->mime_type = $fileMimeType;
                     $taskFile->file_size = $fileSize;
