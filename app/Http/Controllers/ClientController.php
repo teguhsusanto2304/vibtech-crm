@@ -1070,6 +1070,10 @@ class ClientController extends Controller
             });
         }
 
+        if ($request->filled('client_type')) {
+            $clients->where('client_type',$request->client_type);
+        }
+
         return DataTables::of($clients)
             ->addIndexColumn()
             ->addColumn('industry', fn($client) => $client->industryCategory->name ?? '-')

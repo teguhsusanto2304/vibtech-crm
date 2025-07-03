@@ -77,7 +77,7 @@ class DashboardController extends Controller
             $events[] = $event;
         }
 
-        return view('dashboard.dashboard', compact('events'))->with('title', 'Dashboard')->with('breadcrumb', ['Home', 'Dashboard']);
+        return view('dashboard.dashboard', compact('events'))->with('title', 'Staff Calendar')->with('breadcrumb', ['Home', 'Dashboard']);
     }
 
     public function getNotifications()

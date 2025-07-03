@@ -33,6 +33,15 @@
             @endforeach
         </select>
     </div>
+    <div class="col-md-4">
+        <label for="filter-type" class="form-label">Type</label>
+        <select id="filter-type" class="form-select">
+            <option value="">All Type</option>
+            <option value="1">Vendor</option>
+            <option value="2">Supplier</option>
+            <option value="3">Client</option>
+        </select>
+    </div>
     <div class="col-md-8 d-flex align-items-end justify-content-start mt-4">
         <div class="btn-group" role="group">
                 @if(Route::currentRouteName() == 'v1.client-database.list')

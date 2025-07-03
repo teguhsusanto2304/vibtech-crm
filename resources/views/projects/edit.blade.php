@@ -51,7 +51,7 @@
 @endif
         <div class="card">
             <div class="card-body">
-                <form action="{{ isset($project) ? route('v1.project-management.update', $project->obfuscated_id) : route('v1.project-management.store') }}" method="POST" class="p-4">
+                <form action="{{ isset($project) ? route('v1.project-management.update', $project->obfuscated_id) : route('v1.project-management.store') }}" method="POST" class="p-4"  enctype="multipart/form-data">
                     @csrf
                     {{-- If in edit mode, spoof the PUT/PATCH method --}}
                     @if(isset($project))
@@ -137,6 +137,7 @@
                                 @endforeach
                             </select>
                         </div>
+                        
                         <div class="col-md-6">
                             <label class="form-label">Project Manager</label>
                             <div class="d-flex align-items-center p-2 border rounded bg-white">
@@ -145,6 +146,174 @@
                                 <span class="fw-semibold text-dark">You</span>
                                 {{-- Keep a hidden input for the manager ID --}}
                                 <input type="hidden" name="project_manager_id" value="{{ auth()->user()->id }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        {{-- Project Files Section --}}
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                                <div id="new-file-upload-container">
+                                    {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
+                                    @if(old('project_files'))
+                                        @foreach(old('project_files') as $index => $oldFile)
+                                            <div class="input-group mb-2 file-upload-item">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        {{-- This is the initial input if no old data --}}
+                                        <div class="file-upload-item">
+                                            <div class="input-group mb-2">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                            <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
+                                        </div>                                        
+                                    @endif
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                            </div>
+                            <script>
+                            $(document).ready(function() {
+                                // ... (Your existing JavaScript code for Select2, modals, tooltips, etc.) ...
+
+                                const $newFileUploadContainer = $('#new-file-upload-container');
+                                const $addMoreFilesBtn = $('#add-more-files-btn');
+                                let indexNewFileUpload = 0;
+
+                                // Function to update the visibility of "Remove" buttons
+                                function updateRemoveButtonVisibility() {
+                                    // Show remove button if there's more than one file input field in the NEW upload section
+                                    if ($newFileUploadContainer.children('.file-upload-item').length > 1) {
+                                        $newFileUploadContainer.find('.remove-file-input').show();
+                                    } else {
+                                        $newFileUploadContainer.find('.remove-file-input').hide(); // Hide if only one remains
+                                    }
+                                }
+
+                                // Function to add a new file input field group
+                                function addFileInputField() {
+                                    indexNewFileUpload++;
+                                    if(indexNewFileUpload<=5){
+                                        const newFileInputHtml = `
+                                            <div class="file-upload-item">
+                                                <div class="input-group mb-2">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
+                                            </div>
+                                        `;
+                                        $newFileUploadContainer.append(newFileInputHtml);
+                                        updateRemoveButtonVisibility();
+                                    } else {
+                                        alert('you can not add more than 5 files !');
+                                    }
+                                    
+                                    
+                                }
+
+                                // Initial setup on page load:
+                                // If no file input fields are present (e.g., fresh create form), add one.
+                                // Otherwise, just adjust visibility of existing remove buttons (e.g., after validation error).
+                                if ($newFileUploadContainer.children('.file-upload-item').length === 0) {
+                                    addFileInputField();
+                                } else {
+                                    updateRemoveButtonVisibility();
+                                }
+
+                                // Event listener for "Add Another File" button
+                                $addMoreFilesBtn.on('click', function() {
+                                    addFileInputField();
+                                });
+
+                                // Event listener for "Remove" button on dynamically added file inputs
+                                // Using event delegation because buttons are added dynamically
+                                $newFileUploadContainer.on('click', '.remove-file-input', function() {
+                                    $(this).closest('.file-upload-item').remove(); // Remove the entire parent .input-group
+                                    updateRemoveButtonVisibility();
+                                });
+
+                                // --- Handle File Deletion via AJAX (for existing files) ---
+                                // (Keep your existing delete-file-btn logic, ensure project obfuscated_id is passed)
+                                $(document).on('click', '.delete-file-btn', function() { // Use event delegation for dynamically added buttons
+                                    const $button = $(this);
+                                    const fileId = $button.data('file-id');
+                                    const projectId = "{{ $project->obfuscated_id ?? '' }}"; // Get project ID from Blade
+
+                                    if (!projectId) {
+                                        alert('Project ID not found for file deletion.');
+                                        return;
+                                    }
+
+                                    if (!confirm('Are you sure you want to delete this file? This cannot be undone.')) {
+                                        return;
+                                    }
+
+                                    $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...'); // Add spinner
+
+                                    $.ajax({
+                                        url: `/api/projects/${projectId}/files/${fileId}`, // Adjust API endpoint
+                                        type: 'DELETE',
+                                        headers: {
+                                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                        },
+                                        success: function(response) {
+                                            if (response.success) {
+                                                alert(response.message || 'File deleted.');
+                                                $button.closest('.list-group-item').remove(); // Remove the list item from UI
+                                            } else {
+                                                alert(response.message || 'Failed to delete file.');
+                                                $button.prop('disabled', false).html('<i class="fas fa-trash"></i>'); // Reset button
+                                            }
+                                        },
+                                        error: function(xhr) {
+                                            let errorMessage = 'An error occurred. Please try again.';
+                                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                                errorMessage = xhr.responseJSON.message;
+                                            } else if (xhr.status === 403) {
+                                                errorMessage = 'You are not authorized to delete this file.';
+                                            }
+                                            alert(errorMessage);
+                                            console.error('Error deleting file:', xhr.responseText);
+                                            $button.prop('disabled', false).html('<i class="fas fa-trash"></i>'); // Reset button
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                            <div class="col-md-6 mb-3">
+
+                                @if(isset($project) && $project->files->isNotEmpty()) {{-- Assuming a 'files' relationship on Project model --}}
+                                    <h6 class="mt-3">Existing Files:</h6>
+                                    <ul class="list-group">
+                                        @php
+                                            // Filter the collection to only include files where project_stage_task_id is null
+                                            $projectLevelFiles = $project->files->filter(function ($file) {
+                                                return is_null($file->project_stage_task_id);
+                                            });
+                                        @endphp
+                                        @foreach($projectLevelFiles as $file)
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>
+                                                    <i class="fas fa-file me-2"></i> {{ $file->file_name }}
+                                                    <small class="text-muted">({{ number_format($file->file_size / 1024, 2) }} KB)</small>
+                                                </span>
+                                                <div>
+                                                    
+                                                    {{-- Add a delete button (requires JavaScript and a backend route to handle deletion) --}}
+                                                    <button type="button" class="btn btn-sm btn-danger delete-file-btn" data-file-id="{{ $file->id }}" data-file-name="{{ $file->original_name }}">
+                                                        <i class="fas fa-trash"></i> <small>Delete</small>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </div>
                         </div>
                     </div>

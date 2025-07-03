@@ -160,7 +160,7 @@
                                 <th>Image</th>
                                 <th>Created On</th>
                                 <th>Updated On</th>
-                                <th>Client Type</th>
+                                <th>Type</th>
                                 <th>Action</th>
                                 <th>Quotation</th>
                                 <th>Remark Action</th>
@@ -580,6 +580,7 @@
                 $('#filter-sales-person').val('');
                 $('#filter-industry').val('');
                 $('#filter-country').val('');
+                $('#filter-type').val('');
                 $('#clients-table').DataTable().ajax.reload();
             });
 
@@ -654,6 +655,7 @@
                             d.sales_person = $('#filter-sales-person').val();
                             d.industry = $('#filter-industry').val();
                             d.country = $('#filter-country').val();
+                            d.client_type = $('#filter-type').val();
                             d.master = '{{ $master }}';
                         }
                     },
@@ -831,7 +833,7 @@
                     });
                 }
 
-                $('#filter-sales-person, #filter-industry, #filter-country').on('change', function () {
+                $('#filter-sales-person, #filter-industry, #filter-country, #filter-type').on('change', function () {
                     table.ajax.reload();
                 });
 

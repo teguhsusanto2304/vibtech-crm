@@ -1778,6 +1778,8 @@
                         overflow-y: hidden;
                         /* Hide vertical scrollbar if it appears (optional) */
                         padding-bottom: 1rem;
+
+
                     }
 
                     /* Optional: Hide scrollbar in webkit browsers (Chrome, Safari) */

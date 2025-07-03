@@ -57,7 +57,7 @@
                             d="M33.84,14.15h-12.2c-.67.05-1.26-.46-1.31-1.13,0,0,0-.01,0-.02V1.15c.04-.67.62-1.19,1.29-1.15,0,0,.01,0,.02,0h12.2c.67-.05,1.26.46,1.31,1.13,0,0,0,.01,0,.02v11.86c-.04.67-.62,1.19-1.29,1.15,0,0-.01,0-.02,0ZM21.73,12.75h12.02V1.4h-12.02v11.35Z" />
                     </svg>
                 </i>
-                <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
+                <div class="text-truncate" data-i18n="Dashboards">Staff Calendar</div>
             </a>
         </li>
 

@@ -105,7 +105,7 @@
                     </div>
                     <!-- Client Type -->
                     <div class="form-group col-6">
-                        <label for="company">Client Type *</label>
+                        <label for="company">Type *</label>
                         <select name="client_type" class="form-control" required>
                             <option value="">Select Client type</option>
                             <option value="1">Vendor</option>

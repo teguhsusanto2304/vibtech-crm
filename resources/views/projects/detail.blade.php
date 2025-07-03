@@ -3,6 +3,10 @@
 @section('title', 'Dashboard')
 
 @section('content')
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -140,15 +144,10 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0 text-dark invisible">Project Details</h4>
                 <div class="btn-group" role="group" aria-label="Default button group">
-                    @if(!is_null(request('all')))
-                    <a href="{{ route('v1.project-management.all') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-2"></i> Back to Projects
-                    </a>
-                    @else
+                    
                     <a href="{{ route('v1.project-management.list') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-2"></i> Back to Projects
                     </a>
-                    @endif
                     @can('edit-project-management-complete')
                     @if($project->data_status==2)
                     <button type="button"
@@ -291,52 +290,84 @@
                 {{-- Tab 2: Project Files --}}
                 <div class="tab-pane fade p-3" id="project-files" role="tabpanel" aria-labelledby="files-tab">
                     @if($project->files->count() > 0)
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-sm table-hover align-middle">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Uploaded By</th>
-                                        <th width="25%" class="text-end">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($project->files as $file)
-                                    <tr data-table-file-id="{{ $file->id }}">
-                                        <td>
-                                            <i class="fas fa-file-alt me-2"></i> <label class="file-name-text">{{ $file->file_name }}</label><br>
-                                            <small class="text-muted">({{ number_format($file->file_size / 1024 / 1024, 2) }} MB)</small>
-                                        </td>
-                                        <td>
-                                            {{ $file->uploadedBy->name }}
-                                            <p><small>{{ $file->created_at->format('l, F d, Y \a\t h:i A') }}</small></p>
-                                        </td>
-                                        <td class="text-end">
-                                            <a href="{{ Storage::url($file->file_path) }}"
-                                            download="{{ $file->file_name }}"
-                                            class="btn btn-sm btn-outline-success me-2">
-                                                Download
-                                            </a>
+                    <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Description</th>
+                    <th>Uploaded By</th>
+                    <th>Associated Task</th>
+                    <th>Size</th>
+                    <th>Uploaded At</th>
+                    <th width="100px">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{-- Data will be loaded by DataTables --}}
+            </tbody>
+        </table>
+                        <script>
+    $(document).ready(function() {
+        // Get the project ID from a hidden input or data attribute on your page
+        // Assuming you have a variable like $project->id or $project->obfuscated_id available
+        const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
 
+        if (!currentProjectId) {
+            console.error('Project ID is not available for loading files.');
+            return;
+        }
 
-                                            @if($project->project_manager_id == auth()->user()->id || $file->uploaded_by_user_id == auth()->user()->id)
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger delete-file-btn"
-                                                    data-file-id="{{ $file->id }}"
-                                                    data-project-id="{{ $project->obfuscated_id }}"
-                                                    data-file-name="{{ $file->file_name }}">
-                                                Delete
-                                            </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        @else
-                        <p class="text-muted">No files uploaded for this project yet.</p>
-                        @endif
+        var projectFilesTable = $('#project_files_datatable').DataTable({
+            processing: true,
+            serverSide: true,
+            scrollX: true,
+            ajax: {
+                url: "{{ route('v1.project-management.project-files.data') }}",
+                data: function (d) {
+                    d.project_id = currentProjectId;
+                    // Optional: Add a filter for project_stage_task_id
+                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
+                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
+                }
+            },
+            columns: [
+                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
+                {data: 'description', name: 'description', orderable: true, searchable: true},
+                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
+                {data: 'associated_task', name: 'task.name', orderable: true, searchable: true}, // 'task.name' for relationship
+                {data: 'file_size_formatted', name: 'file_size', orderable: true, searchable: false},
+                {data: 'created_at', name: 'created_at', orderable: true, searchable: false},
+                {data: 'action', name: 'action', orderable: false, searchable: false},
+            ],
+            order: [[5, 'desc']] // Default sort by 'Uploaded At' descending
+        });
+
+        // --- JavaScript for Delete Button (from previous discussion) ---
+        $(document).on('click', '.delete-project-file-btn', function() {
+            const fileId = $(this).data('file-id');
+            const fileName = $(this).data('file-name');
+
+            if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
+                $.ajax({
+                    url: '/api/project-files/' + fileId, // Use your API route for deletion
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        alert(response.message);
+                        projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
+                    },
+                    error: function(xhr) {
+                        alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
+                        console.error('Error:', xhr);
+                    }
+                });
+            }
+        });
+    });
+</script>
+@endif
 
                 </div> {{-- End tab-pane project-files --}}
                 <hr>

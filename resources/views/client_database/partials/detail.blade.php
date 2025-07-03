@@ -84,7 +84,7 @@
         <td>{{ $client->salesPerson->name ?? '-' }}</td>
       </tr>
       <tr>
-        <th>Client Type</th>
+        <th>Type</th>
         <td>{!! $client->client_type_label ?? '-' !!}</td>
       </tr>
       @if(!$delete)

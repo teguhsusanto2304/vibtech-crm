@@ -163,13 +163,16 @@
                                     @endforeach
                                 @else
                                     {{-- This is the initial input if no old data --}}
-                                    <div class="input-group mb-2 file-upload-item">
-                                        <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                    <div class="file-upload-item">
+                                            <div class="input-group mb-2">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                            <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
                                     </div>
                                 @endif
                             </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
                             <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
                         </div>
                         <script>
@@ -195,9 +198,12 @@
                                     indexNewFileUpload++;
                                     if(indexNewFileUpload<=5){
                                         const newFileInputHtml = `
-                                            <div class="input-group mb-2 file-upload-item">
-                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            <div class="file-upload-item">
+                                                <div class="input-group mb-2">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
                                             </div>
                                         `;
                                         $newFileUploadContainer.append(newFileInputHtml);

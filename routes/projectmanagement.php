@@ -41,6 +41,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/project-stages/{projectStageId}/{projectId}/bulletins/data', 'getStageBulletinsData')->name('v1.project-management.project-stages.bulletins.data');
             Route::post('/project-stages/{projectStageId}/{projectId}/bulletins/store', 'storeBulletin')->name('v1.project-management.project-stages.bulletins.store');
             Route::get('/monthly-chart','monthlyStatusChartData')->name('v1.project-management.monthly-chart');
+            Route::get('/project-files/data','getProjectFileData')->name('v1.project-management.project-files.data');
         });
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {

@@ -154,4 +154,9 @@ class ProjectController extends Controller
     {
         return $this->projectService->monthlyStatusChartData();
     }
+
+    public function getProjectFileData(Request $request)
+    {
+        return $this->projectService->getProjectFileData($request);
+    }
 }

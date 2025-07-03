@@ -5,6 +5,8 @@
 @section('content')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
 
         .task-card {
@@ -138,6 +140,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0 text-dark invisible">Project Details</h4>
                 <div class="btn-group" role="group" aria-label="Default button group">
+                    
                     <a href="{{ route('v1.project-management.list') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-2"></i> Back to Projects
                     </a>
@@ -266,6 +269,15 @@
                                     </button>
                                     @endif
                                 </div>
+                                {{-- START: Search Input for Project Members --}}
+                                <div class="mt-5"> {{-- Add margin-top for spacing --}}
+                                    <label for="memberSearch" class="form-label" >Search Task Content</label> {{-- Visually hidden label for accessibility --}}
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="taskSearch" placeholder="Search tasks content...">
+                                        <button class="btn btn-outline-secondary" type="button" id="taskSearchClear"><i class="bi bi-eraser"></i></button>
+                                    </div>
+                                </div>
+                                {{-- END: Search Input for Project Members --}}
                             </div>
                         </div>
                     </div>
@@ -285,9 +297,9 @@
                                 </thead>
                                 <tbody>
                                     @foreach($project->files as $file)
-                                    <tr>
+                                    <tr data-table-file-id="{{ $file->id }}">
                                         <td>
-                                            <i class="fas fa-file-alt me-2"></i> {{ $file->file_name }}<br>
+                                            <i class="fas fa-file-alt me-2"></i> <label class="file-name-text">{{ $file->file_name }}</label><br>
                                             <small class="text-muted">({{ number_format($file->file_size / 1024 / 1024, 2) }} MB)</small>
                                         </td>
                                         <td>
@@ -306,7 +318,8 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-danger delete-file-btn"
                                                     data-file-id="{{ $file->id }}"
-                                                    data-project-id="{{ $project->obfuscated_id }}">
+                                                    data-project-id="{{ $project->obfuscated_id }}"
+                                                    data-file-name="{{ $file->file_name }}">
                                                 Delete
                                             </button>
                                             @endif
@@ -405,11 +418,26 @@
 
                         @endphp
                             <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
-                                    <div class="card mb-3" style="max-width: 540px;">
+                                    <div class="card mb-3" style="max-width: 540px; border: 1px solid #819A91;">
                                         <div class="card-body" style="height:100px;">
-                                            <h5 class="card-title">{{ $kanbanStage->name }}</h5>
-                                            <p><small class="text-{{ $fontClass }}">{{ $labelStatus }}</small></p>                
-                                    </div>
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h5 class="card-title">{{ $kanbanStage->name }}</h5>
+                                                    <p><small class="text-{{ $fontClass }}">{{ $labelStatus }}</small></p>
+                                                </div>
+                                                <button
+                                                    class="btn btn-sm btn-outline-warning"
+                                                    data-bs-toggle="modal"              {{-- Bootstrap 5: data-bs-toggle, Bootstrap 4: data-toggle --}}
+                                                    data-bs-target="#bulletinModal"     {{-- Bootstrap 5: data-bs-target, Bootstrap 4: data-target --}}
+                                                    data-bulletin-stage-id="{{ $kanbanStage->id }}" {{-- Custom attribute to pass stage ID --}}
+                                                    data-bulletin-project-id="{{ $project->id }}"
+                                                    data-bulletin-stage-disable="{{ $completeStage }}" 
+                                                    id="show-bulletin-modal-btn-{{ $kanbanStage->id }}" {{-- Unique ID for individual buttons (optional but good) --}}
+                                                >
+                                                    Bulletin
+                                                </button>
+                                            </div>           
+                                        </div>
                                     <div class="card-footer">
                                         <div class="text-end">
                                             <div class="btn-group btn-group-sm" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
@@ -447,18 +475,38 @@
                                 @php
                                 // Fetch tasks for this specific project's stage
                                 // Assuming you have $project->projectStages eager loaded with tasks
-                                $projectStageTasks = $project->projectStages
-                                ->where('kanban_stage_id', $kanbanStage->id)
-                                ->first()
-                                ?->tasks ?? collect();
+                                $projectStage = $project->projectStages() // Access the relationship as a Query Builder
+                                    ->where('kanban_stage_id', $kanbanStage->id)
+                                    ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
+                                    ->first();
+
+                                $projectStageTasks = $projectStage ? $projectStage->tasks->where('data_status', '!=', 0) : collect();
+                                if($project->data_status===1){
+                                    $bgColor = '#E67514';
+                                } else if($project->data_status===2){
+                                    $bgColor = '#8aec6f';
+                                } else {
+                                    $bgColor = '#06923E';
+                                }
                                 @endphp
 
                                 @foreach($projectStageTasks as $task)
-                                <div class="card text-bg-light mb-3" style="max-width: 540px;">
+
+                                @php
+                                if($task->data_status==1){
+                                    $bgColor = '#FFC107';
+                                } else if($task->data_status==2){
+                                    $bgColor = '#8aec6f';
+                                } else {
+                                    $bgColor = '#06923E';
+                                }
+                                @endphp
+                                
+                                <div class="card text-bg-light mb-3 stage-task-card" data-stage-assigned-member-id="{{ $task->assigned_to_user_id ?? '' }}" style="max-width: 540px; border: 1px solid {{ $bgColor }};">
                                     <div class="row ms-1 mt-4">
                                         <div class="col-9">
-                                            <label class="detail-label">{{ $task->name }}</label>
-                                            <p><small>{{ $task->description }}</small></p>
+                                            <label class="detail-label stage-task-title">{{ $task->name }}</label>
+                                            <p class="stage-task-description"><small>{{ $task->description }}</small></p>
                                         </div>
                                         <div class="col-3">
                                             <img src="{{ $task->assignedTo->avatar_url }}" alt="{{ $task->assignedTo->name }}'s avatar"
@@ -478,8 +526,12 @@
                                                         data-bs-target="#taskDetailModal"
                                                         data-task-id="{{ $task->task_obfuscated_id }}" 
                                                 ><small>View</small></button>
-                                                @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1)                                                
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary"><small>Edit</small></button>
+                                                @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1  && $task->data_status!=4)                                                
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary view-task-edit-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskEditModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        ><small>Edit</small></button>
                                                 @endif
                                                 @if($project->data_status==1 && $task->data_status!=4)
                                                     <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-warning add-logs-btn"
@@ -501,6 +553,13 @@
                                                         data-task-log="{{ $task->update_log }}" 
                                                         data-task-status="{{ $task->task_status }}" 
                                                         data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
+                                                        @if($task->assigned_to_user_id==$project->project_manager_id)
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskDeleteModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
+                                                        @endif
                                                 @endif
                                                 @if($task->assigned_to_user_id==auth()->user()->id 
                                                 && $project->data_status==1 
@@ -519,13 +578,27 @@
                                                         data-task-status="{{ $task->task_status }}" 
                                                         data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
                                                 
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger"><small>Delete</small></button>
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskDeleteModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}"
+                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
                                                 @endif
                                             </div>
                                         </div>
-                                        <div class="col-6">
-                                            <div class="d-flex flex-column align-items-center justify-content-center h-100">
-                                                <a href="#" class="download-files-link mb-2">Download Files</a>
+                                        <div class="col-6 ">
+                                            <div class="d-flex flex-column align-items-end justify-content-end h-100 pe-4">
+                                                <p><small>Due Date : </small><small class="
+                                            @if ($task->end_at->isPast())
+                                                text-danger
+                                            @else
+                                                text-warning
+                                           @endif
+                                            ">{{ $task->end_at->format('d M Y') }}</small></p>
+                                                <a href="#" class="download-files-link mb-2 view-task-details-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#taskDetailModal"
+                                                        data-task-id="{{ $task->task_obfuscated_id }}">Download Files</a>
                                                 <span class="badge {{ $task->task_status_badge }} rounded-pill">{{ $task->task_status }}</span>
                                             </div>
                                         </div>
@@ -534,6 +607,361 @@
                                 @endforeach
                             </div>
                         @endforeach
+                    </div>
+                </div>
+
+                <style>
+                    .bulletins-scroll-area {
+                        max-height: 200px; /* Adjust this value as needed */
+                        overflow-y: auto;  /* Enables vertical scrollbar when content overflows */
+                        margin-bottom: 15px; /* Add some space between bulletins and the form */
+                        padding-right: 5px; /* Add a small padding to prevent scrollbar from touching content */
+                    }
+                </style>
+
+                <div class="modal fade" id="bulletinModal" tabindex="-1" aria-labelledby="bulletinModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg"> {{-- Use modal-lg for a larger modal --}}
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="bulletinModalLabel">Stage Bulletins: <span id="modalStageName"></span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="bulletinsContainer" class="bulletins-scroll-area">
+                                    <p class="text-muted">Loading bulletins...</p>
+                                </div>
+                                <hr>
+                                <div id="addBulletinContainer">
+                                    <h6>Add New Bulletin</h6>
+                                    <form id="addBulletinForm">
+                                        @csrf
+                                        <input type="hidden" name="project_stage_id" id="modalProjectStageId">
+                                        <input type="hidden" name="project_id" id="modalProjectId">
+                                        <div class="mb-3">
+                                            <textarea class="form-control" id="newBulletinDescription" name="description" rows="3" placeholder="Enter new bulletin here..." required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">Add Bulletin</button>
+                                    </form>
+                                </div>
+                                <div id="formMessages" class="mt-2"></div> {{-- For success/error messages --}}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function() {
+                        const taskSearchInput = $('#taskSearch');
+                        const taskCards = $('.stage-task-card'); // Select all elements that represent a task
+                        const taskSearchClearButton = $('#taskSearchClear');
+                        taskSearchInput.on('keyup', function() {
+                            const searchTerm = $(this).val().toLowerCase(); // Get the search term and convert to lowercase
+                            taskCards.each(function() {
+                                const taskCard = $(this);
+                                // Get the text content from the relevant parts of the task card
+                                // You can choose to search in specific elements like title and description
+                                const taskTitle = taskCard.find('.stage-task-title').text().toLowerCase();
+                                const taskDescription = taskCard.find('.stage-task-description').text().toLowerCase();
+                                // Or search the entire text content of the card
+                                // const taskContent = taskCard.text().toLowerCase();
+
+                                // Check if the search term is found in the task's content
+                                if (taskTitle.includes(searchTerm) || taskDescription.includes(searchTerm)) {
+                                    taskCard.show(); // Show the task card if it matches
+                                } else {
+                                    taskCard.hide(); // Hide the task card if it doesn't match
+                                }
+                            });
+                        });
+                        taskSearchClearButton.on('click', function() {
+                            taskSearchInput.val(''); // Clear the input field
+                            taskSearchInput.trigger('keyup'); // Trigger the keyup event to re-filter (show all tasks)
+                            taskSearchInput.focus(); // Optionally, put focus back on the search input
+                        });
+
+                        function filterTasks(searchTerm = null, memberId = null) {
+                            taskCards.each(function() {
+                                const taskCard = $(this); // **Correctly refers to the current task card**
+                                const assignedMemberId = taskCard.data('stage-assigned-member-id'); // **Get data from current card**
+                                const taskTitle = taskCard.find('.task-title').text().toLowerCase();
+                                const taskDescription = taskCard.find('.task-description').text().toLowerCase();
+
+                                let showBySearch = true;
+                                let showByMember = true;
+
+                                // Apply text search filter
+                                if (searchTerm && searchTerm.trim() !== '') {
+                                    showBySearch = (taskTitle.includes(searchTerm) || taskDescription.includes(searchTerm));
+                                }
+
+                                // Apply member filter
+                                if (memberId) {
+                                    // **FIX:** Use loose equality (==) for comparison as IDs might be string or number
+                                    showByMember = (assignedMemberId == memberId);
+                                }
+
+                                // Show task only if it passes ALL active filters
+                                if (showBySearch && showByMember) {
+                                    taskCard.show();
+                                } else {
+                                    taskCard.hide();
+                                }
+                            });
+                        }
+
+                        $('#findTaskButton').on('click', function() {
+                            const memberId = $('#modalMemberId').val();// Get the member ID from the hidden input
+                            // Clear the text search input when filtering by member
+                            taskSearchInput.val('');
+                            filterTasks(null, memberId); // Apply the member filter
+                            $('#memberDetailsModal').modal('hide');
+                        });
+                    });
+                </script>
+                <script>
+                    $(document).ready(function() {
+                        const bulletinModal = $('#bulletinModal');
+                        const bulletinsContainer = $('#bulletinsContainer');
+                        const modalStageName = $('#modalStageName');
+                        const modalProjectStageIdInput = $('#modalProjectStageId');
+                        const modalProjectIdInput = $('#modalProjectId');
+                        const addBulletinForm = $('#addBulletinForm');
+                        const newBulletinDescription = $('#newBulletinDescription');
+                        const formMessages = $('#formMessages');
+
+                        let currentProjectId = null;
+                        let currentStageId = null;
+                        let currentStageName = null;
+
+                        function loadBulletins() {
+                            if (!currentProjectId || !currentStageId) {
+                                bulletinsContainer.html('<p class="text-danger">Error: Missing Project or Stage ID.</p>');
+                                return;
+                            }
+
+                            bulletinsContainer.html('<p class="text-muted">Loading bulletins...</p>'); // Show loading message
+
+                            $.ajax({
+                                // Ensure this URL matches your Laravel route, accommodating both IDs
+                                // Example: /v1/project-management/project-stages/{projectId}/{stageId}/bulletins/data
+                                url: `/v1/project-management/project-stages/${currentStageId}/${currentProjectId}/bulletins/data`,
+                                method: 'GET',
+                                success: function(response) {
+                                    let bulletinsHtml = '';
+                                    if (response.bulletins && response.bulletins.length > 0) {
+                                        response.bulletins.forEach(function(bulletin) {
+                                            const createdBy = bulletin.created_by_user ? bulletin.created_by_user.name : 'System';
+                                            const createdAt = new Date(bulletin.created_at).toLocaleString('en-US', {
+                                                year: 'numeric', month: 'short', day: 'numeric',
+                                                hour: 'numeric', minute: 'numeric', hour12: true
+                                            });
+                                            bulletinsHtml += `
+                                                <div class="card mb-2">
+                                                    <div class="card-body py-2">
+                                                        <h6 class="card-subtitle mb-1 text-muted d-flex justify-content-between align-items-center">
+                                                            <span>${createdBy}</span>
+                                                            <small>${createdAt}</small>
+                                                        </h6>
+                                                        <p class="card-text mb-0">${bulletin.description}</p>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+                                    } else {
+                                        bulletinsHtml = '<p class="text-muted">No bulletins found for this stage.</p>';
+                                    }
+                                    bulletinsContainer.html(bulletinsHtml);
+                                },
+                                error: function(xhr) {
+                                    console.error('Error fetching bulletins:', xhr.responseText);
+                                    bulletinsContainer.html('<p class="text-danger">Failed to load bulletins. Please try again.</p>');
+                                }
+                            });
+                        }
+
+                        // Listen for the modal to be shown
+                        bulletinModal.on('show.bs.modal', function (event) {
+                            const button = $(event.relatedTarget); // Button that triggered the modal
+                            const bulletinProjectStageId = button.data('bulletin-stage-id');
+                            const bulletinProjectId = button.data('bulletin-project-id');
+                            const stageName = button.closest('.card-body').find('.card-title').text(); // Get stage name from the card
+
+                            modalStageName.text(stageName); // Update modal title
+                            modalProjectStageIdInput.val(bulletinProjectStageId); // Set hidden input for form submission
+                            modalProjectIdInput.val(bulletinProjectId);
+                            bulletinsContainer.html('<p class="text-muted">Loading bulletins...</p>'); // Show loading message
+                            formMessages.empty(); // Clear previous form messages
+                            newBulletinDescription.val(''); // Clear form field
+
+                            if (button.length > 0) {
+                                currentProjectId = button.data('bulletin-project-id');
+                                currentStageId = button.data('bulletin-stage-id');
+                                currentStageDisable = button.data('bulletin-stage-disable');
+                                currentStageName = button.closest('.card-body').find('.card-title').text();
+                            }
+
+                            loadBulletins();
+                            if(currentStageDisable=='disabled'){
+                                $('#addBulletinContainer').hide();
+                            } else {
+                                 $('#addBulletinContainer').show();
+                            }
+                        });
+
+                        // Handle the "Add Bulletin" form submission
+                        addBulletinForm.on('submit', function(e) {
+                            e.preventDefault(); // Prevent default form submission
+
+                            const addBulletinProjectStageId = modalProjectStageIdInput.val();
+                            const addBulletinProjectId = modalProjectIdInput.val();
+                            const description = newBulletinDescription.val();
+
+                            $.ajax({
+                                url: `/v1/project-management/project-stages/${addBulletinProjectStageId}/${addBulletinProjectId}/bulletins/store`, // Route for storing bulletins
+                                method: 'POST',
+                                data: {
+                                    _token: $('meta[name="csrf-token"]').attr('content'), // CSRF token
+                                    description: description
+                                },
+                                success: function(response) {
+                                    formMessages.html('<div class="alert alert-success">' + response.message + '</div>');
+                                    newBulletinDescription.val(''); // Clear the textarea
+                                    // Reload bulletins after successful addition
+                                    loadBulletins(); // Re-trigger show to reload content
+                                },
+                                error: function(xhr) {
+                                    const errors = xhr.responseJSON.errors;
+                                    let errorHtml = '<div class="alert alert-danger"><ul>';
+                                    if (errors) {
+                                        for (const key in errors) {
+                                            errorHtml += '<li>' + errors[key][0] + '</li>';
+                                        }
+                                    } else {
+                                        errorHtml += '<li>' + (xhr.responseJSON.message || 'An error occurred.') + '</li>';
+                                    }
+                                    errorHtml += '</ul></div>';
+                                    formMessages.html(errorHtml);
+                                    console.error('Error adding bulletin:', xhr.responseText);
+                                }
+                            });
+                        });
+                    });
+                </script>
+
+                <!-- Project File Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteProjectFileModal" tabindex="-1" aria-labelledby="deleteProjectFileModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title" id="deleteProjectFileModalLabel">Confirm File Deletion</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="deleteFileId">
+                                <input type="hidden" id="deleteFileProjectId"> {{-- Add this for the project ID --}}
+                                <p>Are you sure you want to delete file "<strong id="deleteFileName"></strong>"?</p>
+                                <p class="text-muted"><small>This action cannot be undone and will permanently remove the file.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteProjectFileButton">Delete File</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Delete Confirmation Modal -->
+                <div class="modal fade" id="taskDeleteModal" tabindex="-1" aria-labelledby="taskDeleteModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm modal-dialog-centered"> {{-- modal-sm for a smaller, focused modal --}}
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white"> {{-- Red header for danger --}}
+                                <h5 class="modal-title" id="taskDeleteModalLabel">Confirm Deletion</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="deleteModalTaskId">
+                                <input type="hidden" id="deleteModalProjectId"> {{-- Hidden input for project_id --}}
+                                <p>Are you sure you want to delete the task named "<strong id="deleteModalTaskName"></strong>"?</p>
+                                <p class="text-muted"><small>This action cannot be undone.</small></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteTaskButton">Delete Task</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Edit Modal -->
+                <div class="modal fade" id="taskEditModal" tabindex="-1" aria-labelledby="taskEditModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="taskEditModalLabel">Edit Task: <span id="editModalTaskName"></span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form id="editTaskForm" >
+                                @csrf
+                                <div class="modal-body">
+                                    <ul class="nav nav-tabs" id="taskEditTab" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="task-detail-tab" data-bs-toggle="tab" data-bs-target="#task-detail-tab-pane" type="button" role="tab" aria-controls="task-detail-tab-pane" aria-selected="true">Task</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="task-files-tab" data-bs-toggle="tab" data-bs-target="#task-files-tab-pane" type="button" role="tab" aria-controls="task-files-tab-pane" aria-selected="false">Files</button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content" id="taksEditTabContent">
+                                        <div class="tab-pane fade show active" id="task-detail-tab-pane" role="tabpanel" aria-labelledby="task-detail-tab" tabindex="0">
+                                            <input type="hidden" name="project_id" id="editModalProjectId">
+                                            <input type="hidden" name="task_id" id="editModalTaskId">
+
+                                            <div class="mb-3">
+                                                <label for="taskName" class="form-label">Task Name</label>
+                                                <input type="text" class="form-control" id="editTaskName" name="name" required placeholder="e.g., Design UI Mockups">
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="taskDescription" class="form-label">Description</label>
+                                                <textarea class="form-control" id="editTaskDescription" name="description" rows="3" placeholder="Detailed description of the task..."></textarea>
+                                            </div>
+
+                                            <div class="row mb-3">
+                                                
+                                                <div class="col-md-6">
+                                                    <label for="editTaskEndDate" class="form-label">Due Date</label>
+                                                    <input type="date" class="form-control" id="editTaskEndDate" name="end_date">
+                                                </div>                                    
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="task-files-tab-pane" role="tabpanel" aria-labelledby="task-files-tab" tabindex="0">
+                                            <div class="col-md-12 mt-3">
+                                                    <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                                                    <div id="new-file-upload-container">
+                                                            <div class="input-group mb-2 file-upload-item">
+                                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                                            </div>
+                                                    </div>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                                    <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                                            </div>
+                                            <div class="col-sm-12" id="editTaskStageFiles"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                        
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="saveEditTaskButton">Update Task</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
@@ -613,46 +1041,62 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="container-fluid">
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Task Name:</div>
-                                        <div class="col-sm-8" id="taskName"></div>
+                                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Task Detail</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane" type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">Update Logs</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane" type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">Files</button>
+                                    </li>
+                                    </ul>
+                                    <div class="tab-content" id="myTabContent">
+                                    <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                                            <div class="container-fluid">
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Task Name:</div>
+                                                                                <div class="col-sm-8" id="taskName"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Description:</div>
+                                                                                <div class="col-sm-8" id="taskDescription"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Assigned To:</div>
+                                                                                <div class="col-sm-8" id="taskAssignedTo"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Created By:</div>
+                                                                                <div class="col-sm-8" id="taskCreatedby"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Created Date:</div>
+                                                                                <div class="col-sm-8" id="taskStartAt"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Due Date:</div>
+                                                                                <div class="col-sm-8" id="taskEndAt"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Stage:</div>
+                                                                                <div class="col-sm-8" id="taskStage"></div>
+                                                                            </div>
+                                                                            <div class="row mb-2">
+                                                                                <div class="col-sm-4 fw-bold">Stage Description:</div>
+                                                                                <div class="col-sm-8" id="taskStageDescription"></div>
+                                                                            </div>                                        
+                                                                        </div>
                                     </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Description:</div>
-                                        <div class="col-sm-8" id="taskDescription"></div>
+                                    <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
+                                                                    <div class="col-sm-8" id="taskUpdateLogView"></div>
                                     </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Assigned To:</div>
-                                        <div class="col-sm-8" id="taskAssignedTo"></div>
+                                    <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
+                                                                    <div class="col-sm-8" id="taskStageFiles"></div>
                                     </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Created Date:</div>
-                                        <div class="col-sm-8" id="taskStartAt"></div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Due Date:</div>
-                                        <div class="col-sm-8" id="taskEndAt"></div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Update Log:</div>
-                                        <div class="col-sm-8" id="taskUpdateLogView"></div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Stage:</div>
-                                        <div class="col-sm-8" id="taskStage"></div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Stage Description:</div>
-                                        <div class="col-sm-8" id="taskStageDescription"></div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-sm-4 fw-bold">Files:</div>
-                                        <div class="col-sm-8" id="taskStageFiles"></div>
-                                    </div>
-                                    </div>
-
-                            </div>
+                                </div>
+                        </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
@@ -662,6 +1106,294 @@
 
                 <script>
                     $(document).ready(function() {
+
+                    // --- Project File Delete Modal Logic ---
+                    $(document).on('click', '.delete-file-btn', function() {
+                        const fileId = $(this).data('file-id');
+                        const tableFileId = $(this).closest('tr').data('table-file-id');
+                        const projectId = $(this).data('project-id'); // Get project ID
+                        const fileName = $(this).data('file-name'); // Get file name from the row
+
+                        const $modal = $('#deleteProjectFileModal');
+                        $modal.find('#deleteFileId').val(fileId);
+                        $modal.find('#deleteFileProjectId').val(projectId); // Set project ID
+                        $modal.find('#deleteFileName').text(fileName);
+
+                        $modal.modal('show'); // Show the modal
+                    });
+
+                    // --- Handle confirmation of project file deletion ---
+                    $('#confirmDeleteProjectFileButton').off('click').on('click', function() {
+                        const $button = $(this);
+                        $button.prop('disabled', true).text('Deleting...');
+
+                        const fileIdToDelete = $('#deleteFileId').val();
+                        const projectIdForFile = $('#deleteFileProjectId').val(); // Get project ID
+                        //const tableFileId = $(this).closest('tr').data('table-file-id');
+
+                        $.ajax({
+                            url: `/v1/project-management/${fileIdToDelete}/file-destroy`, // API endpoint for file deletion
+                            type: 'DELETE', // Use DELETE HTTP method
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    alert(response.message || 'File deleted successfully!');
+                                    $('#deleteProjectFileModal').modal('hide');
+                                    //location.reload(true); // Refresh the page to reflect changes
+                                    // Or, for a smoother UX, remove the row from the DOM:
+                                    $(`tr[data-table-file-id="${fileIdToDelete}"]`).remove();
+                                    const filesTabButton = document.getElementById('project-files');
+                                    if (filesTabButton) { // Check if the element exists
+                                        const bsTab = new bootstrap.Tab(filesTabButton);
+                                        bsTab.show();
+                                    }
+                                    //window.location.href = window.location.origin + window.location.pathname + window.location.search + '#project-files';
+                                } else {
+                                    alert(response.message || 'Failed to delete file.');
+                                }
+                            },
+                            error: function(xhr) {
+                                let errorMessage = 'An error occurred while deleting the file.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                alert(errorMessage);
+                                console.error('Error deleting file:', xhr.responseText);
+                            }
+                        }).always(function() {
+                            $button.prop('disabled', false).text('Delete File');
+                        });
+                    });
+
+                    // Reset modal content when hidden
+                    $('#deleteProjectFileModal').on('hidden.bs.modal', function () {
+                        $(this).find('#deleteFileId').val('');
+                        $(this).find('#deleteFileProjectId').val('');
+                        $(this).find('#deleteFileName').text('');
+                        $(this).find('#confirmDeleteProjectFileButton').off('click'); // Remove the handler
+                    });
+
+                    // --- Task Delete Confirmation Modal Logic ---
+                    $('#taskDeleteModal').on('show.bs.modal', function (event) {
+                        const button = $(event.relatedTarget); // Button that triggered the modal
+                        const taskId = button.data('task-id'); // Task obfuscated ID
+                        const taskName = button.data('task-name'); // Project obfuscated ID
+
+                        const $modal = $(this);
+                        const $deleteModalTaskId = $modal.find('#deleteModalTaskId');
+                        const $deleteModalTaskName = $modal.find('#deleteModalTaskName');
+                        const $confirmDeleteTaskButton = $modal.find('#confirmDeleteTaskButton');
+
+                        // Reset UI
+                        $deleteModalTaskName.text(taskName);
+
+                        // Set hidden IDs
+                        $deleteModalTaskId.val(taskId);
+
+                        
+                        // --- Attach DELETE action to the confirm button ---
+                        // IMPORTANT: Use .off('click') to prevent multiple event listeners
+                        // if the modal is opened multiple times without page refresh.
+                        $confirmDeleteTaskButton.off('click').on('click', function() {
+                            $(this).prop('disabled', true).text('Deleting...');
+
+                            const taskIdToDelete = $deleteModalTaskId.val();
+
+                            $.ajax({
+                                url: `/v1/project-management/stages/${taskIdToDelete}/tasks-delete`, // API endpoint for deletion
+                                type: 'DELETE', // Use DELETE HTTP method
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Ensure you have CSRF token in meta tag
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        alert(response.message || 'Task deleted successfully!');
+                                        $('#taskDeleteModal').modal('hide');
+                                        location.reload(true); // Refresh page to reflect deletion
+                                    } else {
+                                        alert(response.message || 'Failed to delete task.');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    let errorMessage = 'An error occurred while deleting task.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    }
+                                    alert(errorMessage);
+                                    console.error('Error deleting task:', xhr.responseText);
+                                }
+                            }).always(function() {
+                                // Re-enable and reset button text in case of error
+                                $confirmDeleteTaskButton.prop('disabled', false).text('Delete Task');
+                            });
+                        });
+                    });
+
+                    // Reset modal content when hidden
+                    $('#taskDeleteModal').on('hidden.bs.modal', function () {
+                        const $modal = $(this);
+                        $modal.find('#deleteModalTaskName').text('');
+                        $modal.find('#deleteModalTaskId').val('');
+                        $modal.find('#deleteModalProjectId').val('');
+                        $modal.find('#confirmDeleteTaskButton').off('click'); // Remove the click handler
+                    });
+
+
+                    // --- Task Edit Modal Logic ---
+                    $('#taskEditModal').on('show.bs.modal', function (event) {
+                        const button = $(event.relatedTarget); // Button that triggered the modal
+                        const taskId = button.data('task-id'); // Task obfuscated ID
+                        const projectId = button.data('project-id'); // Project obfuscated ID
+                        //const editTaskFiles = $('#editTaskStageFiles');
+
+                        const $modal = $(this);
+                        const $form = $modal.find('#editTaskForm');
+                        const $editModalTaskId = $modal.find('#editModalTaskId');
+                        const $editModalProjectId = $modal.find('#editModalProjectId');
+                        const $editTaskName = $modal.find('#editTaskName');
+                        const $editTaskDescription = $modal.find('#editTaskDescription');
+                        const $editTaskEndDate = $modal.find('#editTaskEndDate');
+                        const $editModalTaskName = $modal.find('#editModalTaskName');
+                        const $saveEditTaskButton = $modal.find('#saveEditTaskButton');
+
+                        
+                        
+                        // Clear previous validation feedback
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback').text('');                  
+
+                        // Set hidden IDs
+                        $editModalTaskId.val(taskId);
+                        $editModalProjectId.val(projectId);
+
+                        // Fetch task details for editing
+                        $.ajax({
+                            url: `/v1/project-management/stage/${taskId}/tasks`, // Use your task detail API endpoint
+                            type: 'GET',
+                            success: function(response) {
+                                if (response.success) {
+                                    const task = response.task;
+                                    $editModalTaskName.text(task.name);
+
+                                    // Populate form fields
+                                    $editTaskName.val(task.name);
+                                    $editTaskDescription.val(task.description);
+                                    $editTaskEndDate.val(task.end_at ? new Date(task.end_at).toISOString().split('T')[0] : '');
+                                    if (task.files && task.files.length > 0) {
+                                            htmlContent = `<table class="table table-striped" width="100%">
+                                            `;
+                                            task.files.forEach(file => {
+                                                htmlContent += `
+                                                    <tr>
+                                                        <td>
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
+                                                            (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-danger delete-file-btn" {{-- Changed class name --}}
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#deleteProjectFileModal" {{-- Target the confirmation modal --}}
+                                                                    data-file-id="${file.id}"
+                                                                    data-project-id="${task.project_id}" {{-- Pass task's project ID --}}
+                                                                    data-file-name="${file.file_name}" {{-- Pass file name for confirmation text --}}
+                                                                    >
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            });
+                                            htmlContent += `</tablel>`;
+                                        } else {
+                                            htmlContent = `<p class="text-muted mt-4">No files attached to this task.</p>`;
+                                        }
+                                        document.getElementById('editTaskStageFiles').innerHTML = htmlContent; 
+                                    
+
+                                } else {
+                                    alert('Failed to load task details for edit: ' + (response.message || 'Unknown error'));
+                                    $modal.modal('hide');
+                                }
+                            },
+                            error: function(xhr) {
+                                alert('Error loading task details for edit: ' + (xhr.responseJSON && xhr.responseJSON.message || 'Server error'));
+                                $modal.modal('hide');
+                                console.error('Error fetching task details for edit:', xhr.responseText);
+                            }
+                        });
+                    });
+
+                    // --- Handle form submission for updating task ---
+                    $('#editTaskForm').on('submit', async function(e) {
+                        e.preventDefault();
+
+                        const $form = $(this);
+                        const taskId = $form.find('#editModalTaskId').val();
+                        const projectId = $form.find('#editModalProjectId').val();
+                        const $saveButton = $form.find('#saveEditTaskButton');
+
+                        // Reset validation feedback
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback').text('');
+
+                        $saveButton.prop('disabled', true).text('Saving...');
+
+                        const formData = new FormData(this);
+                        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+                        // If the Select2 is disabled, its value won't be sent. Use the hidden input.
+                        if ($('#editTaskAssignee').prop('disabled') && $('#editAssignedToUserIdHidden').val()) {
+                            formData.set('assigned_to_user_id', $('#editAssignedToUserIdHidden').val());
+                        }
+
+                        try {
+                            const response = await fetch(`/v1/project-management/stages/${taskId}/tasks-update`, {
+                                method: 'POST', // Always POST for FormData with _method spoofing
+                                headers: {
+                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                                },
+                                body: formData
+                            });
+
+                            const result = await response.json();
+
+                            if (response.ok && result.success) { // Check both HTTP status and custom 'success' flag
+                                alert(result.message || 'Task updated successfully!');
+                                $('#taskEditModal').modal('hide');
+                                location.reload(true); // Refresh page to reflect changes
+                            } else {
+                                // Handle validation errors or other API errors
+                                let errorMessage = result.message || 'Failed to update task.';
+                                if (result.errors) {
+                                    errorMessage = 'Validation Errors:\n';
+                                    for (const field in result.errors) {
+                                        const inputField = $form.find(`[name="${field}"]`);
+                                        inputField.addClass('is-invalid');
+                                        inputField.next('.invalid-feedback').text(result.errors[field][0]);
+                                        errorMessage += `- ${result.errors[field][0]}\n`;
+                                    }
+                                }
+                                alert(errorMessage);
+                            }
+                        } catch (error) {
+                            console.error('Error updating task:', error);
+                            alert('An unexpected error occurred. Please try again.');
+                        } finally {
+                            $saveButton.prop('disabled', false).text('Save Changes');
+                        }
+                    });
+
+                    // Reset modal content when hidden
+                    $('#taskEditModal').on('hidden.bs.modal', function () {
+                        const $modal = $(this);
+                        //$modal.find('#editTaskForm')[0].reset();
+                        //$modal.find('#editModalTaskName').text('');
+                        //$modal.find('#saveEditTaskButton').prop('disabled', false).text('Save Changes');
+                        
+                    });
 
                     // --- Task Add/View Logs Modal Logic ---
                     $('#taskAddLogsModal').on('show.bs.modal', function (event) {
@@ -706,10 +1438,6 @@
                         // Append CSRF token
                         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
 
-                        // Send AJAX request
-                        // You might reuse your updateStatus endpoint or create a new one for just logs
-                        // For simplicity, let's use the updateStatus endpoint by also sending current status
-                        // OR create a dedicated 'add-log' endpoint. A dedicated endpoint is cleaner.
                         $.ajax({
                             url: `/v1/project-management/stages/${taskId}/tasks-add-log`, // New API endpoint for adding logs
                             type: 'POST',
@@ -790,7 +1518,7 @@
                             if(taskUserLogon===taskProjectManagerId && taskAssignTo!==taskProjectManagerId && taskStatus==='Task Ongoing'){
                                 $newStatusSelect.remove();
                                 $('.btn-update-status').prop('disabled', true);
-                                $('#taskMessage').html('<div class="alert alert-danger" role="alert">The task status is <strong>On Going</strong>, task assigner must move to <strong>Task Pending Review</strong> first !</div>');
+                                $('#taskMessage').html('<div class="alert alert-danger" role="alert">The task status is <strong>On Going</strong>, task assignee must move to <strong>Task Pending Review</strong> first !</div>');
                             }
                         }
 
@@ -800,10 +1528,6 @@
                             );
                         }
 
-                        // Assuming you've fetched the 'task' object and have its current status
-                        // Example: const taskCurrentStatus = task.status; // from your AJAX response
-
-                        // --- Step 3: Loop through data and append options ---
                         statusOptions.forEach(option => {
                             const optionHtml = `
                                 <option value="${option.value}" >
@@ -892,6 +1616,7 @@
                                         document.getElementById('taskName').innerText = task.name;
                                         document.getElementById('taskDescription').innerText = task.description;
                                         document.getElementById('taskAssignedTo').innerText = task.assigned_to?.name || 'N/A';
+                                        document.getElementById('taskCreatedby').innerText = task.created_by?.name || 'N/A';
                                         document.getElementById('taskStartAt').innerText = new Date(task.created_at).toLocaleString('en-GB', { // Using 'en-GB' for dd/mm/yyyy hh:mm format
                                             day: '2-digit',
                                             month: '2-digit',
@@ -905,19 +1630,18 @@
                                             month: '2-digit',
                                             year: 'numeric'
                                         });
-                                        document.getElementById('taskUpdateLogView').innerText = task.update_log;
+                                        //document.getElementById('taskUpdateLogView').innerText = task.update_log;
                                         document.getElementById('taskStage').innerText = task.project_stage?.kanban_stage?.name || 'N/A';
                                         document.getElementById('taskStageDescription').innerText = task.project_stage?.kanban_stage?.description || 'N/A';
                                         if (task.files && task.files.length > 0) {
                                             htmlContent = `
-                                                <h6 class="mt-4">Attached Files:</h6>
                                                 <ul class="list-group list-group-flush">
                                             `;
                                             task.files.forEach(file => {
                                                 htmlContent += `
                                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
-                                                            <i class="fas fa-file-alt me-2"></i> <a href="${file.file_url}" target="_blank">${file.file_name}
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
                                                             (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
                                                         </span>
                                                     </li>
@@ -927,7 +1651,32 @@
                                         } else {
                                             htmlContent = `<p class="text-muted mt-4">No files attached to this task.</p>`;
                                         }
-                                        document.getElementById('taskStageFiles').innerHTML = htmlContent;                                        
+                                        document.getElementById('taskStageFiles').innerHTML = htmlContent; 
+
+                                        if (task.logs && task.logs.length > 0) {
+                                            htmlLogContents = `
+                                                <ul class="list-group list-group-flush">
+                                            `;
+                                            task.logs.forEach(log => {
+                                                const description = log.description || 'No description.';
+                                                const userName = log.user ? log.user.name : 'System/Deleted User'; // Access log.user.name
+                                                const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A'; // Format timestamp
+                                                htmlLogContents += `
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            ${description}
+                                                            <p><span class="text-muted text-sm">
+                                                                <small>${createdAt} by ${userName}</small>
+                                                            </span></p>
+                                                        </span>
+                                                    </li>
+                                                `;
+                                            });
+                                            htmlLogContents += `</ul>`;
+                                        } else {
+                                            htmlLogContents = `<p class="text-muted mt-4">No task update logs.</p>`;
+                                        }
+                                        document.getElementById('taskUpdateLogView').innerHTML = htmlLogContents;                                       
 
                                     } else {
                                         $taskDetailContent.html('<p class="text-danger">Failed to load task details: ' + (response.message || 'Unknown error') + '</p>');
@@ -965,8 +1714,8 @@
                             <form id="createTaskForm" enctype="multipart/form-data">
                                 @csrf
                                 <div class="modal-body">
-                                    <input type="hidden" name="project_id" id="modalProjectId">
-                                    <input type="hidden" name="kanban_stage_id" id="modalKanbanStageId">
+                                    <input type="hidden" name="project_id" id="createModalProjectId">
+                                    <input type="hidden" name="kanban_stage_id" id="createModalKanbanStageId">
 
                                     <div class="mb-3">
                                         <label for="taskName" class="form-label">Task Name</label>
@@ -975,7 +1724,7 @@
 
                                     <div class="mb-3">
                                         <label for="taskDescription" class="form-label">Description</label>
-                                        <textarea class="form-control" id="taskDescription" name="description" rows="3" placeholder="Detailed description of the task..."></textarea>
+                                        <textarea class="form-control" id="taskDescription" name="description" rows="3" required placeholder="Detailed description of the task..."></textarea>
                                     </div>
 
                                     <div class="row mb-3">
@@ -985,13 +1734,12 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="taskEndDate" class="form-label">Due Date</label>
-                                            <input type="date" class="form-control" id="taskEndDate" name="end_date">
+                                            <input type="date" class="form-control" id="taskEndDate" required name="end_date">
                                         </div>                                    
                                         <div class="col-md-6">
                                             <label for="taskEndDate" class="form-label">Task Status</label>
                                             <select class="form-control" id="taskStatus" name="task_status">
                                                 <option value="1">Ongoing</option>
-                                                <option value="2">Complete</option>
                                             </select>
                                         </div>
                                     </div>
@@ -1009,11 +1757,14 @@
                                     </div>
                                          <div class="col-md-12 mt-3">
                                             <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
-                                            <div id="new-file-upload-container">
+                                            <div id="create-new-file-upload-container">
                                                     <div class="input-group mb-2 file-upload-item">
-                                                        <input type="file" id="task_file" name="task_file" class="form-control" accept=".pdf,.doc,.docx">
+                                                        <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
                                                     </div>
                                             </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="create-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -1024,6 +1775,68 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                                const $newFileUploadContainer = $('#create-new-file-upload-container');
+                                const $addMoreFilesBtn = $('#create-add-more-files-btn');
+                                let indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
+
+                                // Function to update the visibility of "Remove" buttons
+                                function updateRemoveButtonVisibility() {
+                                    const currentFileInputCount = $newFileUploadContainer.children('.file-upload-item').length;
+                                    // Show remove button if there's more than one file input field in the NEW upload section
+                                    if ($newFileUploadContainer.children('.file-upload-item').length > 1) {
+                                        $newFileUploadContainer.find('.remove-file-input').show();
+                                    } else {
+                                        $newFileUploadContainer.find('.remove-file-input').hide(); // Hide if only one remains
+                                    }
+                                }
+
+                                // Function to add a new file input field group
+                                function addFileInputField() {
+                                    const currentFileInputCount = $newFileUploadContainer.children('.file-upload-item').length;
+                                    if(indexNewFileUpload<=3){
+                                        const newFileInputHtml = `
+                                            <div class="input-group mb-2 file-upload-item">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        `;
+                                        $newFileUploadContainer.append(newFileInputHtml);
+                                        updateRemoveButtonVisibility();
+                                    } else {
+                                        alert('you can not add more than 3 files !');
+                                    }
+                                    
+                                    
+                                }
+
+                                // Initial setup on page load:
+                                // If no file input fields are present (e.g., fresh create form), add one.
+                                // Otherwise, just adjust visibility of existing remove buttons (e.g., after validation error).
+                                if ($newFileUploadContainer.children('.file-upload-item').length === 0) {
+                                    addFileInputField();
+                                } else {
+                                    updateRemoveButtonVisibility();
+                                }
+
+                                // Event listener for "Add Another File" button
+                                $addMoreFilesBtn.on('click', function() {
+                                    indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
+                                    if(indexNewFileUpload>2){
+                                        alert('you can not add more than 3 files !')
+                                    } else {                                        
+                                        addFileInputField();
+                                    }
+                                });
+
+                                // Event listener for "Remove" button on dynamically added file inputs
+                                // Using event delegation because buttons are added dynamically
+                                $newFileUploadContainer.on('click', '.remove-file-input', function() {
+                                    indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
+                                    $(this).closest('.file-upload-item').remove(); // Remove the entire parent .input-group
+                                    updateRemoveButtonVisibility();
+                                });
+                    </script>
 
                 
 
@@ -1035,10 +1848,6 @@
                         overflow-y: hidden;
                         /* Hide vertical scrollbar if it appears (optional) */
                         padding-bottom: 1rem;
-                        /* Add some padding at the bottom for the scrollbar to not cut off content */
-                        /* Optional: Add some padding-left/right if you want space before/after the first/last card */
-                        /* padding-left: 15px; */
-                        /* padding-right: 15px; */
                     }
 
                     /* Optional: Hide scrollbar in webkit browsers (Chrome, Safari) */
@@ -1129,7 +1938,11 @@
                             {{-- This is where your Select2 for users would go --}}
                             <select class="form-select" id="newMemberSelect" name="member_id" required>
                                 @foreach($users as $user)
-                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                <option value="{{ $user->id }}"
+                                        data-avatar-url="{{ $user->avatar_url }}" {{-- IMPORTANT: Pass avatar URL --}}
+                                        data-initials="{{ $user->name }}"> {{-- Optional: Initials for fallback --}}
+                                    {{ $user->name }}
+                                </option>
                                 @endforeach
                             </select>
                         </div>
@@ -1143,13 +1956,84 @@
         </div>
     </div>
 
+    <script>
+        $(document).ready(function() {
+            // --- Select2 Formatting Functions ---
+
+            // Function to format each option in the dropdown list
+            function formatUserResult(user) {
+                if (!user.id) {
+                    return user.text; // Return original text for placeholder
+                }
+
+                const avatarUrl = $(user.element).data('avatar-url');
+                const initials = $(user.element).data('initials');
+                
+                let avatarHtml = '';
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${avatarUrl}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">`;
+                } else if (initials) {
+                    // Fallback for initials if no avatar URL
+                    avatarHtml = `<div class="rounded-circle d-inline-flex align-items-center justify-content-center me-2 text-white bg-primary" style="width: 30px; height: 30px; font-size: 0.7em;">${initials.substring(0,2)}</div>`;
+                }
+
+                // Return a jQuery object or a DOM element
+                const $container = $(
+                    `<span class="d-flex align-items-center">${avatarHtml} ${user.text}</span>`
+                );
+                return $container;
+            }
+
+            // Function to format the selected option in the input field
+            function formatUserSelection(user) {
+                if (!user.id) {
+                    return user.text; // Return original text for placeholder
+                }
+
+                const avatarUrl = $(user.element).data('avatar-url');
+                const initials = $(user.element).data('initials');
+
+                let avatarHtml = '';
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${avatarUrl}" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">`;
+                } else if (initials) {
+                    avatarHtml = `<div class="rounded-circle d-inline-flex align-items-center justify-content-center me-2 text-white bg-secondary" style="width: 24px; height: 24px; font-size: 0.7em;">${initials.substring(0,2)}</div>`;
+                }
+
+                const $container = $(
+                    `<span class="d-flex align-items-center">${avatarHtml} ${user.text}</span>`
+                );
+                return $container;
+            }
+
+            // --- Initialize Select2 when the modal is shown ---
+            $('#addMemberModal').on('shown.bs.modal', function () {
+                $('#newMemberSelect').select2({
+                    theme: "bootstrap-5",
+                    dropdownParent: $('#addMemberModal'), // IMPORTANT: This ensures the dropdown is within the modal's z-index context
+                    placeholder: "Select a user", // Placeholder text
+                    allowClear: true, // Allows clearing the selection
+                    templateResult: formatUserResult, // Function to render each option in the dropdown
+                    templateSelection: formatUserSelection // Function to render the selected option
+                });
+            });
+
+            // --- Destroy Select2 when the modal is hidden to prevent duplicates ---
+            $('#addMemberModal').on('hidden.bs.modal', function () {
+                $('#newMemberSelect').select2('destroy');
+            });
+
+            // ... (Your other JavaScript code) ...
+        });
+        </script>
+
     <div class="modal fade" id="memberDetailsModal" tabindex="-1" aria-labelledby="memberDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center pt-0">
+                <div class="modal-body text-center pt-1">
                     <img id="modalMemberAvatar" src="" alt="Member Avatar" class="modal-member-avatar rounded-circle mb-3">
                     <div class="modal-member-avatar-placeholder mb-3 rounded-circle d-flex align-items-center justify-content-center text-white fw-bold d-none"></div>
                     <h5 id="modalMemberName" class="mb-1"></h5>
@@ -1157,12 +2041,14 @@
                     <p id="modalMemberPosition" class="text-muted small"></p>
 
                     <hr class="my-3">
-
-                    @if($project->project_manager_id == auth()->user()->id) {{-- Only project manager can remove --}}
-                    <button type="button" class="btn btn-danger btn-sm w-100" id="removeMemberButton">Remove from Project</button>
-                    <input type="hidden" id="modalMemberId">
-                    <input type="hidden" id="modalProjectId">
-                    @endif
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        @if($project->project_manager_id == auth()->user()->id) {{-- Only project manager can remove --}}
+                        <button type="button" class="btn btn-danger btn-sm" id="removeMemberButton"><small>Remove from Project</small></button>
+                        <input type="hidden" id="modalMemberId">
+                        <input type="hidden" id="modalProjectId">
+                        @endif
+                        <button type="button" class="btn btn-success btn-sm" id="findTaskButton"><small>Find the tasks</small></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1266,6 +2152,56 @@
                 });
             });
 
+            function formatAssigneeResult(user) {
+                if (!user.id) {
+                    return user.text; // Return original text for placeholder
+                }
+
+                const avatarUrl = $(user.element).data('avatar-url');
+                const initials = $(user.element).data('initials');
+                
+                let avatarHtml = '';
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${avatarUrl}" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">`;
+                } else if (initials) {
+                    // Fallback for initials if no avatar URL
+                    avatarHtml = `<div class="rounded-circle d-inline-flex align-items-center justify-content-center me-2 text-white bg-primary" style="width: 30px; height: 30px; font-size: 0.7em;">${initials.substring(0,2)}</div>`;
+                }
+
+                // Return a jQuery object or a DOM element
+                const $container = $(
+                    `<span class="d-flex align-items-center">${avatarHtml} ${user.text}</span>`
+                );
+                return $container;
+            }
+
+            // Function to format the selected option in the input field
+            function formatAssigneeSelection(user) {
+                if (!user.id) {
+                    return user.text; // Return original text for placeholder
+                }
+
+                const avatarUrl = $(user.element).data('avatar-url');
+                const initials = $(user.element).data('initials');
+
+                let avatarHtml = '';
+                if (avatarUrl) {
+                    avatarHtml = `<img src="${avatarUrl}" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">`;
+                } else if (initials) {
+                    avatarHtml = `<div class="rounded-circle d-inline-flex align-items-center justify-content-center me-2 text-white bg-secondary" style="width: 24px; height: 24px; font-size: 0.7em;">${initials.substring(0,2)}</div>`;
+                }
+
+                const $container = $(
+                    `<span class="d-flex align-items-center">${avatarHtml} ${user.text}</span>`
+                );
+                return $container;
+            }
+
+            $('#createTaskModal').on('hidden.bs.modal', function () {
+                $('#taskAssignee').select2('destroy');
+            });
+
+
             // Event listener for when the "Create Task" modal is about to be shown
             $('#createTaskModal').on('show.bs.modal', function(event) {
                 const button = $(event.relatedTarget); // Button that triggered the modal
@@ -1275,8 +2211,8 @@
 
                 const $modal = $(this);
                 const $assigneeSelect = $modal.find('#taskAssignee');
-                const $modalProjectIdInput = $modal.find('#modalProjectId');
-                const $modalKanbanStageIdInput = $modal.find('#modalKanbanStageId');
+                const $modalProjectIdInput = $modal.find('#createModalProjectId');
+                const $modalKanbanStageIdInput = $modal.find('#createModalKanbanStageId');
                 const $assignedToUserIdHidden = $modal.find('#assignedToUserIdHidden'); // The hidden input
 
                 // Set hidden project and kanban stage IDs in the form
@@ -1296,7 +2232,7 @@
                     success: function(response) {
                         if (response.success && response.users) {
                             const assignableUsers = response.users;
-                            const currentUserId = {{ auth()->check() ? auth()->id() : 'null' }}; // Get logged-in user ID
+                            const currentUserId = {{ auth()->check() ? auth()->id() : "null" }}; // Get logged-in user ID
                             const projectManagerid = {{ $project->project_manager_id }};
                             const isProjectManager = (currentUserId  === projectManagerid);
                             let loggedInUserFound = false;
@@ -1319,21 +2255,21 @@
                                 $assigneeSelect.append(optionHtml);
                             });
 
+                            $assigneeSelect.select2({
+                                        theme: "bootstrap-5",
+                                        dropdownParent: $('#createTaskModal'), // Make sure this is the correct ID of the modal container
+                                        placeholder: "Select user (Optional)",
+                                        allowClear: true,
+                                        templateResult: formatAssigneeResult,
+                                        templateSelection: formatAssigneeSelection,
+                            });
                             // Logic for disabling/enabling and setting value:
                             if (loggedInUserFound) {
                                 if(isProjectManager){
                                     $assigneeSelect.prop('disabled', false);
-                                    // Make sure the hidden input is removed or its value cleared if select is enabled
-                                    if ($assignedToUserIdHidden.length) {
-                                        $assignedToUserIdHidden.val('');
-                                    }
                                 } else {
                                     // If logged-in user is in the list and auto-selected, keep the select disabled
-                                    $assigneeSelect.prop('disabled', true);
-                                    // Ensure the hidden input holds the correct value
-                                    if ($assignedToUserIdHidden.length) {
-                                        $assignedToUserIdHidden.val(currentUserId);
-                                    }
+                                    $assigneeSelect.prop('disabled', true);                                    
                                 }
                                 
                             } else {
@@ -1347,12 +2283,7 @@
                             }
                             
                             // If you are using Select2 for styling, re-initialize it
-                            $assigneeSelect.select2({
-                                placeholder: "Select user (Optional)",
-                                allowClear: true,
-                                templateResult: formatUserResult,    // Your custom format functions
-                                templateSelection: formatUserSelection, // from earlier Select2 setup
-                            });
+                            
                             
                             // Trigger change to ensure Select2 updates its display
                             $assigneeSelect.trigger('change');
@@ -1377,17 +2308,9 @@
             // *** THIS IS THE KEY FIX: Remove $.param() ***
             const formData = new FormData(this); // Correctly creates FormData from the form
 
-            // The hidden inputs (project_id, kanban_stage_id) and CSRF token
-            // will automatically be included if they are part of the form.
-            // You generally DO NOT need to manually append them if they are standard hidden inputs.
-            // If your CSRF token is NOT a hidden input in the form, you'd still append it:
-            // formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
-
-            // Retrieve project and kanban stage IDs directly from formData
-            // This is a robust way to get them as they are part of the sent data.
             
-            const projectId = $('#modalProjectId').val();
-            const kanbanStageId = $('#modalKanbanStageId').val();
+            const createProjectId = $('#createModalProjectId').val();
+            const createKanbanStageId = $('#createModalKanbanStageId').val();
             
             @if($project->project_manager_id!=auth()->user()->id)
                 const selectElement = document.querySelector('select[name="assigned_to_user_id"]');
@@ -1396,7 +2319,7 @@
 
             // Send AJAX request
             $.ajax({
-                url: `/v1/project-management/${projectId}/stages/${kanbanStageId}/tasks`, // API endpoint to create task
+                url: `/v1/project-management/${createProjectId}/stages/${createKanbanStageId}/tasks`, // API endpoint to create task
                 type: 'POST',
                 data: formData, // Pass FormData object directly
                 processData: false, // IMPORTANT: Tells jQuery not to process the data (essential for files)

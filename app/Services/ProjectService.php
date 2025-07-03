@@ -6,12 +6,12 @@ use App\Models\Project;
 use App\Models\ProjectStage;
 use App\Models\ProjectFile;
 use Auth;
-use Yajra\DataTables\DataTables;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectStageLog;
 use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Yajra\DataTables\Facades\DataTables;
 
 class ProjectService {
 
@@ -73,7 +73,7 @@ class ProjectService {
 
             // 4. Handle File Uploads
             if ($request->hasFile('project_files')) {
-                foreach ($request->file('project_files') as $file) {
+                foreach ($request->file('project_files') as $index => $file) {
                     $originalFileName = $file->getClientOriginalName();
                     $fileMimeType = $file->getClientMimeType();
                     $fileSize = $file->getSize(); // Size in bytes
@@ -87,6 +87,7 @@ class ProjectService {
                         'file_path' => $path, // The path returned by store()
                         'mime_type' => $fileMimeType,
                         'file_size' => $fileSize,
+                        'description' => $request->input('project_file_descriptions')[$index] ?? null,
                         'uploaded_by_user_id' => Auth::id(),
                     ]);
                 }
@@ -183,12 +184,6 @@ class ProjectService {
                     // Edit button
                     $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.edit', ['id' => $row->obfuscated_id]) . '">Edit</a>';
 
-                    // Delete button (using a form for proper DELETE request)
-                    //$btn .= '<form action="' . route('v1.project-management.destroy', ['project' => $row->obfuscated_id]) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this project?\');">';
-                    //$btn .= csrf_field(); // Laravel CSRF token
-                    //$btn .= method_field('DELETE'); // Spoof DELETE method for Laravel
-                    //$btn .= '<button type="submit" class="btn btn-danger btn-sm">Delete</button>'; // Use btn-danger for styling
-                    //$btn .= '</form>';
                     $btn .= '<button type="button" class="btn btn-danger btn-sm delete-project-btn"';
                     $btn .= ' data-bs-toggle="modal"';
                     $btn .= ' data-bs-target="#confirmationModal"'; // Target our custom modal
@@ -308,6 +303,27 @@ class ProjectService {
             $project->projectMembers()->sync($validatedData['addProjectMembers']);
         } else {
             $project->projectMembers()->detach(); // If no members selected, detach all
+        }
+
+        if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $index => $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $project->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $project->files()->create([
+                        'file_name' => $originalFileName,
+                        'file_path' => $path, // The path returned by store()
+                        'mime_type' => $fileMimeType,
+                        'file_size' => $fileSize,
+                        'description' => $request->input('project_file_descriptions')[$index] ?? null,
+                        'uploaded_by_user_id' => Auth::id(),
+                    ]);
+                }
         }
 
         return redirect()->route('v1.project-management.detail', ['project' => $project->obfuscated_id])
@@ -800,6 +816,76 @@ class ProjectService {
             'data' => [$ongoingProjectsCount, $completedProjectsCount],
             'title' => 'Project Status for ' . Carbon::now()->format('F Y')
         ]);
+    }
+
+    /**
+     * API endpoint for DataTables to fetch project files.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProjectFileData(Request $request)
+    {
+        // Get filters from DataTables AJAX request (or custom parameters)
+        $projectId = $request->input('project_id');
+        
+        $query = ProjectFile::query();
+
+        // Eager load relationships to prevent N+1 queries
+        $query->with(['project', 'uploadedBy', 'task']);
+
+        // Filter by project_id (mandatory for project files)
+        if ($projectId) {
+            $query->where('project_id', $projectId);
+        }
+
+        return DataTables::eloquent($query)
+            ->addColumn('file_name_link', function (ProjectFile $file) {
+                // Generate a clickable link to download/view the file
+                $url = $file->file_url; // Using the accessor you defined in the model
+                $icon = '';
+                // Add icons based on mime type
+                if (\Str::contains($file->mime_type, ['pdf'])) {
+                    $icon = '<i class="fas fa-file-pdf text-danger me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['word', 'document'])) {
+                    $icon = '<i class="fas fa-file-word text-primary me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['excel', 'spreadsheet'])) {
+                    $icon = '<i class="fas fa-file-excel text-success me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['image'])) {
+                    $icon = '<i class="fas fa-file-image text-info me-1"></i>';
+                } else {
+                    $icon = '<i class="fas fa-file text-muted me-1"></i>';
+                }
+
+                return '<a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->file_name) . '</a>';
+            })
+            ->addColumn('uploaded_by', function (ProjectFile $file) {
+                //return $file->uploadedBy->name ?? 'N/A';
+                return '-';
+            })
+            ->addColumn('associated_task', function (ProjectFile $file) {
+                //return !is_null($file->task->name) ? 'Task':'Project'; // Display task name or 'Project-level'
+                return '-';
+            })
+            ->addColumn('file_size_formatted', function (ProjectFile $file) {
+                // Convert bytes to KB, MB, etc.
+                $bytes = $file->file_size;
+                $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                $i = 0;
+                while ($bytes >= 1024 && $i < count($units) - 1) {
+                    $bytes /= 1024;
+                    $i++;
+                }
+                return round($bytes, 2) . ' ' . $units[$i];
+            })
+            ->addColumn('action', function (ProjectFile $file) {
+                $buttons = '<a href="'. $file->file_url .'" target="_blank" download class="btn btn-sm btn-info me-1" title="Download"><i class="fas fa-download"></i></a>';
+                // Add a delete button (requires AJAX and a delete route)
+                $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-project-file-btn" data-file-id="'.$file->id.'" data-file-name="'.e($file->file_name).'" title="Delete"><i class="fas fa-trash"></i></button>';
+                return $buttons;
+            })
+            ->rawColumns(['file_name_link', 'action']) // Tell DataTables these columns contain raw HTML
+            ->make(true);
     }
     
 }
