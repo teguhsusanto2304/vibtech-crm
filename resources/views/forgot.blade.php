@@ -76,7 +76,7 @@
                             {{ session('status') }}
                         </div>
                     @endif
-                    <input type="text" name="email" placeholder="your email">
+                    <input type="text" name="email" placeholder="Your Email">
                     <button type="submit">Email Password Reset Link</button>
                 </form>
                 <p class="mt-3"><a href="{{ route('v1.login') }}" class="text-white">Back to Login</a></p>

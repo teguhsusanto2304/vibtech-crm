@@ -34,7 +34,7 @@
                                 <h5 class="card-title">New Project</h5>
                                 
                                     <a href="{{ route('v1.project-management.create') }}" class="btn btn_primary mt-auto">
-                                        Create Project</a>
+                                        Create</a>
                                 
                             </div>
                         </div>
@@ -44,8 +44,18 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">All Projects</h5>
-                                <a href="{{ route('v1.project-management.list')}}" class="btn btn_primary mt-auto">View All Projects</a>
+                                <h5 class="card-title">Your Projects</h5>
+                                <a href="{{ route('v1.project-management.list')}}" class="btn btn_primary mt-auto">View</a>
+                            </div>
+                        </div>
+                    </div>
+                   @endcan
+                   @can('view-vibtech-project')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Vibtech Projects</h5>
+                                <a href="{{ route('v1.project-management.all')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
                     </div>

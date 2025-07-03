@@ -140,15 +140,11 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0 text-dark invisible">Project Details</h4>
                 <div class="btn-group" role="group" aria-label="Default button group">
-                    @if(!is_null(request('all')))
+
                     <a href="{{ route('v1.project-management.all') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-2"></i> Back to Projects
                     </a>
-                    @else
-                    <a href="{{ route('v1.project-management.list') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-2"></i> Back to Projects
-                    </a>
-                    @endif
+                    
                     @can('edit-project-management-complete')
                     @if($project->data_status==2)
                     <button type="button"
@@ -263,16 +259,7 @@
                                         data-project-id="{{ $project->obfuscated_id }}"
                                         title="{{ $projectMember->member->name }}" style="cursor: pointer;">
                                     @endforeach
-                                    @if($project->project_manager_id == auth()->user()->id)
-                                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center me-2"
-                                        style="width: 40px; height: 40px; font-size: 1.5em; border: 2px dashed #0d6efd;"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#addMemberModal" {{-- Target the modal for adding members --}}
-                                        title="Add New Member">
-                                        <i class="bi bi-plus-circle-fill"></i> {{-- Bootstrap Plus Circle Icon --}}
-                                    </button>
-                                    @endif
+                                    
                                 </div>
                                 {{-- START: Search Input for Project Members --}}
                                 <div class="mt-5"> {{-- Add margin-top for spacing --}}
@@ -445,35 +432,7 @@
                                         </div>
                                     <div class="card-footer">
                                         <div class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
-                                            {{-- Create Task Button --}}
-                                                <button type="button" class="btn btn-outline-primary btn-sm create-task-btn"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#createTaskModal"
-                                                    data-project-id="{{ $project->obfuscated_id }}" {{-- Pass obfuscated project ID --}}
-                                                    data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Pass actual kanban stage ID --}}
-                                                    data-kanban-stage-name="{{ $kanbanStage->name }}" {{-- Pass stage name for modal title --}}
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top"
-                                                    title="Add a new task for this stage"
-                                                    {{ $createTask }}>Create</button>
-                                                @if($project->project_manager_id == auth()->user()->id)
-                                                    @if($canCompleteStage) {{-- Use the pre-calculated $canCompleteStage variable --}}
-                                                        <button type="button" class="btn btn-outline-success btn-sm mark-stage-complete-btn"
-                                                            data-project-id="{{ $project->obfuscated_id }}"
-                                                            data-project-stage-id="{{ $currentProjectStage->obfuscated_id }}" {{-- Pass obfuscated project stage ID --}}
-                                                            data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
-                                                            {{ $completeStage }}>Complete</button>
-                                                     @else
-                                                        {{-- Optionally show a disabled button with a tooltip explaining why --}}
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm mark-stage-complete-btn"
-                                                            data-project-id="{{ $project->obfuscated_id }}"
-                                                            data-project-stage-id="{{ $currentProjectStage->obfuscated_id??'-' }}" {{-- Pass obfuscated project stage ID --}}
-                                                            data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
-                                                            {{ $completeStage }}>Complete</button>
-                                                    @endif
-                                                @endif
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -531,41 +490,7 @@
                                                         data-bs-target="#taskDetailModal"
                                                         data-task-id="{{ $task->task_obfuscated_id }}" 
                                                 ><small>View</small></button>
-                                                @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1  && $task->data_status!=4)                                                
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary view-task-edit-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskEditModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        ><small>Edit</small></button>
-                                                @endif
-                                                @if($project->data_status==1 && $task->data_status!=4)
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-warning add-logs-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskAddLogsModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-project-id="{{ $project->obfuscated_id }}"><small>Add Logs</small>
-                                                    </button>
-                                                @endif
-                                                @if($project->project_manager_id==auth()->user()->id && $project->data_status==1 && $task->data_status!=4)  
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-success view-task-update-status-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskUpdateStatusModal"
-                                                        data-project-manager-id="{{ $project->project_manager_id }}"
-                                                        data-assign-to="{{ $task->assigned_to_user_id }}"
-                                                        data-user-logon="{{ auth()->user()->id }}"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-project-id="{{ $project->id }}"
-                                                        data-task-log="{{ $task->update_log }}" 
-                                                        data-task-status="{{ $task->task_status }}" 
-                                                        data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
-                                                        @if($task->assigned_to_user_id==$project->project_manager_id)
-                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskDeleteModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
-                                                        @endif
-                                                @endif
+                                                
                                                 @if($task->assigned_to_user_id==auth()->user()->id 
                                                 && $project->data_status==1 
                                                 && $project->project_manager_id!=auth()->user()->id 
@@ -2047,11 +1972,8 @@
 
                     <hr class="my-3">
                     <div class="btn-group" role="group" aria-label="Basic example">
-                        @if($project->project_manager_id == auth()->user()->id) {{-- Only project manager can remove --}}
-                        <button type="button" class="btn btn-danger btn-sm" id="removeMemberButton"><small>Remove from Project</small></button>
-                        <input type="hidden" id="modalMemberId">
+                       <input type="hidden" id="modalMemberId">
                         <input type="hidden" id="modalProjectId">
-                        @endif
                         <button type="button" class="btn btn-success btn-sm" id="findTaskButton"><small>Find the tasks</small></button>
                     </div>
                 </div>

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
-use Yajra\DataTables\DataTables;
+//use Spatie\Permission\Models\Role;
+use App\Models\Role;
+//use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Facades\DataTables;
 
 class RoleController extends Controller
 {
@@ -122,25 +124,55 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
 
-        // Check if role exists in role_has_permissions, model_has_roles, or users table
-        $roleUsed = DB::table('role_has_permissions')->where('role_id', $id)->exists() ||
-                    DB::table('model_has_roles')->where('role_id', $id)->exists() ||
-                    DB::table('users')->where('role_id', $id)->exists(); // Adjust column name if different
-
-        if ($roleUsed) {
-            return redirect()->back()->with('error', 'Cannot delete role because it is still assigned.');
-        }
+        
 
         // If role is not in use, proceed with deletion
-        // $role->delete();
+        $role->roleStatus->data_status = 2;
+        $role->roleStatus->save();
 
         return redirect()->route('v1.roles')->with('success', 'Role deleted successfully.');
     }
 
     public function getRoles(Request $request)
     {
+        // Get the status parameter from the request
+        $statusFilter = $request->input('status'); // Will be 'active', 'inactive', or null
+
+        $query = Role::query();
+
+        // Join with role_statuses table to filter by status
+        // Ensure you have the roleStatus relationship defined in your Role model
+        if ($statusFilter) {
+            $query->whereHas('roleStatus', function ($q) use ($statusFilter) {
+                $q->where('data_status', $statusFilter);
+            });
+        }
+        // If no status filter is provided, you might want to default to 'active' or show all.
+        // For this setup, if statusFilter is null, it will show all roles without a status condition.
+        // If you want to explicitly only show active by default if no filter, add an 'else' condition here.
+
+        return DataTables::eloquent($query)
+            ->addColumn('action', function ($row) {
+                    $btn = '<a href="'.route('v1.roles.edit', ['id' => $row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
+                    $btn .= ' <a href="'.route('v1.roles.show', ['id' => $row->id]).'" class="edit btn btn-info btn-sm">Permission</a>';
+                    if ($row->roleStatus->data_status == 1) { // <--- Condition to show delete button if status is 'inactive' (2)
+                    $btn .= '<form class="d-inline-block me-2" action="'.route('v1.roles.destroy', $row->id).'" method="post">'; // Using d-inline-block for spacing
+                    $btn .= '    ' . csrf_field(); // Laravel CSRF token helper
+                    $btn .= '    ' . method_field('PUT'); // <--- FIX: Use DELETE method for destroy route (conventional)
+                    $btn .= '    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to inactive this role?\')">Inactive</button>';
+                    $btn .= '</form>';
+                }
+
+                    return $btn;
+                })
+            ->rawColumns(['action'])
+            ->make(true);
+
+    }
+    public function getRolesx(Request $request)
+    {
         if ($request->ajax()) {
-            $data = Role::select('*');
+            $data = Role::select('*')->with('roleStatus');
 
             return DataTables::of($data)
                 ->addIndexColumn()

@@ -22,11 +22,13 @@ Route::prefix('v1')->group(function () {
         Route::prefix('project-management')->controller(ProjectController::class)->group(function () {
             Route::get('/', 'index')->name('v1.project-management');
             Route::get('/list', 'list')->name('v1.project-management.list');
+            Route::get('/all', 'all')->name('v1.project-management.all');
             Route::get('/create', 'create')->name('v1.project-management.create');
             Route::put('/{id}/update', 'update')->name('v1.project-management.update');            
             Route::post('/{id}/add-member', 'addMember')->name('v1.project-management.add-member');
             Route::delete('/{project_id}/remove-member/{user_id}', 'removeMember')->name('v1.project-management.remove-member');
             Route::get('/{project}/detail', 'detail')->name('v1.project-management.detail');
+            Route::get('/{project}/management-detail', 'managementDetail')->name('v1.project-management.management-detail');
             Route::put('/{project_id}/complete', 'markProjectComplete')->name('v1.project-management.complete');
             Route::put('/{project_id}/stages/{project_stage_id}/complete', 'markComplete')->name('v1.project-management.stages.complete');
             Route::get('/{id}/edit', 'edit')->name('v1.project-management.edit');
@@ -34,10 +36,11 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{projectFileId}/file-destroy', 'fileDestroy')->name('v1.project-management.file-destroy');
             Route::post('/store', 'store')->name('v1.project-management.store');
             Route::get('/data', 'getProjectsData')->name('v1.project-management.data');
+            Route::get('/all-data', 'getAllProjectsData')->name('v1.project-management.all-data');
             Route::get('/{id}/assignable-users','getAssignableUsers')->name('v1.project-management.assignable-users');
             Route::get('/project-stages/{projectStageId}/{projectId}/bulletins/data', 'getStageBulletinsData')->name('v1.project-management.project-stages.bulletins.data');
             Route::post('/project-stages/{projectStageId}/{projectId}/bulletins/store', 'storeBulletin')->name('v1.project-management.project-stages.bulletins.store');
-            
+            Route::get('/monthly-chart','monthlyStatusChartData')->name('v1.project-management.monthly-chart');
         });
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {

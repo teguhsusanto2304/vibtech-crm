@@ -172,36 +172,98 @@ class ProjectService {
             )
             ->addColumn('progress_percentage',fn($project) => $project->work_progress_percentage )
            ->addColumn('action', function ($row) {
-    // Start with the vertical button group container
-    $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
+                // Start with the vertical button group container
+                $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
 
-    // View button
-    $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail', ['project' => $row->obfuscated_id]) . '">View</a>';
+                // View button
+                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail', ['project' => $row->obfuscated_id]) . '">View</a>';
 
-    // Conditional Edit and Delete buttons (only for project manager)
-    if ($row->project_manager_id == auth()->user()->id && $row->data_status==1) {
-        // Edit button
-        $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.edit', ['id' => $row->obfuscated_id]) . '">Edit</a>';
+                // Conditional Edit and Delete buttons (only for project manager)
+                if ($row->project_manager_id == auth()->user()->id && $row->data_status==1) {
+                    // Edit button
+                    $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.edit', ['id' => $row->obfuscated_id]) . '">Edit</a>';
 
-        // Delete button (using a form for proper DELETE request)
-        //$btn .= '<form action="' . route('v1.project-management.destroy', ['project' => $row->obfuscated_id]) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this project?\');">';
-        //$btn .= csrf_field(); // Laravel CSRF token
-        //$btn .= method_field('DELETE'); // Spoof DELETE method for Laravel
-        //$btn .= '<button type="submit" class="btn btn-danger btn-sm">Delete</button>'; // Use btn-danger for styling
-        //$btn .= '</form>';
-        $btn .= '<button type="button" class="btn btn-danger btn-sm delete-project-btn"';
-        $btn .= ' data-bs-toggle="modal"';
-        $btn .= ' data-bs-target="#confirmationModal"'; // Target our custom modal
-        $btn .= ' data-project-id="' . $row->obfuscated_id . '"'; // Pass the project ID
-        $btn .= ' data-confirm-message="Are you sure you want to delete the project \'' . htmlspecialchars($row->name) . '\'? This action cannot be undone."'; // Custom message
-        $btn .= '>Delete</button>';
+                    // Delete button (using a form for proper DELETE request)
+                    //$btn .= '<form action="' . route('v1.project-management.destroy', ['project' => $row->obfuscated_id]) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this project?\');">';
+                    //$btn .= csrf_field(); // Laravel CSRF token
+                    //$btn .= method_field('DELETE'); // Spoof DELETE method for Laravel
+                    //$btn .= '<button type="submit" class="btn btn-danger btn-sm">Delete</button>'; // Use btn-danger for styling
+                    //$btn .= '</form>';
+                    $btn .= '<button type="button" class="btn btn-danger btn-sm delete-project-btn"';
+                    $btn .= ' data-bs-toggle="modal"';
+                    $btn .= ' data-bs-target="#confirmationModal"'; // Target our custom modal
+                    $btn .= ' data-project-id="' . $row->obfuscated_id . '"'; // Pass the project ID
+                    $btn .= ' data-confirm-message="Are you sure you want to delete the project \'' . htmlspecialchars($row->name) . '\'? This action cannot be undone."'; // Custom message
+                    $btn .= '>Delete</button>';
+                }
+
+                // Close the button group container
+                $btn .= '</div>';
+
+                return $btn;
+            })
+            
+            
+            ->addColumn('start_at', function ($project) {
+                return $project->start_at->format('d M Y') ;
+            })
+            ->addColumn('end_at', function ($project) {
+                return $project->end_at->format('d M Y');
+
+            })
+            ->addColumn('project_status', function ($project) {
+                return $project->data_status==1 ? '<span class="badge bg-warning">Ongoing</span>':'<span class="badge bg-success">Completed</span>';
+
+            })
+            ->escapeColumns([])
+            ->make(true);
     }
 
-    // Close the button group container
-    $btn .= '</div>';
+    public function getAllProjectsData(Request $request)
+    {
+        $projectsQuery = Project::whereNot('data_status',0)->with(['projectManager', 'showProjectMembers.member']); // Assuming projectMembers is the correct relationship name
 
-    return $btn;
-})
+        // Apply conditional filtering based on $request->type
+        if ($request->type === 'my') {
+            // Filter projects where the authenticated user is the project manager
+            $projectsQuery->where('data_status',2);
+        } elseif ($request->type === 'others') {
+           $projectsQuery->where('data_status', 1);
+        }
+        $projects = $projectsQuery->orderBy('created_at', 'ASC')->get();
+
+
+        return DataTables::of($projects)
+            ->addIndexColumn()
+            ->addColumn('project_manager', function ($project) {
+                 return '<img src="'.$project->projectManager->avatar_url.'" alt="Project Manager Avatar" 
+                        class="rounded-circle me-2" data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 width="40" height="40">&nbsp;'.$project->projectManager->name;
+            })
+            ->addColumn('project_members', function ($project) {
+                $return = null;
+                foreach($project->showProjectMembers as $row)
+                {
+                    $return .= '<span class="badge bg-primary">'.$row->member->name.'</span>&nbsp;';
+                }
+                return $return;
+            })
+            ->addColumn('total_project_members', fn($project) => 
+                $project->showProjectMembers()->count().' Person(s)' 
+            )
+            ->addColumn('progress_percentage',fn($project) => $project->work_progress_percentage )
+           ->addColumn('action', function ($row) {
+                // Start with the vertical button group container
+                $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
+
+                // View button
+                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">View</a>';
+
+                $btn .= '</div>';
+
+                return $btn;
+            })
             
             
             ->addColumn('start_at', function ($project) {
@@ -711,6 +773,33 @@ class ProjectService {
         ]);
 
         return response()->json(['message' => 'Bulletin added successfully!']);
+    }
+
+    public function monthlyStatusChartData()
+    {
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        // Count ongoing projects for the current month:
+        // Projects where status is 1 AND their project period overlaps the current month
+        $ongoingProjectsCount = Project::where('data_status', 1) // Assuming 1 is 'ongoing'
+            ->where(function($query) use ($startOfMonth, $endOfMonth) {
+                $query->where('start_at', '<=', $endOfMonth)
+                      ->where('end_at', '>=', $startOfMonth);
+            })
+            ->count();
+
+        // Count completed projects for the current month:
+        // Projects where status is 3 AND their 'end_at' date is within the current month
+        $completedProjectsCount = Project::where('data_status', 3) // Assuming 3 is 'completed'
+            ->whereBetween('end_at', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        return response()->json([
+            'labels' => ['Ongoing', 'Completed'],
+            'data' => [$ongoingProjectsCount, $completedProjectsCount],
+            'title' => 'Project Status for ' . Carbon::now()->format('F Y')
+        ]);
     }
     
 }

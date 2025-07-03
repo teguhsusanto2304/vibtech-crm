@@ -39,6 +39,11 @@ class ProjectController extends Controller
         return view('projects.list')->with('title', 'List of Projects')->with('breadcrumb', ['Home', 'Project Management','List of Projects']);
     }
 
+    public function all()
+    {
+        return view('projects.management.list')->with('title', 'Vibtech Projects')->with('breadcrumb', ['Home', 'Project Management','Vibtech Projects']);
+    }
+
     public function create()
     {
         $users = $this->commonService->getUsers();
@@ -82,6 +87,19 @@ class ProjectController extends Controller
         return view('projects.detail',compact('project','kanbanStages','users'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
     }
 
+    public function managementDetail($id)
+    {
+        $project = $this->projectService->getProject($id);
+        if (!$project) {
+                return redirect()->route('v1.project-management.all')->with('errors', 'Data not finded');
+        }
+        
+        $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
+        $kanbanStages = $this->commonService->getKanbanStages();
+        return view('projects.management.detail',compact('project','kanbanStages','users'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+    }
+
     public function addMember(Request $request, $id)
     {
         return $this->projectService->addMember($request,$id);
@@ -107,6 +125,11 @@ class ProjectController extends Controller
         return $this->projectService->getProjectsData($request);
     }
 
+    public function getAllProjectsData(Request $request)
+    {
+        return $this->projectService->getAllProjectsData($request);
+    }
+
     public function getAssignableUsers($id)
     {
         return $this->projectService->getAssignableUsers($id);
@@ -125,5 +148,10 @@ class ProjectController extends Controller
     public function storeBulletin(Request $request, $projectStageId,$projectId)
     {
         return $this->projectService->storeBulletin($request,$projectStageId,$projectId);
+    }
+
+    public function monthlyStatusChartData()
+    {
+        return $this->projectService->monthlyStatusChartData();
     }
 }

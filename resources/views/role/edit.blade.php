@@ -60,13 +60,7 @@
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Update</button>
                             <a href="{{ route('v1.roles') }}" class="btn btn-warning">Cancel</a>
-                            <form class="row g-3"
-                        action="{{ route('v1.roles.destroy', $role->id) }}"
-                        method="post">
-                        @csrf
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                        @method('PUT')
-                            </form>
+                            
                         </div>
                     </form>
                 </div>

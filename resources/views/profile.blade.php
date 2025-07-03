@@ -155,7 +155,7 @@
 		</div>
 	</div>
   <div class="card-footer text-end bg-dark">
-      <img src="{{ asset('assets/img/logo.png') }}" width="170px" height="70px" class="mt-2">
+      <img src="{{ asset('assets/img/logo.png') }}" width="170px" height="70px" class="mt-4">
   </div>
 </div>
 </div>
