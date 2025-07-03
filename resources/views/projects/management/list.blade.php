@@ -55,7 +55,7 @@
                         <a class="nav-link active" id="others-tab" data-bs-toggle="tab" href="#others" role="tab">Ongoing</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="my-tab" data-bs-toggle="tab" href="#my" role="tab">Complete</a>
+                        <a class="nav-link" id="my-tab" data-bs-toggle="tab" href="#my" role="tab">Completed</a>
                     </li>
                 </ul>
 
