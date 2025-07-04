@@ -252,13 +252,27 @@
                                     }
 
                                     if (!confirm('Are you sure you want to delete this file? This cannot be undone.')) {
-                                        return;
+                                        $.ajax({
+                                            url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
+                                            type: 'DELETE',
+                                            data: {
+                                                _token: '{{ csrf_token() }}'
+                                            },
+                                            success: function(response) {
+                                                alert(response.message);
+                                                projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
+                                            },
+                                            error: function(xhr) {
+                                                alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
+                                                console.error('Error:', xhr);
+                                            }
+                                        });
                                     }
 
                                     $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...'); // Add spinner
 
                                     $.ajax({
-                                        url: `/api/projects/${projectId}/files/${fileId}`, // Adjust API endpoint
+                                         url: '/v1/project-management/' + fileId + '/file-destroy', // Adjust API endpoint
                                         type: 'DELETE',
                                         headers: {
                                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

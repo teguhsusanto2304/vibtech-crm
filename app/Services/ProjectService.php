@@ -829,14 +829,15 @@ class ProjectService {
         // Get filters from DataTables AJAX request (or custom parameters)
         $projectId = $request->input('project_id');
         
-        $query = ProjectFile::query();
+        $query = ProjectFile::query()->with(['uploadedBy']);
 
-        // Eager load relationships to prevent N+1 queries
-        $query->with(['project', 'uploadedBy', 'task']);
+        if ($request->has('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
 
         // Filter by project_id (mandatory for project files)
         if ($projectId) {
-            $query->where('project_id', $projectId);
+            $query->where('project_id', $projectId)->select('project_files.*');
         }
 
         return DataTables::eloquent($query)
@@ -857,10 +858,10 @@ class ProjectService {
                     $icon = '<i class="fas fa-file text-muted me-1"></i>';
                 }
 
-                return $file->description.'<p><small><a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->file_name) . '</a> ('.number_format($file->file_size / 1024, 2).' KB)</small></p>';
+                return $file->description.'<p><small><a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->short_file_name) . '</a> ('.number_format($file->file_size / 1024, 2).' KB)</small></p>';
             })
-            ->addColumn('uploaded_by', function (ProjectFile $file) {
-                return $file->uploadedBy->name.'<p><small>'.$file->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
+            ->addColumn('uploaded_by', function ($query) {
+                return $query->uploadedBy->name.'<p><small>'.$query->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
             })
             ->addColumn('associated_task', function (ProjectFile $file) {
                 return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>Task</small></span>':'<span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'

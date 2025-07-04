@@ -355,6 +355,7 @@
             ],
             order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
         });
+        $('#project_files_datatable').DataTable().columns.adjust().draw();
 
         // --- JavaScript for Delete Button (from previous discussion) ---
         $(document).on('click', '.delete-project-file-btn', function() {
@@ -363,7 +364,7 @@
 
             if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
                 $.ajax({
-                    url: '/api/project-files/' + fileId, // Use your API route for deletion
+                    url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
                     type: 'DELETE',
                     data: {
                         _token: '{{ csrf_token() }}'
@@ -1341,7 +1342,7 @@
                                                 htmlContent += `
                                                     <tr>
                                                         <td>
-                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.short_file_name}
                                                             (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
                                                         </td>
                                                         <td>
@@ -1694,7 +1695,8 @@
                                                 htmlContent += `
                                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
-                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
+                                                            <h6>${file.description}</h6>
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.short_file_name}
                                                             (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
                                                         </span>
                                                     </li>
