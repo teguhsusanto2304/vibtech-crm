@@ -290,99 +290,105 @@
                 {{-- Tab 2: Project Files --}}
                 <div class="tab-pane fade p-3" id="project-files" role="tabpanel" aria-labelledby="files-tab">
                     @if($project->files->count() > 0)
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="uploaded_by_filter" class="form-label">Uploaded By:</label>
+                            <select class="form-select" id="uploaded_by_filter">
+                                <option value="">All Uploaders</option>
+                                {{-- Populate this dynamically from your backend or a cached list of users --}}
+                                @foreach($users as $user) {{-- Assuming $users is passed from your controller --}}
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="section_filter" class="form-label">Section:</label>
+                            <select class="form-select" id="section_filter">
+                                <option value="">All Sections</option>
+                                <option value="project_level">Project Level</option>
+                                {{-- You'll need to fetch tasks dynamically if you want to filter by specific tasks --}}
+                                @foreach($projectTasks as $task) {{-- Assuming $projectTasks is passed from your controller --}}
+                                    <option value="{{ $task->id }}">Task: {{ $task->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button id="apply_filters_btn" class="btn btn-primary">Apply Filters</button>
+                            <button id="clear_filters_btn" class="btn btn-secondary ms-2">Clear Filters</button>
+                        </div>
+                    </div>
                     <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
-            <thead>
-                <tr>
-                    <th>File Name</th>
-                    <th>Uploaded By</th>
-                    <th>Section</th>
-                    <th width="100px">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{-- Data will be loaded by DataTables --}}
-            </tbody>
-        </table>
-        <style>
-    /* Custom CSS to truncate text in DataTable cells */
-    .dataTables_wrapper table.dataTable tbody td {
-        white-space: nowrap; /* Prevent wrapping by default */
-        overflow: hidden;     /* Hide overflowing content */
-        text-overflow: ellipsis; /* Show ellipsis for truncated text */
-    }
-
-    /* Override for specific columns where content must wrap or actions */
-    .dataTables_wrapper table.dataTable tbody td.dt-body-wrap {
-        white-space: normal; /* Allow wrapping for description or other long text */
-    }
-
-    /* Ensure Action column doesn't truncate buttons */
-    .dataTables_wrapper table.dataTable tbody td:last-child {
-        white-space: nowrap; /* Keep buttons on one line */
-        overflow: visible;   /* Ensure buttons are not cut off */
-        text-overflow: initial;
-    }
-</style>
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Uploaded By</th>
+                                <th>Section</th>
+                                <th width="100px">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Data will be loaded by DataTables --}}
+                        </tbody>
+                    </table>
+       
                         <script>
-    $(document).ready(function() {
-        // Get the project ID from a hidden input or data attribute on your page
-        // Assuming you have a variable like $project->id or $project->obfuscated_id available
-        const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
+                    $(document).ready(function() {
+                        const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
 
-        if (!currentProjectId) {
-            console.error('Project ID is not available for loading files.');
-            return;
-        }
+                        if (!currentProjectId) {
+                            console.error('Project ID is not available for loading files.');
+                            return;
+                        }
 
-        var projectFilesTable = $('#project_files_datatable').DataTable({
-            processing: true,
-            serverSide: true,
-            scrollX: true,
-            ajax: {
-                url: "{{ route('v1.project-management.project-files.data') }}",
-                data: function (d) {
-                    d.project_id = currentProjectId;
-                    // Optional: Add a filter for project_stage_task_id
-                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
-                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
-                }
-            },
-            columns: [
-                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
-                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
-                {data: 'associated_task', name: 'task.name', orderable: true, searchable: true}, // 'task.name' for relationship
-                {data: 'action', name: 'action', orderable: false, searchable: false},
-            ],
-            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
-        });
-        $('#project_files_datatable').DataTable().columns.adjust().draw();
+                        var projectFilesTable = $('#project_files_datatable').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            scrollX: true,
+                            ajax: {
+                                url: "{{ route('v1.project-management.project-files.data') }}",
+                                data: function (d) {
+                                    d.project_id = currentProjectId;
+                                    // Optional: Add a filter for project_stage_task_id
+                                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
+                                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
+                                }
+                            },
+                            columns: [
+                                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
+                                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
+                                {data: 'associated_task', name: 'task.name', orderable: true, searchable: true}, // 'task.name' for relationship
+                                {data: 'action', name: 'action', orderable: false, searchable: false},
+                            ],
+                            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
+                        });
+                        $('#project_files_datatable').DataTable().columns.adjust().draw();
 
-        // --- JavaScript for Delete Button (from previous discussion) ---
-        $(document).on('click', '.delete-project-file-btn', function() {
-            const fileId = $(this).data('file-id');
-            const fileName = $(this).data('file-name');
+                        // --- JavaScript for Delete Button (from previous discussion) ---
+                        $(document).on('click', '.delete-project-file-btn', function() {
+                            const fileId = $(this).data('file-id');
+                            const fileName = $(this).data('file-name');
 
-            if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
-                $.ajax({
-                    url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        alert(response.message);
-                        projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
-                    },
-                    error: function(xhr) {
-                        alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
-                        console.error('Error:', xhr);
-                    }
-                });
-            }
-        });
-    });
-</script>
-@endif
+                            if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
+                                $.ajax({
+                                    url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
+                                    type: 'DELETE',
+                                    data: {
+                                        _token: '{{ csrf_token() }}'
+                                    },
+                                    success: function(response) {
+                                        alert(response.message);
+                                        projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
+                                    },
+                                    error: function(xhr) {
+                                        alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
+                                        console.error('Error:', xhr);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                </script>
+                @endif
 
                 </div> {{-- End tab-pane project-files --}}
                 <hr>

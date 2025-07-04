@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\Project;
 use App\Models\ProjectStage;
 use App\Models\ProjectFile;
+use App\Models\ProjectMember;
 use Auth;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectStageLog;
@@ -889,6 +890,29 @@ class ProjectService {
             })
             ->escapeColumns([])
             ->make(true);
+    }
+
+    public function getFileCreator($project_id)
+    {
+
+        $decodedId = IdObfuscator::decode($project_id);
+        $project = Project::find($decodedId);
+        $projectManagerId = $project->project_manager_id;
+
+        // 2. Get the IDs of Project Members for the current project
+        $memberIds = ProjectMember::where('project_id', $project->id)
+                                  ->pluck('member_id')
+                                  ->toArray();
+
+        // 3. Combine all unique user IDs
+        $allRelatedUserIds = array_unique(array_merge($memberIds, [$projectManagerId]));
+
+        // 4. Fetch the User models for these IDs
+        // Select 'id' and 'name' as that's what's needed for the dropdown
+        $uploaders = User::whereIn('id', $allRelatedUserIds)
+                         ->orderBy('name')
+                         ->get(['id', 'name']);
+        return $uploaders;
     }
     
 }
