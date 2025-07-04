@@ -295,10 +295,7 @@
                             <label for="uploaded_by_filter" class="form-label">Uploaded By:</label>
                             <select class="form-select" id="uploaded_by_filter">
                                 <option value="">All Uploaders</option>
-                                {{-- Populate this dynamically from your backend or a cached list of users --}}
-                                @foreach($users as $user) {{-- Assuming $users is passed from your controller --}}
-                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                @endforeach
+                                
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -306,10 +303,7 @@
                             <select class="form-select" id="section_filter">
                                 <option value="">All Sections</option>
                                 <option value="project_level">Project Level</option>
-                                {{-- You'll need to fetch tasks dynamically if you want to filter by specific tasks --}}
-                                @foreach($projectTasks as $task) {{-- Assuming $projectTasks is passed from your controller --}}
-                                    <option value="{{ $task->id }}">Task: {{ $task->name }}</option>
-                                @endforeach
+                                
                             </select>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
