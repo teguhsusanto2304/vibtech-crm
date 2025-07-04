@@ -265,7 +265,7 @@ class PostController extends Controller
 
         $post->update($request->all());
 
-        $users = User::where(['user_status'=>1,'id'=>18])->get();
+        $users = User::where(['user_status'=>1])->get();
         foreach($users as $user)
         {
             $data = [
