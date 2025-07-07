@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/respond', 'respond')->name('v1.job-assignment-form.respond');
             Route::get('/list', 'list')->name('v1.job-assignment-form.list');
             Route::get('/view/{id}/{respond}', 'view')->name('v1.job-assignment-form.view');
+            Route::get('/new-view/{id}/{respond}', 'new_view')->name('v1.job-assignment-form.new-view');
             Route::get('/job-list', 'getJobsAssignments')->name('v1.job-assignment-form.job-list');
             Route::get('/job-list-user', 'getJobsAssignmentsByUser')->name('v1.job-assignment-form.job-list-user');
             Route::get('/invited-staff/{user_id}/{job_id}', 'invitedStaff')->name('v1.job-assignment-form.job.invited-staff');

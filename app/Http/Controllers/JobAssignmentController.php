@@ -349,6 +349,30 @@ class JobAssignmentController extends Controller
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Detail']);
     }
 
+    public function new_view($id, $respond)
+    {
+        $notif = request('notif');
+
+        if ($id) {
+            Auth::user()->notifications()
+                ->where('id', $notif)
+                ->update(['read_at' => now()]);
+        }
+
+        $job = JobAssignment::find($id);
+        $staff = User::whereNot('id', auth()->user()->id)
+            ->whereNot('position_level_id', 99)
+            ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
+                $query->where('job_assignment_id', $id);
+            })
+            ->get();
+        $personnels = JobAssignmentPersonnel::where('job_assignment_id', $id)->get();
+
+        return view('job_assignment.view', compact('job', 'personnels', 'respond', 'staff'))
+            ->with('title', 'Job Requisition Form Detail')
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Detail']);
+    }
+
     public function generate_autonumber($prefix = 'XXX')
     {
         // Get the last inserted autonumber (if any)
