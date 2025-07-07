@@ -27,7 +27,7 @@ class NewMemoNotification extends Mailable
         if($this->post['method']=='insert'){
             $method ='New';
         } else {
-            $method = 'Update';
+            $method = 'Updated';
         }
         return $this->from(env('MAIL_FROM_ADDRESS'))
             ->subject('Vibtech Genesis Staff Portal :: '.$method.' Memo')

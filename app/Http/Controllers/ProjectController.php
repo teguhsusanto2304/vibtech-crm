@@ -84,7 +84,8 @@ class ProjectController extends Controller
         $users = $this->commonService->getUsers();
         $users = $users->where('id', '!=', auth()->user()->id);
         $kanbanStages = $this->commonService->getKanbanStages();
-        return view('projects.detail',compact('project','kanbanStages','users'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        $creators = $this->projectService->getFileCreator($id);
+        return view('projects.detail',compact('project','kanbanStages','users','creators'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
     }
 
     public function managementDetail($id)

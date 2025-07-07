@@ -3,6 +3,10 @@
 @section('title', 'Dashboard')
 
 @section('content')
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -88,6 +92,24 @@
             color: #495057;
             text-decoration: underline;
         }
+
+        .scrollbar-thumb {
+            height: 100%;
+            width: 50px; /* Initial width, will be calculated by JS */
+            background-color: rgba(0, 0, 0, 0.5); /* Darker thumb */
+            border-radius: 5px; /* Rounded corners for the thumb */
+            cursor: grab; /* Cursor indicates draggable */
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: auto; /* Re-enable pointer events for the thumb itself */
+            transition: transform 0.05s linear; /* Smooth horizontal movement */
+        }
+
+        .scrollbar-thumb:active {
+            cursor: grabbing; /* Cursor indicates currently dragging */
+        }
+
     </style>
 <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
@@ -286,58 +308,107 @@
                 {{-- Tab 2: Project Files --}}
                 <div class="tab-pane fade p-3" id="project-files" role="tabpanel" aria-labelledby="files-tab">
                     @if($project->files->count() > 0)
-                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                            <table class="table table-sm table-hover align-middle">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>File</th>
-                                        <th>Uploaded By</th>
-                                        <th width="25%" class="text-end">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($project->files as $file)
-                                    <tr data-table-file-id="{{ $file->id }}">
-                                        <td>
-                                            <i class="fas fa-file-alt me-2"></i> <label class="file-name-text">{{ $file->file_name }}</label><br>
-                                            <small class="text-muted">({{ number_format($file->file_size / 1024 / 1024, 2) }} MB)</small>
-                                        </td>
-                                        <td>
-                                            {{ $file->uploadedBy->name }}
-                                            <p><small>{{ $file->created_at->format('l, F d, Y \a\t h:i A') }}</small></p>
-                                        </td>
-                                        <td class="text-end">
-                                            <a href="{{ Storage::url($file->file_path) }}"
-                                            download="{{ $file->file_name }}"
-                                            class="btn btn-sm btn-outline-success me-2">
-                                                Download
-                                            </a>
-
-
-                                            @if($project->project_manager_id == auth()->user()->id || $file->uploaded_by_user_id == auth()->user()->id)
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger delete-file-btn"
-                                                    data-file-id="{{ $file->id }}"
-                                                    data-project-id="{{ $project->obfuscated_id }}"
-                                                    data-file-name="{{ $file->file_name }}">
-                                                Delete
-                                            </button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="uploaded_by_filter" class="form-label">Uploaded By:</label>
+                            <select class="form-select" id="uploaded_by_filter">
+                                <option value="">All Uploaders</option>
+                                @foreach($creators as $creator)
+                                <option value="{{ $creator->id }}">{{  $creator->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        @else
-                        <p class="text-muted">No files uploaded for this project yet.</p>
-                        @endif
+                        <div class="col-md-4">
+                            <label for="section_filter" class="form-label">Section:</label>
+                            <select class="form-select" id="section_filter">
+                                <option value="">All Sections</option>
+                                <option value="project">Project</option>
+                                <option value="task">Task</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button id="apply_filters_btn" class="btn btn-primary">Apply</button>
+                            <button id="clear_filters_btn" class="btn btn-secondary ms-2">Clear</button>
+                        </div>
+                    </div>
+                    <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Uploaded By</th>
+                                <th>Section</th>
+                                <th width="100px">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Data will be loaded by DataTables --}}
+                        </tbody>
+                    </table>
+       
+                        <script>
+                    $(document).ready(function() {
+                        const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
+
+                        if (!currentProjectId) {
+                            console.error('Project ID is not available for loading files.');
+                            return;
+                        }
+
+                        var projectFilesTable = $('#project_files_datatable').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            scrollX: true,
+                            ajax: {
+                                url: "{{ route('v1.project-management.project-files.data') }}",
+                                data: function (d) {
+                                    d.project_id = currentProjectId;
+                                    // Optional: Add a filter for project_stage_task_id
+                                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
+                                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
+                                }
+                            },
+                            columns: [
+                                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
+                                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
+                                {data: 'associated_task', name: 'task.name', orderable: true, searchable: true}, // 'task.name' for relationship
+                                {data: 'action', name: 'action', orderable: false, searchable: false},
+                            ],
+                            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
+                        });
+                        $('#project_files_datatable').DataTable().columns.adjust().draw();
+
+                        // --- JavaScript for Delete Button (from previous discussion) ---
+                        $(document).on('click', '.delete-project-file-btn', function() {
+                            const fileId = $(this).data('file-id');
+                            const fileName = $(this).data('file-name');
+
+                            if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
+                                $.ajax({
+                                    url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
+                                    type: 'DELETE',
+                                    data: {
+                                        _token: '{{ csrf_token() }}'
+                                    },
+                                    success: function(response) {
+                                        alert(response.message);
+                                        projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
+                                    },
+                                    error: function(xhr) {
+                                        alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
+                                        console.error('Error:', xhr);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                </script>
+                @endif
 
                 </div> {{-- End tab-pane project-files --}}
                 <hr>
                 
-                <div class="horizontal-scroll-wrapper"> {{-- Custom wrapper for overflow --}}
-                    <div class="row flex-nowrap g-4">
+                <div class="horizontal-scroll-wrapper" style="height: 400px;"> {{-- Custom wrapper for overflow --}}
+                    <div class="row flex-nowrap">
                         @foreach($kanbanStages as $index => $kanbanStage)
                             @php
                                 $ProjectStageStatus = 'Active';
@@ -417,7 +488,7 @@
                                 }
 
                         @endphp
-                            <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
+                            <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}" > {{-- h-100 to make cards in a row have equal height --}}
                                     <div class="card mb-3" style="max-width: 540px; border: 1px solid #819A91;">
                                         <div class="card-body" style="height:100px;">
                                             <div class="d-flex justify-content-between align-items-start">
@@ -941,12 +1012,15 @@
                                             <div class="col-md-12 mt-3">
                                                     <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
                                                     <div id="new-file-upload-container">
-                                                            <div class="input-group mb-2 file-upload-item">
-                                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                                            <div class="file-upload-item">
+                                                                <div class="input-group mb-2">
+                                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                                </div>
+                                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                                             </div>
                                                     </div>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" id="update-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
                                                     <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
                                             </div>
                                             <div class="col-sm-12" id="editTaskStageFiles"></div>
@@ -1288,7 +1362,7 @@
                                                 htmlContent += `
                                                     <tr>
                                                         <td>
-                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.short_file_name}
                                                             (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
                                                         </td>
                                                         <td>
@@ -1641,7 +1715,8 @@
                                                 htmlContent += `
                                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
-                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.file_name}
+                                                            <h6>${file.description}</h6>
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.file_path}" target="_blank">${file.short_file_name}
                                                             (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
                                                         </span>
                                                     </li>
@@ -1758,10 +1833,13 @@
                                          <div class="col-md-12 mt-3">
                                             <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
                                             <div id="create-new-file-upload-container">
-                                                    <div class="input-group mb-2 file-upload-item">
+                                                <div class="file-upload-item">
+                                                    <div class="input-group mb-2">
                                                         <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                     </div>
+                                                    <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
+                                                </div>
                                             </div>
                                             <button type="button" class="btn btn-outline-primary btn-sm" id="create-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
                                             <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
@@ -1778,6 +1856,7 @@
                 <script>
                                 const $newFileUploadContainer = $('#create-new-file-upload-container');
                                 const $addMoreFilesBtn = $('#create-add-more-files-btn');
+                                const $updateAddMoreFilesBtn = $('#update-add-more-files-btn');
                                 let indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
 
                                 // Function to update the visibility of "Remove" buttons
@@ -1796,9 +1875,12 @@
                                     const currentFileInputCount = $newFileUploadContainer.children('.file-upload-item').length;
                                     if(indexNewFileUpload<=3){
                                         const newFileInputHtml = `
-                                            <div class="input-group mb-2 file-upload-item">
-                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
-                                                <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                            <div class="file-upload-item">
+                                                <div class="input-group mb-2">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                                <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                             </div>
                                         `;
                                         $newFileUploadContainer.append(newFileInputHtml);
@@ -1829,6 +1911,15 @@
                                     }
                                 });
 
+                                $updateAddMoreFilesBtn.on('click', function() {
+                                    indexNewFileUpload = $newFileUploadContainer.children('.file-upload-item').length;
+                                    if(indexNewFileUpload>2){
+                                        alert('you can not add more than 3 files !')
+                                    } else {                                        
+                                        addFileInputField();
+                                    }
+                                });
+
                                 // Event listener for "Remove" button on dynamically added file inputs
                                 // Using event delegation because buttons are added dynamically
                                 $newFileUploadContainer.on('click', '.remove-file-input', function() {
@@ -1849,6 +1940,37 @@
                         /* Hide vertical scrollbar if it appears (optional) */
                         padding-bottom: 1rem;
                     }
+
+                    .horizontal-scroll-wrapperx {
+                        position: fixed; /* Makes it stick to the viewport */
+                        bottom: 0;       /* Aligns it to the bottom of the viewport */
+                        left: 0;
+                        width: 100%;     /* Spans the full width of the viewport */
+                        height: auto;    /* Height will adjust to content, but max-height can be set */
+                        max-height: 220px; /* Max height to prevent it from taking too much screen space */
+                        background-color: #f8f9fa; /* Light background for the fixed bar */
+                        padding: 1rem;   /* Internal padding */
+                        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.15); /* Shadow to lift it visually */
+                        z-index: 1000;   /* Ensures it stays on top of other content */
+                        overflow: hidden; /* Hide any overflow from its children if max-height is hit */
+                        display: flex;   /* Use flexbox to center the inner row */
+                        justify-content: center; /* Center the inner row horizontally */
+                        align-items: center; /* Center the inner row vertically */
+                    }
+
+                    .row-flex-nowrap-scroller {
+                        display: flex;
+                        flex-wrap: nowrap; /* Prevent wrapping */
+                        gap: 1rem; /* g-4 equivalent for spacing between cards */
+                        padding: 0 1rem; /* Padding for visual space around cards */
+                        overflow-x: auto; /* Enable horizontal scrolling for this inner container */
+                        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                        scrollbar-width: none; /* Hide native scrollbar for Firefox */
+                        -ms-overflow-style: none; /* Hide native scrollbar for IE/Edge */
+                        max-width: 100%; /* Ensure it doesn't overflow its fixed parent */
+                        height: 100%; /* Take full height of its parent */
+                    }
+
 
                     /* Optional: Hide scrollbar in webkit browsers (Chrome, Safari) */
                     .horizontal-scroll-wrapper::-webkit-scrollbar {
@@ -2053,6 +2175,8 @@
             </div>
         </div>
     </div>
+
+    
 
     <script>
         $(document).ready(function() {
@@ -2302,54 +2426,54 @@
 
             // Handle the "Create Task" form submission via AJAX
             $('#createTaskForm').on('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
+                e.preventDefault(); // Prevent default form submission
 
-            const $form = $(this);
-            // *** THIS IS THE KEY FIX: Remove $.param() ***
-            const formData = new FormData(this); // Correctly creates FormData from the form
+                const $form = $(this);
+                // *** THIS IS THE KEY FIX: Remove $.param() ***
+                const formData = new FormData(this); // Correctly creates FormData from the form
 
-            
-            const createProjectId = $('#createModalProjectId').val();
-            const createKanbanStageId = $('#createModalKanbanStageId').val();
-            
-            @if($project->project_manager_id!=auth()->user()->id)
-                const selectElement = document.querySelector('select[name="assigned_to_user_id"]');
-                formData.append('assigned_to_user_id', selectElement.value);
-            @endif
+                
+                const createProjectId = $('#createModalProjectId').val();
+                const createKanbanStageId = $('#createModalKanbanStageId').val();
+                
+                @if($project->project_manager_id!=auth()->user()->id)
+                    const selectElement = document.querySelector('select[name="assigned_to_user_id"]');
+                    formData.append('assigned_to_user_id', selectElement.value);
+                @endif
 
-            // Send AJAX request
-            $.ajax({
-                url: `/v1/project-management/${createProjectId}/stages/${createKanbanStageId}/tasks`, // API endpoint to create task
-                type: 'POST',
-                data: formData, // Pass FormData object directly
-                processData: false, // IMPORTANT: Tells jQuery not to process the data (essential for files)
-                contentType: false, // IMPORTANT: Tells jQuery not to set the Content-Type header (essential for files)
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message || 'Task created successfully!');
-                        $('#createTaskModal').modal('hide'); // Close modal
-                        location.reload(true); // Refresh page to see new task
-                    } else {
-                        alert(response.message || 'Failed to create task.');
-                        // Display validation errors if available
-                        if (response.errors) {
-                            let errorMessages = Object.values(response.errors).flat().join('\n');
-                            alert('Validation Errors:\n' + errorMessages);
+                // Send AJAX request
+                $.ajax({
+                    url: `/v1/project-management/${createProjectId}/stages/${createKanbanStageId}/tasks`, // API endpoint to create task
+                    type: 'POST',
+                    data: formData, // Pass FormData object directly
+                    processData: false, // IMPORTANT: Tells jQuery not to process the data (essential for files)
+                    contentType: false, // IMPORTANT: Tells jQuery not to set the Content-Type header (essential for files)
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message || 'Task created successfully!');
+                            $('#createTaskModal').modal('hide'); // Close modal
+                            location.reload(true); // Refresh page to see new task
+                        } else {
+                            alert(response.message || 'Failed to create task.');
+                            // Display validation errors if available
+                            if (response.errors) {
+                                let errorMessages = Object.values(response.errors).flat().join('\n');
+                                alert('Validation Errors:\n' + errorMessages);
+                            }
                         }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'An error occurred. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        }
+                        alert(errorMessage);
+                        console.error('Error creating task:', xhr.responseText);
                     }
-                },
-                error: function(xhr) {
-                    let errorMessage = 'An error occurred. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
-                        errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
-                    }
-                    alert(errorMessage);
-                    console.error('Error creating task:', xhr.responseText);
-                }
+                });
             });
-    });
 
 
             $('#addMemberForm').on('submit', function(e) {

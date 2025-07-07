@@ -25,6 +25,11 @@ class JobAssignment extends Model
         'is_publish',
     ];
 
+    protected $casts = [
+        'created_at'=>'datetime',
+        'updated_at'=>'datetime'
+    ];
+
     public function jobType()
     {
         return $this->belongsTo(JobType::class, 'job_type_id');
@@ -48,5 +53,10 @@ class JobAssignment extends Model
     public function vehicleBookings()
     {
         return $this->hasMany(VehicleBooking::class, 'job_assignment_id');
+    }
+
+    public function files() // <--- ADD THIS RELATIONSHIP
+    {
+        return $this->hasMany(JobAssignmentFile::class);
     }
 }

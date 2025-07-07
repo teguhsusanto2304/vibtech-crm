@@ -92,6 +92,24 @@
             color: #495057;
             text-decoration: underline;
         }
+
+        .scrollbar-thumb {
+            height: 100%;
+            width: 50px; /* Initial width, will be calculated by JS */
+            background-color: rgba(0, 0, 0, 0.5); /* Darker thumb */
+            border-radius: 5px; /* Rounded corners for the thumb */
+            cursor: grab; /* Cursor indicates draggable */
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: auto; /* Re-enable pointer events for the thumb itself */
+            transition: transform 0.05s linear; /* Smooth horizontal movement */
+        }
+
+        .scrollbar-thumb:active {
+            cursor: grabbing; /* Cursor indicates currently dragging */
+        }
+
     </style>
 <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
@@ -295,20 +313,22 @@
                             <label for="uploaded_by_filter" class="form-label">Uploaded By:</label>
                             <select class="form-select" id="uploaded_by_filter">
                                 <option value="">All Uploaders</option>
-                                
+                                @foreach($creators as $creator)
+                                <option value="{{ $creator->id }}">{{  $creator->name }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label for="section_filter" class="form-label">Section:</label>
                             <select class="form-select" id="section_filter">
                                 <option value="">All Sections</option>
-                                <option value="project_level">Project Level</option>
-                                
+                                <option value="project">Project</option>
+                                <option value="task">Task</option>
                             </select>
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
-                            <button id="apply_filters_btn" class="btn btn-primary">Apply Filters</button>
-                            <button id="clear_filters_btn" class="btn btn-secondary ms-2">Clear Filters</button>
+                            <button id="apply_filters_btn" class="btn btn-primary">Apply</button>
+                            <button id="clear_filters_btn" class="btn btn-secondary ms-2">Clear</button>
                         </div>
                     </div>
                     <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
@@ -387,8 +407,8 @@
                 </div> {{-- End tab-pane project-files --}}
                 <hr>
                 
-                <div class="horizontal-scroll-wrapper"> {{-- Custom wrapper for overflow --}}
-                    <div class="row flex-nowrap g-4">
+                <div class="horizontal-scroll-wrapper" style="height: 400px;"> {{-- Custom wrapper for overflow --}}
+                    <div class="row flex-nowrap">
                         @foreach($kanbanStages as $index => $kanbanStage)
                             @php
                                 $ProjectStageStatus = 'Active';
@@ -468,7 +488,8 @@
                                 }
 
                         @endphp
-                            <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}"> {{-- h-100 to make cards in a row have equal height --}}
+                            <div class="col-sm-5 mb-3 mb-sm-0 {{ $cardClasses }}" > {{-- h-100 to make cards in a row have equal height --}}
+                                <div class="kanban-stage">
                                     <div class="card mb-3" style="max-width: 540px; border: 1px solid #819A91;">
                                         <div class="card-body" style="height:100px;">
                                             <div class="d-flex justify-content-between align-items-start">
@@ -489,173 +510,174 @@
                                                 </button>
                                             </div>           
                                         </div>
-                                    <div class="card-footer">
-                                        <div class="text-end">
-                                            <div class="btn-group btn-group-sm" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
-                                            {{-- Create Task Button --}}
-                                                <button type="button" class="btn btn-outline-primary btn-sm create-task-btn"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#createTaskModal"
-                                                    data-project-id="{{ $project->obfuscated_id }}" {{-- Pass obfuscated project ID --}}
-                                                    data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Pass actual kanban stage ID --}}
-                                                    data-kanban-stage-name="{{ $kanbanStage->name }}" {{-- Pass stage name for modal title --}}
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top"
-                                                    title="Add a new task for this stage"
-                                                    {{ $createTask }}>Create</button>
-                                                @if($project->project_manager_id == auth()->user()->id)
-                                                    @if($canCompleteStage) {{-- Use the pre-calculated $canCompleteStage variable --}}
-                                                        <button type="button" class="btn btn-outline-success btn-sm mark-stage-complete-btn"
-                                                            data-project-id="{{ $project->obfuscated_id }}"
-                                                            data-project-stage-id="{{ $currentProjectStage->obfuscated_id }}" {{-- Pass obfuscated project stage ID --}}
-                                                            data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
-                                                            {{ $completeStage }}>Complete</button>
-                                                     @else
-                                                        {{-- Optionally show a disabled button with a tooltip explaining why --}}
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm mark-stage-complete-btn"
-                                                            data-project-id="{{ $project->obfuscated_id }}"
-                                                            data-project-stage-id="{{ $currentProjectStage->obfuscated_id??'-' }}" {{-- Pass obfuscated project stage ID --}}
-                                                            data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
-                                                            {{ $completeStage }}>Complete</button>
-                                                    @endif
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @php
-                                // Fetch tasks for this specific project's stage
-                                // Assuming you have $project->projectStages eager loaded with tasks
-                                $projectStage = $project->projectStages() // Access the relationship as a Query Builder
-                                    ->where('kanban_stage_id', $kanbanStage->id)
-                                    ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
-                                    ->first();
-
-                                $projectStageTasks = $projectStage ? $projectStage->tasks->where('data_status', '!=', 0) : collect();
-                                if($project->data_status===1){
-                                    $bgColor = '#E67514';
-                                } else if($project->data_status===2){
-                                    $bgColor = '#8aec6f';
-                                } else {
-                                    $bgColor = '#06923E';
-                                }
-                                @endphp
-
-                                @foreach($projectStageTasks as $task)
-
-                                @php
-                                if($task->data_status==1){
-                                    $bgColor = '#FFC107';
-                                } else if($task->data_status==2){
-                                    $bgColor = '#8aec6f';
-                                } else {
-                                    $bgColor = '#06923E';
-                                }
-                                @endphp
-                                
-                                <div class="card text-bg-light mb-3 stage-task-card" data-stage-assigned-member-id="{{ $task->assigned_to_user_id ?? '' }}" style="max-width: 540px; border: 1px solid {{ $bgColor }};">
-                                    <div class="row ms-1 mt-4">
-                                        <div class="col-9">
-                                            <label class="detail-label stage-task-title">{{ $task->name }}</label>
-                                            <p class="stage-task-description"><small>{{ $task->description }}</small></p>
-                                        </div>
-                                        <div class="col-3">
-                                            <img src="{{ $task->assignedTo->avatar_url }}" alt="{{ $task->assignedTo->name }}'s avatar"
-                                                alt="{{ $task->assignedTo->name }}"
-                                                        class="task-assignee-avatar rounded-circle"
-                                                        width="20" height="20"
+                                        <div class="card-footer">
+                                            <div class="text-end">
+                                                <div class="btn-group btn-group-sm" role="group" aria-label="Kanban Actions"> {{-- No vertical class --}}
+                                                {{-- Create Task Button --}}
+                                                    <button type="button" class="btn btn-outline-primary btn-sm create-task-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#createTaskModal"
+                                                        data-project-id="{{ $project->obfuscated_id }}" {{-- Pass obfuscated project ID --}}
+                                                        data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Pass actual kanban stage ID --}}
+                                                        data-kanban-stage-name="{{ $kanbanStage->name }}" {{-- Pass stage name for modal title --}}
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="top"
-                                                        title="{{ $task->assignedTo->name }}">
-                                        </div>
-                                    </div>
-                                    <div class="row mt-3 mb-3">
-                                        <div class="col-6">
-                                            <div class="list-group">
-                                                <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-info view-task-details-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskDetailModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}" 
-                                                ><small>View</small></button>
-                                                @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1  && $task->data_status!=4)                                                
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary view-task-edit-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskEditModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        ><small>Edit</small></button>
-                                                @endif
-                                                @if($project->data_status==1 && $task->data_status!=4)
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-warning add-logs-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskAddLogsModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-project-id="{{ $project->obfuscated_id }}"><small>Add Logs</small>
-                                                    </button>
-                                                @endif
-                                                @if($project->project_manager_id==auth()->user()->id && $project->data_status==1 && $task->data_status!=4)  
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-success view-task-update-status-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskUpdateStatusModal"
-                                                        data-project-manager-id="{{ $project->project_manager_id }}"
-                                                        data-assign-to="{{ $task->assigned_to_user_id }}"
-                                                        data-user-logon="{{ auth()->user()->id }}"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-project-id="{{ $project->id }}"
-                                                        data-task-log="{{ $task->update_log }}" 
-                                                        data-task-status="{{ $task->task_status }}" 
-                                                        data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
-                                                        @if($task->assigned_to_user_id==$project->project_manager_id)
-                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskDeleteModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
+                                                        title="Add a new task for this stage"
+                                                        {{ $createTask }}>Create</button>
+                                                    @if($project->project_manager_id == auth()->user()->id)
+                                                        @if($canCompleteStage) {{-- Use the pre-calculated $canCompleteStage variable --}}
+                                                            <button type="button" class="btn btn-outline-success btn-sm mark-stage-complete-btn"
+                                                                data-project-id="{{ $project->obfuscated_id }}"
+                                                                data-project-stage-id="{{ $currentProjectStage->obfuscated_id }}" {{-- Pass obfuscated project stage ID --}}
+                                                                data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
+                                                                {{ $completeStage }}>Complete</button>
+                                                        @else
+                                                            {{-- Optionally show a disabled button with a tooltip explaining why --}}
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm mark-stage-complete-btn"
+                                                                data-project-id="{{ $project->obfuscated_id }}"
+                                                                data-project-stage-id="{{ $currentProjectStage->obfuscated_id??'-' }}" {{-- Pass obfuscated project stage ID --}}
+                                                                data-kanban-stage-id="{{ $kanbanStage->id }}" {{-- Also useful for UI updates --}}
+                                                                {{ $completeStage }}>Complete</button>
                                                         @endif
-                                                @endif
-                                                @if($task->assigned_to_user_id==auth()->user()->id 
-                                                && $project->data_status==1 
-                                                && $project->project_manager_id!=auth()->user()->id 
-                                                && $project->data_status==1 
-                                                && ($task->data_status!=4 && $task->data_status!=2 ))  
-                                                <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-success view-task-update-status-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskUpdateStatusModal"
-                                                        data-project-manager-id="{{ $project->project_manager_id }}"
-                                                        data-assign-to="{{ $task->assigned_to_user_id }}"
-                                                        data-user-logon="{{ auth()->user()->id }}"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-project-id="{{ $project->id }}"
-                                                        data-task-log="{{ $task->update_log }}" 
-                                                        data-task-status="{{ $task->task_status }}" 
-                                                        data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
-                                                
-                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskDeleteModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}"
-                                                        data-task-name="{{ $task->name }}"><small>Delete</small></button>
-                                                @endif
-                                            </div>
-                                        </div>
-                                        <div class="col-6 ">
-                                            <div class="d-flex flex-column align-items-end justify-content-end h-100 pe-4">
-                                                <p><small>Due Date : </small><small class="
-                                            @if ($task->end_at->isPast())
-                                                text-danger
-                                            @else
-                                                text-warning
-                                           @endif
-                                            ">{{ $task->end_at->format('d M Y') }}</small></p>
-                                                <a href="#" class="download-files-link mb-2 view-task-details-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#taskDetailModal"
-                                                        data-task-id="{{ $task->task_obfuscated_id }}">Download Files</a>
-                                                <span class="badge {{ $task->task_status_badge }} rounded-pill">{{ $task->task_status }}</span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                    @php
+                                    // Fetch tasks for this specific project's stage
+                                    // Assuming you have $project->projectStages eager loaded with tasks
+                                    $projectStage = $project->projectStages() // Access the relationship as a Query Builder
+                                        ->where('kanban_stage_id', $kanbanStage->id)
+                                        ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
+                                        ->first();
+
+                                    $projectStageTasks = $projectStage ? $projectStage->tasks->where('data_status', '!=', 0) : collect();
+                                    if($project->data_status===1){
+                                        $bgColor = '#E67514';
+                                    } else if($project->data_status===2){
+                                        $bgColor = '#8aec6f';
+                                    } else {
+                                        $bgColor = '#06923E';
+                                    }
+                                    @endphp
+
+                                    @foreach($projectStageTasks as $task)
+
+                                    @php
+                                    if($task->data_status==1){
+                                        $bgColor = '#FFC107';
+                                    } else if($task->data_status==2){
+                                        $bgColor = '#8aec6f';
+                                    } else {
+                                        $bgColor = '#06923E';
+                                    }
+                                    @endphp
+                                    
+                                    <div class="card text-bg-light mb-3 stage-task-card" data-stage-assigned-member-id="{{ $task->assigned_to_user_id ?? '' }}" style="max-width: 540px; border: 1px solid {{ $bgColor }};">
+                                        <div class="row ms-1 mt-4">
+                                            <div class="col-9">
+                                                <label class="detail-label stage-task-title">{{ $task->name }}</label>
+                                                <p class="stage-task-description"><small>{{ $task->description }}</small></p>
+                                            </div>
+                                            <div class="col-3">
+                                                <img src="{{ $task->assignedTo->avatar_url }}" alt="{{ $task->assignedTo->name }}'s avatar"
+                                                    alt="{{ $task->assignedTo->name }}"
+                                                            class="task-assignee-avatar rounded-circle"
+                                                            width="20" height="20"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="top"
+                                                            title="{{ $task->assignedTo->name }}">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3 mb-3">
+                                            <div class="col-6">
+                                                <div class="list-group">
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-info view-task-details-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskDetailModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}" 
+                                                    ><small>View</small></button>
+                                                    @if($task->assigned_to_user_id==auth()->user()->id && $project->data_status==1  && $task->data_status!=4)                                                
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-primary view-task-edit-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskEditModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            ><small>Edit</small></button>
+                                                    @endif
+                                                    @if($project->data_status==1 && $task->data_status!=4)
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-warning add-logs-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskAddLogsModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            data-project-id="{{ $project->obfuscated_id }}"><small>Add Logs</small>
+                                                        </button>
+                                                    @endif
+                                                    @if($project->project_manager_id==auth()->user()->id && $project->data_status==1 && $task->data_status!=4)  
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-success view-task-update-status-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskUpdateStatusModal"
+                                                            data-project-manager-id="{{ $project->project_manager_id }}"
+                                                            data-assign-to="{{ $task->assigned_to_user_id }}"
+                                                            data-user-logon="{{ auth()->user()->id }}"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            data-project-id="{{ $project->id }}"
+                                                            data-task-log="{{ $task->update_log }}" 
+                                                            data-task-status="{{ $task->task_status }}" 
+                                                            data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
+                                                            @if($task->assigned_to_user_id==$project->project_manager_id)
+                                                            <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskDeleteModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            data-task-name="{{ $task->name }}"><small>Delete</small></button>
+                                                            @endif
+                                                    @endif
+                                                    @if($task->assigned_to_user_id==auth()->user()->id 
+                                                    && $project->data_status==1 
+                                                    && $project->project_manager_id!=auth()->user()->id 
+                                                    && $project->data_status==1 
+                                                    && ($task->data_status!=4 && $task->data_status!=2 ))  
+                                                    <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-success view-task-update-status-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskUpdateStatusModal"
+                                                            data-project-manager-id="{{ $project->project_manager_id }}"
+                                                            data-assign-to="{{ $task->assigned_to_user_id }}"
+                                                            data-user-logon="{{ auth()->user()->id }}"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            data-project-id="{{ $project->id }}"
+                                                            data-task-log="{{ $task->update_log }}" 
+                                                            data-task-status="{{ $task->task_status }}" 
+                                                            data-task-status-badge="{{ $task->task_status_badge }}"><small>Update Status</small></button>
+                                                    
+                                                        <button type="button" class="py-1 list-group-item list-group-item-action btn-sm text-danger view-task-delete-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskDeleteModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}"
+                                                            data-task-name="{{ $task->name }}"><small>Delete</small></button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="col-6 ">
+                                                <div class="d-flex flex-column align-items-end justify-content-end h-100 pe-4">
+                                                    <p><small>Due Date : </small><small class="
+                                                @if ($task->end_at->isPast())
+                                                    text-danger
+                                                @else
+                                                    text-warning
+                                            @endif
+                                                ">{{ $task->end_at->format('d M Y') }}</small></p>
+                                                    <a href="#" class="download-files-link mb-2 view-task-details-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#taskDetailModal"
+                                                            data-task-id="{{ $task->task_obfuscated_id }}">Download Files</a>
+                                                    <span class="badge {{ $task->task_status_badge }} rounded-pill">{{ $task->task_status }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endforeach
+                            </div>
                             </div>
                         @endforeach
                     </div>
@@ -1921,6 +1943,20 @@
                         padding-bottom: 1rem;
                     }
 
+                    .row-flex-nowrap-scroller {
+                        display: flex;
+                        flex-wrap: nowrap; /* Prevent wrapping */
+                        gap: 1rem; /* g-4 equivalent for spacing between cards */
+                        padding: 0 1rem; /* Padding for visual space around cards */
+                        overflow-x: auto; /* Enable horizontal scrolling for this inner container */
+                        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                        scrollbar-width: none; /* Hide native scrollbar for Firefox */
+                        -ms-overflow-style: none; /* Hide native scrollbar for IE/Edge */
+                        max-width: 100%; /* Ensure it doesn't overflow its fixed parent */
+                        height: 100%; /* Take full height of its parent */
+                    }
+
+
                     /* Optional: Hide scrollbar in webkit browsers (Chrome, Safari) */
                     .horizontal-scroll-wrapper::-webkit-scrollbar {
                         height: 8px;
@@ -1933,6 +1969,21 @@
 
                     .horizontal-scroll-wrapper::-webkit-scrollbar-track {
                         background-color: transparent;
+                    }
+
+                    .kanban-stage {
+                        display: flex;
+                        flex-direction: column;
+                        max-height: 500px; /* Set your desired stage height */
+                        overflow-y: auto; /* Enable vertical scroll per stage */
+                        padding-right: 20px; /* Optional: to prevent content cutoff */
+                    }
+                    .kanban-stage::-webkit-scrollbar {
+                        width: 8px;
+                    }
+                    .kanban-stage::-webkit-scrollbar-thumb {
+                        background-color: rgba(0, 0, 0, 0.2);
+                        border-radius: 4px;
                     }
 
                     /* Your custom card-disabled styles from previous example */
@@ -2124,6 +2175,8 @@
             </div>
         </div>
     </div>
+
+    
 
     <script>
         $(document).ready(function() {

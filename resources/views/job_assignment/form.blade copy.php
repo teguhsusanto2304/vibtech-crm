@@ -3,58 +3,6 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />    
-<style>
-
-/* Style for individual selected tags (THE KEY PART FOR SELECTED OPTION HEIGHT) */
-.select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    
-    /* --- CUSTOMIZE THESE PROPERTIES FOR HEIGHT --- */
-    padding: 0.2rem 0.6rem; /* Adjust vertical padding (0.2rem) and horizontal padding (0.6rem) */
-    /* You can also use fixed height, but padding is more flexible: */
-    /* height: 30px; */ 
-    
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-right: 0;
-    color: #212529;
-    display: flex;
-    align-items: center; /* Ensures content (avatar, text, x) is vertically centered */
-}
-
-/* Style for the remove 'x' button on selected tags */
-.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    color: #6c757d;
-    margin-right: 0.3rem;
-}
-
-/* Style for the search input within the multiple select */
-.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
-    border: none;
-    outline: none;
-    box-shadow: none;
-    padding: 0;
-    margin: 0;
-    height: auto;
-    min-width: 50px;
-    flex-grow: 1;
-}
-/* Style for search results highlight */
-.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-    background-color: #0d6efd;
-    color: #fff;
-}
-/* Style for already selected options in the dropdown */
-.select2-container--default .select2-results__option--selected {
-    background-color: #f8f9fa;
-    color: #495057;
-}
-
-                        </style>
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <!-- custom-icon Breadcrumb-->
@@ -62,7 +10,7 @@
                 <ol class="breadcrumb breadcrumb-custom-icon">
                     @foreach ($breadcrumb as $item)
                         <li class="breadcrumb-item">
-                            @if($item == 'Job Assignment Form')
+                            @if($item=='Job Assignment Form')
                                 <a href="{{ route('v1.job-assignment-form')}}">{{ $item }}</a>
                             @else
                                 <a href="javascript:void(0);">{{ $item }}</a>
@@ -72,81 +20,153 @@
                     @endforeach
                 </ol>
             </nav>
-        </div>
 
-        <h3>{{ $title }}</h3>
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+            <h3>{{ $title }}</h3>
+            <style>
+                                input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+    background-color: rgb(241, 243, 244) !important;
+    color: black !important;
+    box-shadow: 0 0 0px 1000px rgb(248, 249, 249) inset !important; /* Forces color */
+}
 
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Oops! Something went wrong:</strong>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if (session()->has('error_import'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>Error:</strong> {{ session('error_import') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-        <div class="card">
-            <div class="card-body">
-                <form action="{{ route('v1.job-assignment-form.store')}}" method="POST" class="p-4 row g-3" enctype="multipart/form-data">
-                    @csrf
-                    <!-- Project Name -->
-                     <div class="col-md-3">
-                            <label for="inputEmail4" class="form-label">Job Record ID</label>
-                            <input type="text" class="form-control" name="job_record_id" value="{{ $job_no }}" readonly>
+                .form-container {
+                    background-color: #fff;
+                    /* Dark blue background */
+                    padding: 30px;
+                    border-radius: 5px;
+                }
+
+                .form-control:focus {
+                    background-color: white;
+                    /* Change background color on focus */
+                    color: #fff;
+                    /* Change text color on focus */
+                }
+
+                .form-container h2 {
+                    color: #fff;
+                    margin-bottom: 20px;
+                }
+
+                .form-control-input {
+                    color: #010101;
+                    /* Text color */
+                    background-color: #fff;
+                    /* Background color */
+                    border-color: #fff;
+                    /* Border color */
+                }
+
+                .form-control-input:focus {
+                    color: #010101;
+                    /* Text color */
+                    background-color: #fff;
+                    /* Background color */
+                    border-color: #fff;
+                    /* Border color */
+                }
+
+
+
+                .form-check-input {
+                    background-color: #fff;
+                    /* Radio button background color */
+                    border-color: #fff;
+                    /* Radio button border color */
+                }
+
+
+
+                .form-select {
+                    background-color: white;
+                    /* Set background color to white */
+                    color: #131313;
+                    /* Set text color to match your background */
+                    border: 1px solid #ccc;
+                    /* Add a border for better contrast */
+                }
+
+                .form-label {
+                    color: #fff;
+                }
+            </style>
+                    @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Oops! Something went wrong:</strong>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                    <div class="col-md-3">
+                @endif
+            <div class="card" style="background-color: #004080">
+                <div class="card-body">
+                    <form class="row g-3" action="{{ route('v1.job-assignment-form.store')}}" method="post">
+                        @csrf
+                        <div class="col-md-3">
+                            <label for="inputEmail4" class="form-label">Job Record ID</label>
+                            <input type="text" class="form-control form-control-input" name="job_record_id" value="{{ $job_no }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputPassword4" class="form-label">Type of Job </label>
+                            <input type="text" class="form-control form-control-input" name="job_type"  value="{{ old('job_type')}}">
+                        </div>
+                        <div class="col-md-2">
                             <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
                             <br>
                             <input class="form-check-input" type="checkbox" value="1" name="job_status" />
                             <label class="form-label" for="defaultCheck1">
                                 Yes
                             </label>
-                    </div>
-                    <div class="col-md-6">
-                            <label for="inputPassword4" class="form-label">Type of Job </label>
-                            <input type="text" class="form-control" name="job_type"  value="{{ old('job_type')}}">
-                    </div>
-                    
-                    <div class="col-6">
+                        </div>
+                        <div class="col-6">
                             <label for="inputAddress" class="form-label">Business Name</label>
-                            <input type="text" class="form-control" name="business_name" value="{{ old('business_name')}}" placeholder="Enter business name">
-                    </div>
-                    <div class="col-6">
+                            <input type="text" class="form-control form-control-input" name="business_name" value="{{ old('business_name')}}" placeholder="enter business name">
+                        </div>
+                        <div class="col-6">
                             <label for="inputAddress2" class="form-label">Business Address</label>
-                            <input type="text" class="form-control" name="business_address" value="{{ old('business_address')}}"
-                                placeholder="Enter business address">
-                    </div>
-                    <div class="col-md-12">
+                            <input type="text" class="form-control form-control-input" name="business_address" value="{{ old('business_address')}}"
+                                placeholder="enter business addressr">
+                        </div>
+                        <div class="col-md-12">
                             <label for="inputCity" class="form-label">Scope of work</label>
-                            <textarea class="form-control" name="scope_of_work" cols="6" rows="3"
-                                placeholder="Enter scope of work">{{ old('scope_of_work')}}</textarea>
-                    </div>
-                    <div class="col-3">
+                            <textarea class="form-control form-control-input" name="scope_of_work" cols="6" rows="3"
+                                placeholder="enter scope of work">{{ old('scope_of_work')}}</textarea>
+                        </div>
+                        <div class="col-2">
                             <label for="inputAddress" class="form-label">Start Date</label>
-                            <input type="date" class="form-control" name="start_at">
-                    </div>
-                    <div class="col-3">
+                            <input type="date" class="form-control form-control-input" name="start_at">
+                        </div>
+                        <div class="col-2">
                             <label for="inputAddress2" class="form-label">End Date</label>
-                            <input type="date" class="form-control" name="end_at">
-                    </div>
-                    <div class="col-6">
-                            <label for="addProjectMembers" class="form-label">Sent To</label>
-                            <select name="prsonnel_ids[]" id="personnel-multiple" class="form-select" multiple="multiple">
-                                 @foreach ($users as $dept => $departmentUsers)
+                            <input type="date" class="form-control form-control-input" name="end_at">
+                        </div>
+                        <div class="col-md-8">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputState" class="form-label">Sent To</label>
+                            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+                            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+                                rel="stylesheet" />
+                            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                            <style>
+                                .select2-container .select2-selection--single {
+                                    height: 36px !important;
+                                    /* Adjust height as needed */
+                                    border: 1px solid #ccc !important;
+                                    /* Add border for consistency */
+                                    border-radius: 4px !important;
+                                    /* Add border-radius for consistency */
+                                }
+                            </style>
+                            <select class="form-select select2 " name="prsonnel_ids[]" id="personnel-multiple"
+                                multiple="multiple">
+                                @foreach ($users as $dept => $departmentUsers)
                                     <optgroup label="{{ $dept }}">
                                         @foreach ($departmentUsers as $user)
                                             <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -154,11 +174,12 @@
                                     </optgroup>
                                 @endforeach
                             </select>
-                    </div>
-                    
-                    <!-- Members and Manager -->
-                    <div class="row mb-3">
-                        
+                            <script>
+                                $(document).ready(function () {
+                                    $('#personnel-multiple').select2();
+                                });
+                            </script>
+                        </div>
                         <div class="col-md-6">
                             <label for="inputZip" class="form-label">Vehicle Require</label>
                             <br>
@@ -303,113 +324,14 @@
                                 });
                             });
                         </script>
-                    </div>
-
-                    <!-- Buttons -->
-                    <div class="col-12">
-                            <a href="{{ route('v1.job-assignment-form')}}" class="btn btn-warning">Cancel</a>
+                        <div class="col-12">
                             <button type="submit" class="btn btn-primary">Submit</button>
-                    </div>
-                </form>
-
+                            <button type="reset" class="btn btn-warning">Reset</button>
+                        </div>
+                    </form>
+                </div>
             </div>
+
         </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- jQuery (Select2 depends on jQuery) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <!-- Select2 JS CDN -->
- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <script>
-        // --- Select2 Custom Formatting Functions ---
-
-        // Function to get or generate avatar URL
-        function getAvatarOrPlaceholder(userOption) {
-            // Check if userOption has a direct avatar_url property (common if loaded via AJAX)
-            // or if it has an element (common if loaded from static <option> tags)
-            const avatarUrl = userOption.avatar_url || (userOption.element ? $(userOption.element).data('avatar-url') : null);
-            const initials = userOption.initials || (userOption.element ? $(userOption.element).data('initials') : null);
-            const userName = userOption.text || userOption.id; // Fallback to ID if no text
-
-            if (avatarUrl) {
-                return avatarUrl;
-            } else {
-                // Generate placeholder with initials
-                const fallbackInitials = initials || (userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : '?');
-                return `https://placehold.co/28x28/d0c5f3/333333?text=${encodeURIComponent(fallbackInitials)}`;
-            }
-        }
-
-        // Formats options in the dropdown results list
-        function formatUserResult(user) {
-            if (!user.id) {
-                return user.text; // Return original text for placeholder/search input
-            }
-
-            const avatarSrc = getAvatarOrPlaceholder(user);
-            
-            // Create a jQuery object for the option HTML
-            const $container = $(
-                `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
-                    <span>${user.text}</span>
-                </span>`
-            );
-            return $container;
-        }
-
-        // Formats selected items within the Select2 input box
-        function formatUserSelection(user) {
-            if (!user.id) {
-                return user.text; // Return original text for placeholder
-            }
-
-            const avatarSrc = getAvatarOrPlaceholder(user);
-
-            // Create a jQuery object for the selected tag HTML
-            const $container = $(
-                `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
-                    <span>${user.text}</span>
-                </span>`
-            );
-            return $container;
-        }
-
-        // --- Select2 Initialization ---
-        $(document).ready(function() {
-            $('#personnel-multiple').select2({
-                placeholder: "Select personnel involved", // Text shown when no items are selected
-                allowClear: true, // Allows clearing all selections
-                templateResult: formatUserResult,    // Function to format dropdown options
-                templateSelection: formatUserSelection, // Function to format selected items
-                // If you are fetching users via AJAX, you would add an 'ajax' configuration here:
-                // ajax: {
-                //     url: '/your-api-endpoint-for-users', // e.g., /api/users-for-select2
-                //     dataType: 'json',
-                //     delay: 250, // Delay in milliseconds before search performs
-                //     data: function (params) {
-                //         return {
-                //             search: params.term, // search term
-                //             page: params.page
-                //         };
-                //     },
-                //     processResults: function (data, params) {
-                //         params.page = params.page || 1;
-                //         return {
-                //             results: data.results, // Assume your API returns { results: [...] }
-                //             pagination: {
-                //                 more: (params.page * 20) < data.total_count // Adjust per your API's pagination
-                //             }
-                //         };
-                //     },
-                //     cache: true
-                // }
-            });
-        });
-</script>
-
-   
 @endsection

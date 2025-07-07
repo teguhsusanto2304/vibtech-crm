@@ -203,6 +203,8 @@ class JobAssignmentController extends Controller
             'prsonnel_ids' => 'array',
             'prsonnel_ids.*' => 'exists:users,id',
             'job_status' => 'nullable',
+            'project_files' => 'nullable|array|max:5', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
         ]);
 
         // Create Job Assignment Form
@@ -218,6 +220,28 @@ class JobAssignmentController extends Controller
             'user_id' => Auth()->user()->id,
             'job_status' => $request->has('job_status') ? 1 : 0,
         ]);
+
+        // 4. Handle File Uploads
+            if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $index => $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $jobAssignment->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $jobAssignment->files()->create([
+                        'file_name' => $originalFileName,
+                        'file_path' => $path, // The path returned by store()
+                        'mime_type' => $fileMimeType,
+                        'file_size' => $fileSize,
+                        'description' => $request->input('project_file_descriptions')[$index] ?? null,
+                        'uploaded_by_user_id' => Auth::id(),
+                    ]);
+                }
+            }
 
         // Attach personnel to job assignment (Many-to-Many Relationship)
         if (! empty($validated['prsonnel_ids'])) {
@@ -320,7 +344,7 @@ class JobAssignmentController extends Controller
             ->get();
         $personnels = JobAssignmentPersonnel::where('job_assignment_id', $id)->get();
 
-        return view('job_assignment.view', compact('job', 'personnels', 'respond', 'staff'))
+        return view('job_assignment.oldview', compact('job', 'personnels', 'respond', 'staff'))
             ->with('title', 'Job Requisition Form Detail')
             ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Detail']);
     }
