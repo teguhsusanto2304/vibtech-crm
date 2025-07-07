@@ -7,11 +7,11 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<style>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+        <style>
 
         .task-card {
             background-color: #e8e8e8; /* Light grey background similar to screenshot */
@@ -326,10 +326,6 @@
                                 <option value="task">Task</option>
                             </select>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button id="apply_filters_btn" class="btn btn-primary">Apply</button>
-                            <button id="clear_filters_btn" class="btn btn-secondary ms-2">Clear</button>
-                        </div>
                     </div>
                     <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
                         <thead>
@@ -362,9 +358,8 @@
                                 url: "{{ route('v1.project-management.project-files.data') }}",
                                 data: function (d) {
                                     d.project_id = currentProjectId;
-                                    // Optional: Add a filter for project_stage_task_id
-                                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
-                                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
+                                    d.uploaded_by_user_id = $('#uploaded_by_filter').val();
+                                    d.section = $('#section_filter').val();
                                 }
                             },
                             columns: [
@@ -376,6 +371,9 @@
                             order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
                         });
                         $('#project_files_datatable').DataTable().columns.adjust().draw();
+                        $('#uploaded_by_filter,#section_filter').on('change', function () {
+                            $('#project_files_datatable').DataTable().ajax.reload();
+                        });
 
                         // --- JavaScript for Delete Button (from previous discussion) ---
                         $(document).on('click', '.delete-project-file-btn', function() {
@@ -407,7 +405,7 @@
                 </div> {{-- End tab-pane project-files --}}
                 <hr>
                 
-                <div class="horizontal-scroll-wrapper" style="height: 400px;"> {{-- Custom wrapper for overflow --}}
+                <div class="horizontal-scroll-wrapper" style="height: 500px;"> {{-- Custom wrapper for overflow --}}
                     <div class="row flex-nowrap">
                         @foreach($kanbanStages as $index => $kanbanStage)
                             @php

@@ -1,8 +1,8 @@
 @if((int) $job->user_id === (int) auth()->user()->id)
     <p>
         @if((int) $job->job_status === 0)
-                <span class="badge bg-info">Pending</span>
-            <p>You was created this job record</p>
+                <span class="badge badge-xs bg-info">Pending</span>
+            <p ><small>You was created this job record</small></p>
         @elseif((int) $job->job_status === 1)
             <span class="badge bg-success">Accepted</span>
             <p>You was accepted this job record made on dashboard calendar</p>

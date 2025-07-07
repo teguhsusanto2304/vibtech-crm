@@ -31,14 +31,15 @@
                 <h3 class="mb-0">{{ $title }}</h3>
                 <x-print-button-widget />
             </div>
+            <!-- background: linear-gradient(90deg,rgb(19, 125, 237), #004080);  -->
             <style>
         body {
             background-color: #f4f6f8;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         .header-section {
-            background: linear-gradient(90deg,rgb(19, 125, 237), #004080);
+            background:  #004080;
             color: white;
             padding: 40px 30px;
             border-bottom-left-radius: 15px;
@@ -179,13 +180,13 @@
                                 <h5>Job Record ID</h5>
                                 <p>{{ $job->job_record_id }}</p>
 
-                                <h5>Job Created On</h5>
+                                <h5>Job Created By</h5>
                                 <p>{{ $job->user->name }}</p>
-                                <label>{{ $job->created_at->format('l, d/m/Y h:i A') }}</label>
+                                <label class="mb-2">{{ $job->created_at->format('l, d/m/Y h:i A') }}</label>
 
                                 <h5>Status</h5>
                                 <div class="header-status">
-                                    <span class="badge bg-success">Accepted</span>
+                                    <x-job-status-widget :job="$job" />
                                 </div>
                             </div>
                         </div>
@@ -193,7 +194,6 @@
                 </div>
             </div>
             <div class="container mt-4">
-                <p class="job-requisition-subtext">Originator had accepted this job record made on dashboard calendar</p>
                 <div class="row mt-4">
                     <div class="col-lg-8 mb-4">
                         <div class="card">
@@ -248,6 +248,9 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="card-footer">
+                                <x-respond-widget :personnels="$personnels" :respond="$respond" :job="$job" />
+                            </div>
                         </div>
                     </div>
 
@@ -261,6 +264,7 @@
                             </div>
                         </div>
                         <x-personnal-involved-v2-widget :personnels="$personnels" :staff="$staff" :job="$job" />
+                        <div class="text-end"><x-job-action-buttons :job="$job" /></div>
                     </div>
                 </div>
                 <div class="row">

@@ -841,6 +841,17 @@ class ProjectService {
             $query->where('project_id', $projectId)->select('project_files.*');
         }
 
+        if ($request->filled('uploaded_by_user_id')) {
+            $query->where('uploaded_by_user_id', $request->uploaded_by_user_id)->select('project_files.*');
+        }
+        if ($request->filled('section')) {
+            if($request->section=='task'){
+                    $query->whereNotNull('project_stage_task_id');
+            } else {
+                $query->whereNull('project_stage_task_id');
+            }            
+        }
+
         return DataTables::eloquent($query)
             ->addColumn('file_name_link', function (ProjectFile $file) {
                 // Generate a clickable link to download/view the file
@@ -865,7 +876,7 @@ class ProjectService {
                 return $query->uploadedBy->name.'<p><small>'.$query->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
             })
             ->addColumn('associated_task', function (ProjectFile $file) {
-                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>Task</small></span>':'<span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
+                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>'.$file->task->projectStage->kanbanStage->name.'</small></span>':'<span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
                 
             })
             ->addColumn('file_size_formatted', function (ProjectFile $file) {
