@@ -20,8 +20,13 @@
                     @endforeach
                 </ol>
             </nav>
+            <link rel="stylesheet" href="https://cdn.datatables.net/1.10.22/css/dataTables.bootstrap4.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
             <div class="d-flex align-items-center justify-content-between">
                 <h3 class="mb-0">{{ $title }}</h3>
                 <x-print-button-widget />
@@ -264,42 +269,76 @@
                     <div class="card-header">
                         Uploaded Files
                     </div>
-                    <div class="card-body p-0">
-                        <ul class="list-unstyled file-list mb-0">
-                            <li>
-                                <div class="file-list-item-name">
-                                    <i class="fas fa-file-pdf text-danger"></i>
-                                    <span>Project_Report_Q2_2025.pdf</span>
-                                </div>
-                                <div class="file-actions">
-                                    <a href="#" class="text-decoration-none text-info me-2" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-decoration-none text-primary" title="Download"><i class="fas fa-download"></i></a>
-                                    <a href="#" class="text-decoration-none text-danger ms-2" title="Delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="file-list-item-name">
-                                    <i class="fas fa-file-image text-info"></i>
-                                    <span>Site_Photo_01.jpg</span>
-                                </div>
-                                <div class="file-actions">
-                                    <a href="#" class="text-decoration-none text-info me-2" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-decoration-none text-primary" title="Download"><i class="fas fa-download"></i></a>
-                                    <a href="#" class="text-decoration-none text-danger ms-2" title="Delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="file-list-item-name">
-                                    <i class="fas fa-file-word text-primary"></i>
-                                    <span>Meeting_Minutes_20250705.docx</span>
-                                </div>
-                                <div class="file-actions">
-                                    <a href="#" class="text-decoration-none text-info me-2" title="View"><i class="fas fa-eye"></i></a>
-                                    <a href="#" class="text-decoration-none text-primary" title="Download"><i class="fas fa-download"></i></a>
-                                    <a href="#" class="text-decoration-none text-danger ms-2" title="Delete"><i class="fas fa-trash"></i></a>
-                                </div>
-                            </li>
-                        </ul>
+                    <div class="card-body p-2">
+                        <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Uploaded By</th>
+                                <th width="100px">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Data will be loaded by DataTables --}}
+                        </tbody>
+                    </table>
+       
+                        <script>
+                    $(document).ready(function() {
+                        const currentProjectId = "{{ $job->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
+
+                        if (!currentProjectId) {
+                            console.error('Project ID is not available for loading files.');
+                            return;
+                        }
+
+                        var projectFilesTable = $('#project_files_datatable').DataTable({
+                            processing: true,
+                            serverSide: true,
+                            scrollX: true,
+                            ajax: {
+                                url: "{{ route('v1.job-assignment-form.files.data') }}",
+                                data: function (d) {
+                                    d.job_id = currentProjectId;
+                                    // Optional: Add a filter for project_stage_task_id
+                                    // d.project_stage_task_id = 'null_only'; // To show only project-level files
+                                    // d.project_stage_task_id = '{{ $someTaskId ?? '' }}'; // To show files for a specific task
+                                }
+                            },
+                            columns: [
+                                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
+                                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
+                                {data: 'action', name: 'action', orderable: false, searchable: false},
+                            ],
+                            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
+                        });
+                        $('#project_files_datatable').DataTable().columns.adjust().draw();
+
+                        // --- JavaScript for Delete Button (from previous discussion) ---
+                        $(document).on('click', '.delete-project-file-btn', function() {
+                            const fileId = $(this).data('file-id');
+                            const fileName = $(this).data('file-name');
+
+                            if (confirm(`Are you sure you want to delete the file "${fileName}"?`)) {
+                                $.ajax({
+                                    url: '/v1/project-management/' + fileId + '/file-destroy', // Use your API route for deletion
+                                    type: 'DELETE',
+                                    data: {
+                                        _token: '{{ csrf_token() }}'
+                                    },
+                                    success: function(response) {
+                                        alert(response.message);
+                                        projectFilesTable.ajax.reload(); // Reload the DataTable after deletion
+                                    },
+                                    error: function(xhr) {
+                                        alert('Error deleting file: ' + (xhr.responseJSON.message || 'Unknown error'));
+                                        console.error('Error:', xhr);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                </script>
                         <div class="card-footer text-end">
                             <small class="text-muted">Total Files: 3</small>
                         </div>

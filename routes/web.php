@@ -133,6 +133,7 @@ Route::middleware('auth')->group(function () {
             Route::put('{id}', 'update')->name('v1.job-assignment-form.update');
             Route::get('/send-email', 'sendBookingEmail')->name('v1.job-assignment-form.send-email');
             Route::post('/assign-vehicle-booker', 'assignVehicleBooker')->name('v1.job-assignment-form.assign-vehicle-booker');
+            Route::get('/files/data', 'getJobsAssignmentFiles')->name('v1.job-assignment-form.files.data');
         });
 
         // 🔹 Role Management Routes

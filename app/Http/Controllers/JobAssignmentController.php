@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\ConfirmationMail;
 use App\Models\Department;
 use App\Models\JobAssignment;
+use App\Models\JobAssignmentFile;
 use App\Models\JobAssignmentPersonnel;
 use App\Models\JobType;
 use App\Models\User;
@@ -15,7 +16,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Storage;
 
 class JobAssignmentController extends Controller
 {
@@ -820,5 +822,66 @@ class JobAssignmentController extends Controller
 
         // Return success response
         return response()->json(['success' => 'Vehicle booker assigned successfully!']);
+    }
+
+    public function getJobsAssignmentFiles(Request $request)
+    {
+        // Get filters from DataTables AJAX request (or custom parameters)
+        $jobId = $request->input('job_id');
+        
+        $query = JobAssignmentFile::query()->with(['uploadedBy']);
+
+        if ($request->has('job_id')) {
+            $query->where('job_assignment_id', $request->job_id);
+        }
+
+        
+
+        return DataTables::eloquent($query)
+            ->addColumn('file_name_link', function (JobAssignmentFile $file) {
+                // Generate a clickable link to download/view the file
+                $url = Storage::url($file->file_path); // Using the accessor you defined in the model
+                $icon = '';
+                // Add icons based on mime type
+                if (\Str::contains($file->mime_type, ['pdf'])) {
+                    $icon = '<i class="fas fa-file-pdf text-danger me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['word', 'document'])) {
+                    $icon = '<i class="fas fa-file-word text-primary me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['excel', 'spreadsheet'])) {
+                    $icon = '<i class="fas fa-file-excel text-success me-1"></i>';
+                } elseif (\Str::contains($file->mime_type, ['image'])) {
+                    $icon = '<i class="fas fa-file-image text-info me-1"></i>';
+                } else {
+                    $icon = '<i class="fas fa-file text-muted me-1"></i>';
+                }
+
+                return $file->description.'<p><small><a href="'.$url.'" target="_blank" download class="text-decoration-none">' . $icon . e($file->short_file_name) . '</a> ('.number_format($file->file_size / 1024, 2).' KB)</small></p>';
+            })
+            ->addColumn('uploaded_by', function ($query) {
+                return $query->uploadedBy->name.'<p><small>'.$query->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
+            })
+            
+            ->addColumn('file_size_formatted', function (JobAssignmentFile $file) {
+                // Convert bytes to KB, MB, etc.
+                $bytes = $file->file_size;
+                $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                $i = 0;
+                while ($bytes >= 1024 && $i < count($units) - 1) {
+                    $bytes /= 1024;
+                    $i++;
+                }
+                return round($bytes, 2) . ' ' . $units[$i];
+            })
+            ->addColumn('action', function (JobAssignmentFile $file) {
+                $buttons = '<a href="'. Storage::url($file->file_path) .'" target="_blank" download class="btn btn-sm btn-outline-info me-1" title="Download"><i class="fas fa-download"></i></a>';
+                if($file->uploaded_by_user_id == auth()->user()->id){
+                    $buttons .= '<button type="button" class="btn btn-sm btn-outline-danger delete-project-file-btn" 
+                    data-file-id="'.$file->id.'" data-file-name="'.e($file->file_name).'" title="Delete"><i class="fas fa-trash"></i></button>';
+                }
+                
+                return $buttons;
+            })
+            ->escapeColumns([])
+            ->make(true);
     }
 }
