@@ -368,7 +368,7 @@
                                 {data: 'associated_task',name: 'associated_task' ,orderable: true}, // 'task.name' for relationship
                                 {data: 'action', name: 'action', orderable: false, searchable: false},
                             ],
-                            order: [[1, 'desc']] // Default sort by 'Uploaded At' descending
+                            order: [[1, 'asc']] // Default sort by 'Uploaded At' descending
                         });
                         $('#project_files_datatable').DataTable().columns.adjust().draw();
                         $('#uploaded_by_filter,#section_filter').on('change', function () {
