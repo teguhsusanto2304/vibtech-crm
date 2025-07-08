@@ -127,7 +127,12 @@ class RoleController extends Controller
         
 
         // If role is not in use, proceed with deletion
-        $role->roleStatus->data_status = 2;
+        if($role->roleStatus->data_status==2)
+        {
+            $role->roleStatus->data_status = 1;
+        } else {
+            $role->roleStatus->data_status = 2;
+        }
         $role->roleStatus->save();
 
         return redirect()->route('v1.roles')->with('success', 'Role deleted successfully.');
@@ -156,12 +161,20 @@ class RoleController extends Controller
                     $btn = '<a href="'.route('v1.roles.edit', ['id' => $row->id]).'" class="edit btn btn-success btn-sm">Edit</a>';
                     $btn .= ' <a href="'.route('v1.roles.show', ['id' => $row->id]).'" class="edit btn btn-info btn-sm">Permission</a>';
                     if ($row->roleStatus->data_status == 1) { // <--- Condition to show delete button if status is 'inactive' (2)
-                    $btn .= '<form class="d-inline-block me-2" action="'.route('v1.roles.destroy', $row->id).'" method="post">'; // Using d-inline-block for spacing
-                    $btn .= '    ' . csrf_field(); // Laravel CSRF token helper
-                    $btn .= '    ' . method_field('PUT'); // <--- FIX: Use DELETE method for destroy route (conventional)
-                    $btn .= '    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to inactive this role?\')">Inactive</button>';
-                    $btn .= '</form>';
-                }
+                        $btn .= '<form class="d-inline-block me-3" action="'.route('v1.roles.destroy', $row->id).'" method="post">'; // Using d-inline-block for spacing
+                        $btn .= '    ' . csrf_field(); // Laravel CSRF token helper
+                        $btn .= '    ' . method_field('PUT'); // <--- FIX: Use DELETE method for destroy route (conventional)
+                        $btn .= '    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to inactive this role?\')">Inactive</button>';
+                        $btn .= '</form>';
+                    }
+
+                    if ($row->roleStatus->data_status == 2) { // <--- Condition to show delete button if status is 'inactive' (2)
+                        $btn .= '<form class="d-inline-block me-2" action="'.route('v1.roles.destroy', $row->id).'" method="post">'; // Using d-inline-block for spacing
+                        $btn .= '    ' . csrf_field(); // Laravel CSRF token helper
+                        $btn .= '    ' . method_field('PUT'); // <--- FIX: Use DELETE method for destroy route (conventional)
+                        $btn .= '    <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm(\'Are you sure you want to active this role?\')">Active</button>';
+                        $btn .= '</form>';
+                    }
 
                     return $btn;
                 })
