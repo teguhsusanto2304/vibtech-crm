@@ -203,7 +203,7 @@
             <!-- Tab Content -->
             <div class="tab-content" id="projectDetailsTabContent">
                 {{-- Tab 1: Project Details Information --}}
-                <<div class="tab-pane fade show active" id="project-details" role="tabpanel" aria-labelledby="details-tab">
+                <div class="tab-pane fade show active" id="project-details" role="tabpanel" aria-labelledby="details-tab">
                     <div class="row">
                         <!-- Left Column: Project Info -->
                         <div class="col-md-7 mb-4">
@@ -423,8 +423,7 @@
                 @endif
 
                 </div> {{-- End tab-pane project-files --}}
-                <hr>
-                
+                <hr>                
                 <div class="horizontal-scroll-wrapper" style="height: 500px;"> {{-- Custom wrapper for overflow --}}
                     <div class="row flex-nowrap">
                         @foreach($kanbanStages as $index => $kanbanStage)
