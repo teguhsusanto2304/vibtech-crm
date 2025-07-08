@@ -349,6 +349,7 @@
                             console.error('Project ID is not available for loading files.');
                             return;
                         }
+                        //$('#project_files_datatable').DataTable().columns.adjust().draw();
 
                         var projectFilesTable = $('#project_files_datatable').DataTable({
                             processing: true,
@@ -370,10 +371,12 @@
                             ],
                             order: [[1, 'asc']] // Default sort by 'Uploaded At' descending
                         });
-                        $('#project_files_datatable').DataTable().columns.adjust().draw();
+                        
                         $('#uploaded_by_filter,#section_filter').on('change', function () {
                             $('#project_files_datatable').DataTable().ajax.reload();
                         });
+
+                        $('#project_files_datatable').DataTable().columns.adjust().draw();
 
                         // --- JavaScript for Delete Button (from previous discussion) ---
                         $(document).on('click', '.delete-project-file-btn', function() {
