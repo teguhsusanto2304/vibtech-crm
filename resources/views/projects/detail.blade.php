@@ -335,10 +335,10 @@
                     <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
                         <thead>
                             <tr>
-                                <th>File Name</th>
-                                <th>Uploaded By</th>
-                                <th>Section</th>
-                                <th width="100px">Action</th>
+                                <th width="30%">File Name</th>
+                                <th width="30%">Uploaded By</th>
+                                <th width="30%">Section</th>
+                                <th width="10%">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -369,10 +369,10 @@
                                 }
                             },
                             columns: [
-                                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
-                                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
-                                {data: 'associated_task',name: 'associated_task' ,orderable: true}, // 'task.name' for relationship
-                                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'dt-body-nowrap'},
+                                {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true, width: '30%'},
+                                {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true, width: '30%'}, // 'uploadedBy.name' for relationship
+                                {data: 'associated_task',name: 'associated_task' ,orderable: true, width: '30%'}, // 'task.name' for relationship
+                                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'dt-body-nowrap', width: '10%'},
                             ],
                             order: [[1, 'asc']] // Default sort by 'Uploaded At' descending
                         });
