@@ -372,7 +372,7 @@
                                 {data: 'file_name_link', name: 'file_name', orderable: true, searchable: true},
                                 {data: 'uploaded_by', name: 'uploadedBy.name', orderable: true, searchable: true}, // 'uploadedBy.name' for relationship
                                 {data: 'associated_task',name: 'associated_task' ,orderable: true}, // 'task.name' for relationship
-                                {data: 'action', name: 'action', orderable: false, searchable: false},
+                                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'dt-body-nowrap'},
                             ],
                             order: [[1, 'asc']] // Default sort by 'Uploaded At' descending
                         });
