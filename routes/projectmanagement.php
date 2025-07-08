@@ -14,7 +14,6 @@ use App\Http\Controllers\Auth\NewPasswordController;
 */
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectStageTaskController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
