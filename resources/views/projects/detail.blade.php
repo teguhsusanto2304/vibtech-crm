@@ -327,6 +327,11 @@
                             </select>
                         </div>
                     </div>
+                    <style>
+                        .dt-body-nowrap {
+                            white-space: nowrap;
+                        }
+                    </style>
                     <table class="table table-bordered table-striped nowrap w-100" id="project_files_datatable">
                         <thead>
                             <tr>
