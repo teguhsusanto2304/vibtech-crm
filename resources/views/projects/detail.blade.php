@@ -381,7 +381,15 @@
                             $('#project_files_datatable').DataTable().ajax.reload();
                         });
 
-                        $('#project_files_datatable').DataTable().columns.adjust().draw();
+                        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                            // Check if the shown tab contains your DataTable
+                            if ($(e.target).attr('href') === '#project-files') {
+                                // Adjust column widths and redraw the table
+                                $('#project_files_datatable').DataTable().columns.adjust().draw();
+                            }
+                        });
+
+                        
 
                         // --- JavaScript for Delete Button (from previous discussion) ---
                         $(document).on('click', '.delete-project-file-btn', function() {
