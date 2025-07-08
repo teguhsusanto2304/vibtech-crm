@@ -189,22 +189,21 @@
             <!-- Nav tabs -->
             <ul class="nav nav-tabs" id="projectDetailsTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#project-details" type="button" role="tab" aria-controls="project-details" aria-selected="true">
+                    <a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#project-details" type="button" role="tab" aria-controls="project-details" aria-selected="true">
                         Project Details
-                    </button>
+                    </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="files-tab" data-bs-toggle="tab" data-bs-target="#project-files" type="button" role="tab" aria-controls="project-files" aria-selected="false">
+                    <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#project-files" type="button" role="tab" aria-controls="project-files" aria-selected="false">
                         Project Documentation
-                    </button>
+                    </a>
                 </li>
-
             </ul>
 
             <!-- Tab Content -->
             <div class="tab-content" id="projectDetailsTabContent">
                 {{-- Tab 1: Project Details Information --}}
-                <div class="tab-pane fade show active p-3" id="project-details" role="tabpanel" aria-labelledby="details-tab">
+                <<div class="tab-pane fade show active" id="project-details" role="tabpanel" aria-labelledby="details-tab">
                     <div class="row">
                         <!-- Left Column: Project Info -->
                         <div class="col-md-7 mb-4">
@@ -306,7 +305,7 @@
                 </div> {{-- End tab-pane project-details --}}
 
                 {{-- Tab 2: Project Files --}}
-                <div class="tab-pane fade p-3" id="project-files" role="tabpanel" aria-labelledby="files-tab">
+                <div class="tab-pane fade" id="project-files" role="tabpanel" aria-labelledby="files-tab">
                     @if($project->files->count() > 0)
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -347,7 +346,11 @@
                     </table>
        
                         <script>
+                            
                     $(document).ready(function() {
+
+                        
+
                         const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
 
                         if (!currentProjectId) {
@@ -381,12 +384,13 @@
                             $('#project_files_datatable').DataTable().ajax.reload();
                         });
 
+                        
+
+
                         $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-                            // Check if the shown tab contains your DataTable
-                            if ($(e.target).attr('href') === '#project-files') {
-                                // Adjust column widths and redraw the table
+                            
                                 $('#project_files_datatable').DataTable().columns.adjust().draw();
-                            }
+
                         });
 
                         
@@ -809,6 +813,7 @@
                 </script>
                 <script>
                     $(document).ready(function() {
+
                         const bulletinModal = $('#bulletinModal');
                         const bulletinsContainer = $('#bulletinsContainer');
                         const modalStageName = $('#modalStageName');
@@ -1196,6 +1201,8 @@
 
                 <script>
                     $(document).ready(function() {
+
+
 
                     // --- Project File Delete Modal Logic ---
                     $(document).on('click', '.delete-file-btn', function() {
