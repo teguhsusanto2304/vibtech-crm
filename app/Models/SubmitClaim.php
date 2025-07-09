@@ -18,6 +18,10 @@ class SubmitClaim extends Model
         'data_status',
     ];
 
+    protected $casts = [
+        'claim_date'=>'datetime'
+    ];
+
     /**
      * A claim has many claim items.
      */

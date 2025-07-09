@@ -7,6 +7,7 @@ use App\Models\SubmitClaimItem;
 use App\Models\ClaimType;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
+use App\Helpers\IdObfuscator;
 
 class SubmitClaimService {
     /**
@@ -16,12 +17,12 @@ class SubmitClaimService {
     {
         // 1. Validate the incoming request data
         $request->validate([
-            'claim_serial_number' => 'required|string|max:255|unique:claims,serial_number',
-            'claim_date' => 'required|date',
-            'staff_id' => 'required|exists:users,id', // Ensure staff_id exists in users table
-            'items' => 'required|array|min:1', // Ensure at least one claim item
-            'items.*.description' => 'required|string|max:255',
-            'items.*.amount' => 'required|numeric|min:0.01',
+            'claim_serial_number' => 'nullable|string|max:255|unique:submit_claims,serial_number',
+            'claim_type_id' => 'required',
+            'start_at' => 'required|date', // Ensure at least one claim item
+            'end_at' => 'required|date',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required',
             'items.*.category' => 'required|string|max:255',
         ]);
 
@@ -33,40 +34,45 @@ class SubmitClaimService {
             // 2. Create the main Claim record
             $claim = SubmitClaim::create([
                 'serial_number' => $this->generateSerialNumber(),
-                'claim_date' => $request->claim_date,
-                'staff_id' => $request->staff_id,
-                'status' => 'pending', // Default status
+                'claim_date' => date('Y-m-d'),
+                'staff_id' => auth()->user()->id,
+                'data_status' => 1, // Default status
                 'total_amount' => 0, // Will be updated after saving items
             ]);
 
             $totalAmount = 0;
 
             // 3. Create Claim Items and associate them with the main claim
-            foreach ($request->items as $itemData) {
+            //foreach ($request->items as $itemData) {
                 SubmitClaimItem::create([
-                    'claim_id' => $claim->id,
-                    'description' => $itemData['description'],
-                    'amount' => $itemData['amount'],
-                    'category' => $itemData['category'],
+                    'submit_claim_id' => $claim->id,
+                    'description' => '-',
+                    'amount' => $request->amount,
+                    'currency' => $request->currency,
+                    'claim_type_id' => $request->claim_type_id,
+                    'start_at' => $request->start_at,
+                    'end_at' => $request->end_at,
+                    'data_status' => 1,
                 ]);
-                $totalAmount += $itemData['amount'];
-            }
+                //$totalAmount += $itemData['amount'];
+            //}
 
             // 4. Update the total_amount for the main claim
-            $claim->update(['total_amount' => $totalAmount]);
+            $claim->update(['total_amount' => $request->amount]);
 
             DB::commit();
 
             // 5. Return a success response
-            return response()->json(['message' => 'Claim submitted successfully!', 'claim_id' => $claim->id], 201);
+            return redirect()->route('v1.submit-claim')->with('success', 'Project has been stored successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             // Log the error for debugging
             \Log::error('Claim submission failed: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect()->back()->withErrors(['errors' => 'Failed to submit claim. Please try again.'.$e->getMessage()])->withInput();
 
             // Return an error response
-            return response()->json(['message' => 'Failed to submit claim. Please try again.', 'error' => $e->getMessage()], 500);
+            //return response()->json(['message' => 'Failed to submit claim. Please try again.', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -115,7 +121,9 @@ class SubmitClaimService {
             ->addColumn('total_amount_currency', fn($claim) =>
                 $claim->currency . ' ' . number_format($claim->total_amount, 2)
             )
-
+            ->addColumn('claim_date',fn($claim) => 
+                $claim->claim_date->format('d M Y h:i')
+            )
             ->addColumn('claim_status', function ($claim) {
                 return match ($claim->data_status) {
                     1 => '<span class="badge bg-warning">Ongoing</span>',
@@ -126,14 +134,19 @@ class SubmitClaimService {
 
             ->addColumn('action', function ($claim) {
                 return '<div class="btn-group btn-group-vertical" role="group" aria-label="Claim Actions">'
-                    . '<a class="btn btn-info btn-sm" href="' . route('claims.detail', ['claim' => $claim->obfuscated_id]) . '">View</a>'
+                    . '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id]) . '">View</a>'
                     . '</div>';
             })
 
-            ->escapeColumns(['staff', 'claim_status', 'action']) // These contain raw HTML
+            ->escapeColumns([])
             ->make(true);
     }
 
-    
+    public function show($id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+        $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
+        return view('submit_claim.detail',compact('claim'))->with('title', 'Submit Claim Detail')->with('breadcrumb', ['Home', 'Staff Task','Submit Claim Detail']);
+    }
 
 }

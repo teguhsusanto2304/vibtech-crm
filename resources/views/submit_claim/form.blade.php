@@ -98,7 +98,7 @@
                         </div>
                         <div class="col-md-2">
                             <label for="projectDescription" class="form-label">Claim Currency</label>
-                            <select class="form-control" id="claimCurrency" name="claim_currency">
+                            <select class="form-control" id="currency" name="currency">
                                 <option value="SGD" selected>SGD</option>
                                 <option value="USD">MYR</option>
                                 <option value="EUR">IDR</option>
@@ -107,7 +107,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="claimAmount" class="form-label">Claim Amount:</label>
-                            <input type="number" step="0.01" class="form-control" id="claimAmount" name="claim_amount" placeholder="Enter Claim Amount">
+                            <input type="number" step="0.01" class="form-control" id="amount" name="amount" placeholder="Enter Claim Amount">
                         </div>
                     </div>
 

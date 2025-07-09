@@ -21,6 +21,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/', 'index')->name('v1.submit-claim');
             Route::get('/list', 'list')->name('v1.submit-claim.list');
             Route::get('/all', 'all')->name('v1.submit-claim.all');
+            Route::get('/{id}/detail', 'detail')->name('v1.submit-claim.detail');
             Route::get('/create', 'create')->name('v1.submit-claim.create');
             Route::post('/store', 'store')->name('v1.submit-claim.store');
             Route::get('/list/data', 'getSubmitClaimsData')->name('v1.submit-claim.list.data');

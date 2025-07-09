@@ -56,8 +56,6 @@
         <th>Serial Number</th>
         <th>Claim Date</th>
         <th>Staff Name</th>
-        <th>Total Amount</th>
-        <th>Currency</th>
         <th>Status</th>
         <th>Items Count</th>
         <th>Items Summary</th> <!-- ← 8th column -->
@@ -86,11 +84,9 @@
     { data: 'serial_number', name: 'serial_number' },
     { data: 'claim_date', name: 'claim_date' },
     { data: 'staff', name: 'staff' },
-    { data: 'total_amount', name: 'total_amount' }, // or total_amount_currency
-    { data: 'currency', name: 'currency' }, // Add this if it is split out
     { data: 'claim_status', name: 'claim_status' },
     { data: 'submit_claim_item_count', name: 'submit_claim_item_count', orderable: false, searchable: false },
-    { data: 'items_summary', name: 'items_summary' }, // ← Add this
+    { data: 'total_amount_currency', name: 'total_amount_currency' }, // ← Add this
     { data: 'action', name: 'action', orderable: false, searchable: false }
 ],
                     order: [[ 0, 'asc' ]]

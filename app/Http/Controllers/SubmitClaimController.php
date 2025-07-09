@@ -50,4 +50,14 @@ class SubmitClaimController extends Controller
         $claimTypes = $this->submitClaimService->getSubmitClaimType();
         return view('submit_claim.form',compact('claimTypes'))->with('title', 'Create A Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','Create A Submit Claim']);
     }
+
+    public function store(Request $request)
+    {
+        return  $this->submitClaimService->store($request);
+    }
+
+    public function detail($id)
+    {
+        return $this->submitClaimService->show($id);
+    }
 }
