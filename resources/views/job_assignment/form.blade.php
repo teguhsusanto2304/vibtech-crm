@@ -149,7 +149,10 @@
                                  @foreach ($users as $dept => $departmentUsers)
                                     <optgroup label="{{ $dept }}">
                                         @foreach ($departmentUsers as $user)
-                                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            <option value="{{ $user->id }}"
+                                data-avatar-url="{{ $user->avatar_url }}"
+                                data-initials="{{ $user->name }}"
+                                >{{ $user->name }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
