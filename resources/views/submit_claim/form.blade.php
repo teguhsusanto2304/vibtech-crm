@@ -74,12 +74,23 @@
                                 {{-- Loop through claim types fetched from the database --}}
                                 @foreach($claimTypes as $claimType)
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="claim_type_id" id="claimType{{ $claimType->id }}" value="{{ $claimType->id }}"
+                                        <input class="form-check-input claim-type-radio" type="radio" name="claim_type_id" id="claimType{{ $claimType->id }}" value="{{ $claimType->id }}"
                                             {{ $loop->first ? 'checked' : '' }}> {{-- Check the first one by default --}}
                                         <label class="form-check-label" for="claimType{{ $claimType->id }}">
                                             {{ $claimType->name }}
                                         </label>
+                                        @if($claimType->id==10)
+                                                                        <!-- NEW: Input field for Miscellaneous/Other claim type name -->
+                                        <div class="mb-3 mt-3" id="otherClaimTypeNameGroup" style="display: none;">
+                                            <label for="other_claim_type_name" class="form-label">Other Claim Type Name:</label>
+                                            <input type="text" class="form-control" id="other_claim_type_name" name="other_claim_type_name" placeholder="Enter specific claim type name">
+                                            <div class="invalid-feedback">
+                                                Please enter a name for the miscellaneous claim type.
+                                            </div>
+                                        </div>
+                                    @endif
                                     </div>
+                                    
                                 @endforeach
                             </div>
                         </div>
@@ -148,7 +159,31 @@
                         </div>
                         <script>
                             $(document).ready(function() {
-                                // ... (Your existing JavaScript code for Select2, modals, tooltips, etc.) ...
+                                const MISCELLANEOUS_CLAIM_TYPE_ID = '10'; // IMPORTANT: Match this to the actual ID in your database
+
+                                // Function to show/hide the "Other Claim Type Name" input
+                                function toggleOtherClaimTypeNameInput() {
+                                    const selectedClaimTypeId = $('input[name="claim_type_id"]:checked').val();
+                                    const otherClaimTypeNameGroup = $('#otherClaimTypeNameGroup');
+                                    const otherClaimTypeNameInput = $('#other_claim_type_name');
+
+                                    if (selectedClaimTypeId === MISCELLANEOUS_CLAIM_TYPE_ID) {
+                                        otherClaimTypeNameGroup.show();
+                                        otherClaimTypeNameInput.attr('required', true); // Make it required when visible
+                                    } else {
+                                        otherClaimTypeNameGroup.hide();
+                                        otherClaimTypeNameInput.attr('required', false); // Make it not required when hidden
+                                        otherClaimTypeNameInput.val(''); // Clear the value when hidden
+                                        otherClaimTypeNameInput.removeClass('is-invalid'); // Remove validation feedback
+                                    }
+                                }
+
+                                toggleOtherClaimTypeNameInput();
+
+                                // Event listener for changes on any claim type radio button
+                                $('.claim-type-radio').on('change', function() {
+                                    toggleOtherClaimTypeNameInput();
+                                });
 
                                 const $newFileUploadContainer = $('#new-file-upload-container');
                                 const $addMoreFilesBtn = $('#add-more-files-btn');
