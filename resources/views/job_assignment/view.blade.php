@@ -264,7 +264,13 @@
                             </div>
                         </div>
                         <x-personnal-involved-v2-widget :personnels="$personnels" :staff="$staff" :job="$job" />
-                        <div class="text-end"><x-job-action-buttons :job="$job" /></div>
+                        <div >
+                        <style> 
+                            h5 {
+                                color:rgb(124, 125, 127);
+                            }
+                        </style>    
+                        <x-job-action-buttons :job="$job" /></div>
                     </div>
                 </div>
                 <div class="row">
