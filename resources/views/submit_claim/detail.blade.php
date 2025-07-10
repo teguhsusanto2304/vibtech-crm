@@ -73,12 +73,12 @@
                         <a href="#" class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
                             data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
                             data-new-status="3">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Approve
+                                Approve This Claim
                         </a>
                         <a href="#" class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
                             data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
                             data-new-status="4">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Reject
+                                Reject This Claim
                         </a>
                         @endif
                         @endcan
