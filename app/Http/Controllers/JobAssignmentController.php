@@ -272,7 +272,7 @@ class JobAssignmentController extends Controller
         }
 
         // Redirect back with success message
-        return redirect()->route('v1.job-assignment-form.list')->with('success', 'Job Requisition Form Created Successfully');
+        return redirect()->route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'no'])->with('success', 'Job Requisition Form Created Successfully');
     }
 
     public function update(Request $request, $id)
