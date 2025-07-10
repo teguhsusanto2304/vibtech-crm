@@ -100,8 +100,8 @@
                             <label for="projectDescription" class="form-label">Claim Currency</label>
                             <select class="form-control" id="currency" name="currency">
                                 <option value="SGD" selected>SGD</option>
-                                <option value="USD">MYR</option>
-                                <option value="EUR">IDR</option>
+                                <option value="MYR">MYR</option>
+                                <option value="IDR">IDR</option>
                                 <!-- Add more currencies as needed -->
                             </select>
                         </div>
@@ -255,6 +255,15 @@
                                 });
                             });
                         </script>
+                    </div>
+                    <div class="col-md-12">
+                        <h6>Submit Claim Header</h6>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claimAmount" class="form-label">Description:</label>
+                            <textarea class="form-control" id="description" name="description" >@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
+                        </div>
                         @if(!is_null($dataClaim))
                         <div class="col-md-5">
                             <label for="claimAmount" class="form-label">Serial Number</label>
@@ -262,6 +271,7 @@
                             <input type="text"  class="form-control" id="serial_number" name="serial_number" value="{{ $dataClaim->serial_number }}" disabled>
                         </div>
                         @endif
+                        
                     </div>                   
 
                     <!-- Buttons -->

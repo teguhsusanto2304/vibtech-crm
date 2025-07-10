@@ -54,11 +54,12 @@
                                 <thead>
                                     <tr>
                                         <th>Serial Number</th>
+                                        <th>Description</th>
                                         <th>Claim Date</th>
                                         <th>Staff Name</th>
                                         <th>Status</th>
                                         <th>Items Count</th>
-                                        <th>Items Summary</th> <!-- ← 8th column -->
+                                        <th class="text-end">Items Summary</th> <!-- ← 8th column -->
                                         <th>Actions</th>       <!-- ← 9th column -->
                                     </tr>
                                 </thead>
@@ -88,13 +89,23 @@
                     },
                 columns: [
                     { data: 'serial_number', name: 'serial_number' },
+                    { data: 'description', name: 'description' },
                     { data: 'claim_date', name: 'claim_date' },
                     { data: 'staff', name: 'staff' },
                     { data: 'claim_status', name: 'claim_status' },
                     { data: 'submit_claim_item_count', name: 'submit_claim_item_count', orderable: false, searchable: false },
                     { data: 'total_amount_currency', name: 'total_amount_currency' }, // ← Add this
                     { data: 'action', name: 'action', orderable: false, searchable: false }
-],
+                ],
+                columnDefs: [
+                {
+                    targets: 6, // FIXED: Target the 'total_amount_currency' column (0-indexed). Adjust if your column order is different.
+                    className: 'dt-body-right dt-head-right' // DataTables built-in classes
+                    // Or, if you prefer Bootstrap classes:
+                    // className: 'text-end'
+                }
+                // ... other columnDefs ...
+            ],
                     order: [[ 0, 'asc' ]]
                 });
 

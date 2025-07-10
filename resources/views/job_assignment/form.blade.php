@@ -174,13 +174,13 @@
                         </div>
                         <!-- Project Files Upload Field ADDED HERE -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX, PNG/JPG)</label>
+                            <label class="form-label">Upload New Upload Job Files (PDF, DOC/DOCX, PNG/JPG)</label>
                             <div id="new-file-upload-container">
                                 {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
                                 @if(old('project_files'))
                                     @foreach(old('project_files') as $index => $oldFile)
                                         <div class="input-group mb-2 file-upload-item">
-                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                         </div>
                                     @endforeach

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Helpers\IdObfuscator;
+use Illuminate\Support\Collection;
 
 class SubmitClaim extends Model
 {
@@ -16,6 +17,7 @@ class SubmitClaim extends Model
         'total_amount',
         'currency',
         'data_status',
+        'description'
     ];
 
     protected $casts = [
@@ -65,6 +67,34 @@ class SubmitClaim extends Model
             4 => '<span class="badge bg-danger"><small>Rejected</small></span>',
             default => '<span class="badge bg-danger"><small>unknown</small></span>',
         };
+    }
+
+    /**
+     * Get the sum of submit claim items grouped by currency.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTotalByCurrencyAttribute(): Collection
+    {
+        // Check if the relationship is loaded to prevent N+1 query issue
+        if ($this->relationLoaded('submitClaimItems')) {
+            $items = $this->submitClaimItems;
+        } else {
+            // If not loaded, fetch them (consider eager loading this relationship in your controller)
+            $items = $this->submitClaimItems()->get();
+        }
+
+        return $items->groupBy('currency') // Group by the 'currency' attribute of items
+                     ->map(function ($itemsInGroup, $currency) {
+                         // Sum the 'amount' for each group
+                         $totalAmount = $itemsInGroup->sum('amount');
+                         return [
+                             'currency' => $currency,
+                             'total' => $totalAmount,
+                             'formatted_total' => $currency . ' ' . number_format($totalAmount, 2)
+                         ];
+                     })
+                     ->values(); // Reset keys to ensure it's an array of objects/arrays
     }
 
 }

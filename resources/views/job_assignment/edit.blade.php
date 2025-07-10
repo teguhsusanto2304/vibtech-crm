@@ -109,14 +109,7 @@
                             <label for="inputEmail4" class="form-label">Job Record ID</label>
                             <input type="text" class="form-control" name="job_record_id" value="{{ $job->job_record_id }}" readonly>
                     </div>
-                    <div class="col-md-3">
-                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
-                            <br>
-                            <input class="form-check-input" type="checkbox" value="1" name="job_status"{{ $job->job_status ? 'checked' : '' }} />
-                            <label class="form-label" for="defaultCheck1">
-                                Yes
-                            </label>
-                    </div>
+                    
                     <div class="col-md-6">
                             <label for="inputPassword4" class="form-label">Type of Job </label>
                             <input type="text" class="form-control" name="job_type"  value="{{ old('job_type', $job->job_type) }}">
@@ -150,7 +143,9 @@
                                 @foreach ($users as $dept => $departmentUsers)
                                     <optgroup label="{{ $dept }}">
                                         @foreach ($departmentUsers as $user)
-                                            <option value="{{ $user->id }}" {{ in_array($user->id, $selectedUsers) ? 'selected' : '' }}>{{ $user->name }}</option>
+                                            <option value="{{ $user->id }}"
+                                data-avatar-url="{{ $user->avatar_url }}"
+                                data-initials="{{ $user->name }}" {{ in_array($user->id, $selectedUsers) ? 'selected' : '' }}>{{ $user->name }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
@@ -160,24 +155,31 @@
                     <!-- Members and Manager -->
                     <div class="row mb-3">
                         
-                        <div class="col-md-12">
+                        <div class="col-md-3">
                             <label for="inputZip" class="form-label">Vehicle Require</label>
                             <br>
                             <input class="form-check-input" type="checkbox" value="1" name="is_vehicle_require" {{ $job->is_vehicle_require ? 'checked' : '' }} />
                             <label class="form-label" for="defaultCheck1">
                                 Yes
                             </label>
-
                         </div>
+                        <div class="col-md-9">
+                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
+                            <br>
+                            <input class="form-check-input" type="checkbox" value="1" name="job_status"{{ $job->job_status ? 'checked' : '' }} />
+                            <label class="form-label" for="defaultCheck1">
+                                Yes
+                            </label>
+                    </div>
                         <!-- Project Files Upload Field ADDED HERE -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Upload New Project Files (PNG,JPG,PDF, DOC/DOCX)</label>
+                            <label class="form-label">Upload New Upload Job Files (PDF, DOC/DOCX, PNG/JPG)</label>
                             <div id="new-file-upload-container">
                                 {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
                                 @if(old('project_files'))
                                     @foreach(old('project_files') as $index => $oldFile)
                                         <div class="input-group mb-2 file-upload-item">
-                                            <input type="file" name="project_files[]" class="form-control" accept=".png, .jpg, .pdf,.doc,.docx">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                         </div>
                                     @endforeach

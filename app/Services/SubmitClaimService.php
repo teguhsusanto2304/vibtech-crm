@@ -31,8 +31,10 @@ class SubmitClaimService {
                 'required',
                 'exists:claim_types,id',
                 // Unique validation: claim_type_id must be unique for this submit_claim_id
-                Rule::unique('submit_claim_items')->where(function ($query) use ($submitClaimId) {
+                Rule::unique('submit_claim_items')->where(function ($query) use ($submitClaimId, $request) {
                     return $query->where('submit_claim_id', $submitClaimId)
+                    ->where('start_at',$request->start_at)
+                    ->where('end_at',$request->end_at)
                     ->where('data_status','!=',0);
                 }),
             ],
@@ -42,6 +44,7 @@ class SubmitClaimService {
             'currency' => 'required',
             'project_files' => 'nullable|array|max:5', // Max 5 new files
             'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
+            'description' => 'required',
         ]);
 
         // Use a database transaction to ensure atomicity
@@ -64,6 +67,7 @@ class SubmitClaimService {
                     'staff_id' => auth()->user()->id,
                     'data_status' => 1, // Default status
                     'total_amount' => 0, // Will be updated after saving items
+                    'currency' => $request->currency,
                 ]);
 
             }            
@@ -103,7 +107,7 @@ class SubmitClaimService {
             }
 
             // 4. Update the total_amount for the main claim
-            $claim->update(['total_amount' => $totalAmount]);
+            $claim->update(['total_amount' => $totalAmount,'description'=>$request->description]);
 
             DB::commit();
 
@@ -146,6 +150,8 @@ class SubmitClaimService {
             if ($request->has('status_filter') && $request->input('status_filter') !== '') {
                 $status = $request->input('status_filter');
                 $submitClaimsQuery->whereIn('data_status', [2,3]);
+            } else {
+                $submitClaimsQuery->where('staff_id', auth()->user()->id);
             }
 
         return DataTables::eloquent($submitClaimsQuery) // ✅ Correct: passing builder, not collection
@@ -165,9 +171,24 @@ class SubmitClaimService {
                 $claim->submitClaimItems->where('data_status','!=',0)->count().' item(s)'
             )
 
-            ->addColumn('total_amount_currency', fn($claim) =>
-                $claim->currency . ' ' . number_format($claim->total_amount, 2)
-            )
+            ->addColumn('total_amount_currency', function ($claim) {
+                $totals = $claim->total_by_currency; // Access the accessor
+
+                if ($totals->isEmpty()) {
+                    return 'N/A'; // Or an empty string, or '0.00'
+                }
+
+                // Format the totals into a string, e.g., "MYR 1,500.00, SGD 1,234.00"
+                // Or you can use a list for better readability
+                $output = [];
+                foreach ($totals as $total) {
+                    $output[] = $total['formatted_total'];
+                }
+                // return implode(', ', $output); // Simple comma separated
+
+                // For better multi-line display in a table cell, use HTML list or <br>
+                return '<div style="text-align: right;">' . implode('<br>', $output) . '</div>'; // Use <br> for new lines
+            })
             ->addColumn('claim_date',fn($claim) => 
                 $claim->claim_date->format('d M Y h:i')
             )
@@ -216,6 +237,7 @@ class SubmitClaimService {
             ->addColumn('amount_currency', fn($claim) =>
                 $claim->currency . ' ' . number_format($claim->amount, 2)
             )
+            ->addColumn('currency', fn($claim) => $claim->currency)
             ->addColumn('start_date',fn($claim) => 
                 $claim->start_at->format('d M Y')
             )

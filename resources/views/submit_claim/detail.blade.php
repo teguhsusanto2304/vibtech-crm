@@ -41,7 +41,25 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
+        <!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
 
+<!-- FixedHeader CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/4.0.1/css/fixedHeader.dataTables.min.css">
+<!-- FixedHeader JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/4.0.1/js/dataTables.fixedHeader.min.js"></script>
+
+<!-- NEW: RowGroup CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.5.0/css/rowGroup.dataTables.min.css">
+<!-- NEW: RowGroup JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/rowgroup/1.5.0/js/dataTables.rowGroup.min.js"></script>
+<style>
+    .dt-amount-right {
+    text-align: right !important; /* !important to override DataTables' default alignment */
+}
+</style>
         <!-- Card -->
         <div class="card">
     <div class="card-header bg-default text-white p-4 rounded-t-lg">
@@ -50,7 +68,7 @@
                     <h5 class="mb-0 text-xl font-semibold"></h5>
                     <div class="flex space-x-2">
                         @if(request()->query('from'))
-                         <a href="{{ route('v1.submit-claim.list') }}" class="btn btn-light bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm">
+                         <a href="{{ route('v1.submit-claim.all') }}" class="btn btn-light bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm">
                             <i class="fas fa-arrow-left me-1 mr-2"></i> Back to Claims List
                         </a>
                         @else
@@ -103,6 +121,10 @@
                     <strong>Staff Name:</strong>
                     <div>{{ $claim->staff->name ?? 'N/A' }}</div>
                 </div>
+                <div class="mb-3">
+                    <strong>Description:</strong>
+                    <div>{{ $claim->description ?? 'N/A' }}</div>
+                </div>
                 {{-- Uncomment if needed
                 <div class="mb-3">
                     <strong>Claim Type:</strong>
@@ -126,12 +148,23 @@
                 </div>
                 <div class="mb-3 text-end">
                     <strong>Total Amount:</strong>
-                    <div><h4>{{ $claim->currency }} {{ number_format($claim->total_amount, 2) }}</h4></div>
+                    <div><ul class="list-group mb-4">
+        @forelse($claim->total_by_currency as $totalByCurrency)
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <strong>{{ $totalByCurrency['currency'] }} Total :</strong>
+                {{ $totalByCurrency['formatted_total'] }}
+            </li>
+        @empty
+            <li class="list-group-item">No claim items with amounts found.</li>
+        @endforelse
+    </ul>
+</div>
                 </div>
             </div>
         </div>
         <div >
             <input type="hidden" id="submitClaimId" value="{{ $claim->id }}"> 
+            <div class="table-responsive">
             <table class="table table-bordered table-striped nowrap w-100" id="submit-claim-item-table">
                 <thead>
                     <tr>
@@ -140,14 +173,25 @@
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Created Date</th>
-                        <th>Amount</th>
+                        <th class="dt-amount-right">Amount</th>
+                        <th class="d-none">Currency</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                                    <!-- DataTables will populate this tbody via AJAX -->
                 </tbody>
+                <tfoot>
+        <!-- NEW: Add a tfoot for summary rows -->
+        <tr>
+            <th colspan="5" style="text-align:right">Total:</th>
+            <th class="dt-amount-right"></th> <!-- This will be for the sum of amounts -->
+            <th></th> <!-- Empty for hidden currency column -->
+            <th></th> <!-- Empty for action column -->
+        </tr>
+    </tfoot>
             </table>
+            </div>
 
             <!-- Submit Claim Item Details Modal -->
             <div class="modal fade" id="submitClaimItemDetailModal" tabindex="-1" aria-labelledby="submitClaimItemDetailModalLabel" aria-hidden="true">
@@ -199,6 +243,7 @@
 
             <script>
         $(document).ready(function() {
+            
 
             $('.submit-claim-status-btn').on('click', function(e) {
                 e.preventDefault(); // Prevent default link behavior
@@ -371,33 +416,82 @@
 
             if (!submitClaimId) {
                 console.error("submit_claim_id is not defined. Cannot initialize DataTable.");
+                
                 return;
             }
 
-            $('#submit-claim-item-table').DataTable({
-                processing: true,      // Show processing indicator
-                serverSide: true,      // Enable server-side processing
-                scrollY: '400px', // Set a fixed height for vertical scrolling
-                scrollCollapse: true, // Allows the table to shrink if data is less than scrollY height
-                scrollX: true, // Enable horizontal scrolling if content overflows
-                fixedHeader: true, 
+            const dataTable = $('#submit-claim-item-table').DataTable({
+                processing: true,
+                serverSide: true,
                 ajax: {
-                    // Construct the AJAX URL using the route helper (if in Blade)
-                    // Or hardcode it if you're not using Blade's route() helper
-                    url: `/v1/submit-claim/${submitClaimId}/item-list/data`, // Example: /submit-claim-items-data/123
+                    url: `/v1/submit-claim/${submitClaimId}/item-list/data`,
                     type: 'GET'
                 },
+                // REMOVED: 'claim_status' column
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // For addIndexColumn()
-                    { data: 'claim_type', name: 'claim_type' },
-                    { data: 'start_date', name: 'start_date' },
-                    { data: 'end_date', name: 'end_date' },
-                    { data: 'created_date', name: 'created_date' },
-                    { data: 'amount_currency', name: 'amount_currency' },
-                    { data: 'action', name: 'action', orderable: false, searchable: false }, // Contains HTML, not directly sortable/searchable by DB
-                ]
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // 0
+                    { data: 'claim_type', name: 'claim_type' },                                    // 1
+                    { data: 'start_date', name: 'start_date' },                                    // 2
+                    { data: 'end_date', name: 'end_date' },                                        // 3
+                    { data: 'created_date', name: 'created_date' },                                // 4
+                    // REMOVED: { data: 'claim_status', name: 'claim_status', orderable: false, searchable: false },
+                    { data: 'amount_currency', name: 'amount_currency' },                          // 5 - ADJUSTED INDEX
+                    { data: 'currency', name: 'currency', visible: false },                        // 6 - ADJUSTED INDEX
+                    { data: 'action', name: 'action', orderable: false, searchable: false },       // 7 - ADJUSTED INDEX
+                ],
+                columnDefs: [
+                    { 
+                        targets: 5, // ADJUSTED: Target 'amount_currency' is now at index 5
+                        className: 'dt-body-right dt-head-right' 
+                    }
+                ],
+                // ADJUSTED: Order by 'currency' column (now at index 6)
+                order: [[1, 'asc']], 
+                rowGroup: {
+                    dataSrc: 'currency',
+                    startRender: function (rows, group) {
+                        let sumAmount = rows.data().reduce(function (a, b) {
+                            const amountStr = String(b.amount_currency).split(' ')[1]; 
+                            return a + parseFloat(amountStr.replace(/,/g, '')) || 0; 
+                        }, 0);
+
+                        const formattedSum = new Intl.NumberFormat('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(sumAmount);
+
+                        return $('<tr/>')
+                            // ADJUSTED: colspan="5" because there are 5 visible columns before 'Amount' (0 to 4)
+                            .append('<td colspan="5" class="group-header"><strong>Currency: ' + group + '</strong></td>')
+                            .append('<td class="group-total text-end"><strong>' + group + ' ' + formattedSum + '</strong></td>')
+                            // ADJUSTED: colspan="2" for the remaining two columns (hidden currency, action)
+                            .append('<td colspan="2"></td>'); 
+                    }
+                },
+                footerCallback: function (row, data, start, end, display) {
+                    var api = this.api();
+
+                    // ADJUSTED: Target 'amount_currency' column (now at index 5)
+                    let totalAmount = api.column(5, { page: 'current' }).data().reduce(function (a, b) {
+                        const amountStr = String(b).split(' ')[1]; 
+                        return a + parseFloat(amountStr.replace(/,/g, '')) || 0;
+                    }, 0);
+
+                    // Update footer
+                    // ADJUSTED: Target the correct footer cell (index 5 for Amount)
+                    $(api.column(5).footer()).html(
+                        '<strong>' + new Intl.NumberFormat('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(totalAmount) + '</strong>'
+                    );
+                }
+            });
+            $(window).on('load', function() {
+                dataTable.columns.adjust().draw();
             });
         });
+        
     </script>
         </div>
     </div>
