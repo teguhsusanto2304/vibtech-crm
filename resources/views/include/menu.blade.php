@@ -163,7 +163,7 @@
                         <path id="Path-2" class="cls-2" d="M15.5,7.5h4v13.2h-4V7.5Z" />
                     </svg>
                 </i>
-                <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Staff Information Hub
+                <div class="text-truncate" data-i18n="Dashboards" title="Staff Information Hub">Staff Hub
                 </div>
             </a>
 
