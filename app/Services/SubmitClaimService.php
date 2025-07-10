@@ -20,6 +20,7 @@ class SubmitClaimService {
      */
     public function store(Request $request)
     {
+        $submitClaimId = null;
         if ($request->input('submit_claim_id')) {
             $submitClaimId = IdObfuscator::decode($request->input('submit_claim_id'));
         }
@@ -40,7 +41,7 @@ class SubmitClaimService {
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required',
             'project_files' => 'nullable|array|max:5', // Max 5 new files
-            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
+            'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
         ]);
 
         // Use a database transaction to ensure atomicity
@@ -107,7 +108,7 @@ class SubmitClaimService {
             DB::commit();
 
             // 5. Return a success response
-            return redirect()->route('v1.submit-claim.detail',['id'=>$request->input('submit_claim_id')])->with('success', 'Project has been stored successfully.');
+            return redirect()->route('v1.submit-claim.detail',['id'=>$claim->obfuscated_id])->with('success', 'Project has been stored successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
