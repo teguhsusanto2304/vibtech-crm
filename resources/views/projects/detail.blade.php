@@ -325,6 +325,10 @@
                                 <option value="task">Task</option>
                             </select>
                         </div>
+                         <div class="col-md-2">
+                           
+                            <button class="btn bg-warning text-white mt-6" id="fileFilterClearButton">Clear</button>
+                        </div>
                     </div>
                     <style>
                         .dt-body-nowrap {
@@ -349,7 +353,11 @@
                             
                     $(document).ready(function() {
 
-                        
+                        $('#fileFilterClearButton').on('click',function() {
+                            $('#uploaded_by_filter').val('');
+                            $('#section_filter').val('');
+                            $('#project_files_datatable').DataTable().ajax.reload();
+                        });
 
                         const currentProjectId = "{{ $project->id ?? '' }}"; // Or $project->obfuscated_id if your backend uses that
 

@@ -203,7 +203,7 @@
                             <div class="card-body mt-2">
                                 <div class="row">
                                     <div class="col-md-6 detail-item">
-                                        <label>Type of Job</label>
+                                        <label>Name of Job</label>
                                         <p>{{ $job->job_type }}</p>
                                     </div>
                                     <div class="col-md-6 detail-item">
@@ -222,7 +222,7 @@
                                     </div>
                                     <div class="col-md-6 detail-item">
                                         <label>Scope of Work</label>
-                                        <p>{{ $job->scope_of_work }}</p>
+                                        <p>{!! nl2br(e($job->scope_of_work)) !!}</p>
                                     </div>
                                     <div class="col-md-6 detail-item">
                                         <label>Date of Job</label>

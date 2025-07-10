@@ -56,4 +56,15 @@ class SubmitClaim extends Model
         }
     }
 
+    public function getSubmitClaimStatusAttribute()
+    {
+        return match ($this->data_status) {
+            1 => '<span class="badge bg-warning"><small>Draft</small></span>',
+            2 => '<span class="badge bg-info"><small>Submitted</small></span>',
+            3 => '<span class="badge bg-success"><small>Approved</small></span>',
+            4 => '<span class="badge bg-danger"><small>Rejected</small></span>',
+            default => '<span class="badge bg-danger"><small>unknown</small></span>',
+        };
+    }
+
 }

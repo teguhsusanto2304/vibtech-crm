@@ -40,15 +40,24 @@ class SubmitClaimController extends Controller
         return $this->submitClaimService->getSubmitClaimsData($request);
     }
 
-    public function all()
+    public function getSubmitClaimItemsData(Request $request,$submit_claim_id)
     {
-        return view('submit_claim.management.list')->with('title', 'List of All Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','List of All Submit Claim']);
+        return $this->submitClaimService->getSubmitClaimItemsData($request,$submit_claim_id);
     }
 
-    public function create()
+    public function all()
     {
+        return view('submit_claim.list')->with('title', 'List of All Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','List of All Submit Claim']);
+    }
+
+    public function create(Request $request)
+    {
+        $dataClaim = null;
+        if($request->query('id')){
+            $dataClaim = $this->submitClaimService->getData($request->query('id'));
+        }
         $claimTypes = $this->submitClaimService->getSubmitClaimType();
-        return view('submit_claim.form',compact('claimTypes'))->with('title', 'Create A Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','Create A Submit Claim']);
+        return view('submit_claim.form',compact('claimTypes','dataClaim'))->with('title', 'Create A Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','Create A Submit Claim']);
     }
 
     public function store(Request $request)
@@ -59,5 +68,20 @@ class SubmitClaimController extends Controller
     public function detail($id)
     {
         return $this->submitClaimService->show($id);
+    }
+
+    public function getSubmitClaimItemDetails($id)
+    {
+        return $this->submitClaimService->getSubmitClaimItemDetails($id);
+    }
+
+    public function submitClaimDestroy($id)
+    {
+        return $this->submitClaimService->submitClaimDestroy($id);
+    }
+
+    public function submitClaimUpdateStatus(Request $request, $id)
+    {
+        return $this->submitClaimService->updateStatus($request,$id);
     }
 }

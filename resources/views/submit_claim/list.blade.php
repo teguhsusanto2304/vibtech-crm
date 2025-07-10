@@ -52,16 +52,16 @@
 
                             <table class="table table-bordered table-striped nowrap w-100" id="submit-claim-table">
                                 <thead>
-    <tr>
-        <th>Serial Number</th>
-        <th>Claim Date</th>
-        <th>Staff Name</th>
-        <th>Status</th>
-        <th>Items Count</th>
-        <th>Items Summary</th> <!-- ← 8th column -->
-        <th>Actions</th>       <!-- ← 9th column -->
-    </tr>
-</thead>
+                                    <tr>
+                                        <th>Serial Number</th>
+                                        <th>Claim Date</th>
+                                        <th>Staff Name</th>
+                                        <th>Status</th>
+                                        <th>Items Count</th>
+                                        <th>Items Summary</th> <!-- ← 8th column -->
+                                        <th>Actions</th>       <!-- ← 9th column -->
+                                    </tr>
+                                </thead>
                                 <tbody>
                                     <!-- DataTables will populate this tbody via AJAX -->
                                 </tbody>
@@ -78,16 +78,22 @@
                     scrollX: true,
                     responsive: false, 
                     ajax: {
-                        url: '{{ route("v1.submit-claim.list.data") }}'
+                        url: '{{ route("v1.submit-claim.list.data") }}',
+                        type: 'GET',
+                        @if(request()->routeIs('v1.submit-claim.all'))
+                        data: function (d) {
+                            d.status_filter =2;
+                        }
+                        @endif
                     },
                 columns: [
-    { data: 'serial_number', name: 'serial_number' },
-    { data: 'claim_date', name: 'claim_date' },
-    { data: 'staff', name: 'staff' },
-    { data: 'claim_status', name: 'claim_status' },
-    { data: 'submit_claim_item_count', name: 'submit_claim_item_count', orderable: false, searchable: false },
-    { data: 'total_amount_currency', name: 'total_amount_currency' }, // ← Add this
-    { data: 'action', name: 'action', orderable: false, searchable: false }
+                    { data: 'serial_number', name: 'serial_number' },
+                    { data: 'claim_date', name: 'claim_date' },
+                    { data: 'staff', name: 'staff' },
+                    { data: 'claim_status', name: 'claim_status' },
+                    { data: 'submit_claim_item_count', name: 'submit_claim_item_count', orderable: false, searchable: false },
+                    { data: 'total_amount_currency', name: 'total_amount_currency' }, // ← Add this
+                    { data: 'action', name: 'action', orderable: false, searchable: false }
 ],
                     order: [[ 0, 'asc' ]]
                 });

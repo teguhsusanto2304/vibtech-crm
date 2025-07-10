@@ -25,5 +25,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/create', 'create')->name('v1.submit-claim.create');
             Route::post('/store', 'store')->name('v1.submit-claim.store');
             Route::get('/list/data', 'getSubmitClaimsData')->name('v1.submit-claim.list.data');
+            Route::get('/{submit_claim_id}/item-list/data', 'getSubmitClaimItemsData')->name('v1.submit-claim.item-list.data');
+            Route::get('/submit-claim-items/{id}/details', 'getSubmitClaimItemDetails')->name('v1.submit-claim.submit-claim-items.details');
+            Route::delete('/submit-claim-items/{id}/destroy', 'submitClaimDestroy')->name('v1.submit-claim.submit-claim-items.destroy');
+            Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.submit-claim.update-status');
         });
     });

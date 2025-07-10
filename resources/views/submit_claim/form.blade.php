@@ -140,9 +140,11 @@
                                             <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
                                     </div>
                                 @endif
+                                
                             </div>
+                            
                             <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PNG,JPG,PDF, DOC, DOCX.</small>
                         </div>
                         <script>
                             $(document).ready(function() {
@@ -253,11 +255,23 @@
                                 });
                             });
                         </script>
-                    </div>
+                        @if(!is_null($dataClaim))
+                        <div class="col-md-5">
+                            <label for="claimAmount" class="form-label">Serial Number</label>
+                            <input type="hidden" name="submit_claim_id" value="{{ $dataClaim->obfuscated_id }}">                            
+                            <input type="text"  class="form-control" id="serial_number" name="serial_number" value="{{ $dataClaim->serial_number }}" disabled>
+                        </div>
+                        @endif
+                    </div>                   
 
                     <!-- Buttons -->
                     <div class="col-12">
-                            <a href="{{ route('v1.submit-claim')}}" class="btn btn-warning">Cancel</a>
+                            <a href="
+                            @if(!is_null($dataClaim))
+                                {{ route('v1.submit-claim.detail', ['id' => $dataClaim->obfuscated_id]) }}
+                             @else
+                                {{ route('v1.submit-claim') }}
+                            @endif" class="btn btn-warning">Cancel</a>
                             <button type="submit" class="btn btn-primary">Create Submit Claim</button>
                     </div>
                 </form>

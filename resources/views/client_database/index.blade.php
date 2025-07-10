@@ -30,10 +30,10 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Create/Upload</h5>
+                                <h5 class="card-title">Add New Contact/s</h5>
                                 @can('create-client-database')
                                     <a href="{{ route('v1.client-database.create') }}" class="btn btn_primary mt-auto">
-                                        Create/Upload New</a>
+                                        Add</a>
                                 @else
                                     <a href="#" class="btn btn_primary mt-auto">You Can't Create New</a>
                                 @endcan
@@ -61,8 +61,8 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Your Personal Database</h5>
-                                <a href="{{ route('v1.client-database.my-list')}}" class="btn btn_primary mt-auto">View Your Client's Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                                <h5 class="card-title">Personal Database</h5>
+                                <a href="{{ route('v1.client-database.my-list')}}" class="btn btn_primary mt-auto">View&nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>
@@ -73,7 +73,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Vibtech Genesis Database</h5>
-                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View Main Database &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
+                                <a href="{{ route('v1.client-database.list')}}" class="btn btn_primary mt-auto">View &nbsp; @if($clientDataNotifications > 0)  <span class="badge bg-danger">{{ $clientDataNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>
@@ -82,8 +82,8 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Manage Edit Request</h5>
-                                <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View Request &nbsp; @if($requestNotifications > 0)  <span class="badge bg-danger">{{ $requestNotifications }}</span>  @endif</a>
+                                <h5 class="card-title">Edit Request</h5>
+                                <a href="{{ route('v1.client-database.request-list')}}" class="btn btn_primary mt-auto">View &nbsp; @if($requestNotifications > 0)  <span class="badge bg-danger">{{ $requestNotifications }}</span>  @endif</a>
                             </div>
                         </div>
                     </div>
@@ -92,8 +92,8 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Manage Salesperson Assignment</h5>
-                                <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View Request &nbsp; @if($salesPersonNotifications > 0)  <span class="badge bg-danger">{{ $salesPersonNotifications }}</span>  @endif </a>
+                                <h5 class="card-title">Salesperson Assignment</h5>
+                                <a href="{{ route('v1.client-database.assignment-salesperson.list')}}" class="btn btn_primary mt-auto">View &nbsp; @if($salesPersonNotifications > 0)  <span class="badge bg-danger">{{ $salesPersonNotifications }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Recycle Bin</h5>
-                                <a href="{{ route('v1.client-database.recycle-bin.list')}}" class="btn btn_primary mt-auto">View Request  &nbsp; @if($recycleBinNotification > 0)  <span class="badge bg-danger">{{ $recycleBinNotification }}</span>  @endif </a>
+                                <a href="{{ route('v1.client-database.recycle-bin.list')}}" class="btn btn_primary mt-auto">View  &nbsp; @if($recycleBinNotification > 0)  <span class="badge bg-danger">{{ $recycleBinNotification }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>
@@ -113,7 +113,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">CSV/PDF Download Request</h5>
-                                <a href="{{ route('v1.client-database.download-request.list')}}" class="btn btn_primary mt-auto">View Request  &nbsp; @if($PDFCSVDownloadRequestNotification > 0)  <span class="badge bg-danger">{{ $PDFCSVDownloadRequestNotification }}</span>  @endif </a>
+                                <a href="{{ route('v1.client-database.download-request.list')}}" class="btn btn_primary mt-auto">View  &nbsp; @if($PDFCSVDownloadRequestNotification > 0)  <span class="badge bg-danger">{{ $PDFCSVDownloadRequestNotification }}</span>  @endif </a>
                             </div>
                         </div>
                     </div>

@@ -30,11 +30,11 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Create</h5>
+                                <h5 class="card-title">New Job Requisition</h5>
                                 <p class="card-text">Create a New Job Requisition</p>
                                 @can('create-job-requisition')
                                     <a href="{{ route('v1.job-assignment-form.create') }}" class="btn btn_primary mt-auto">
-                                        Create New</a>
+                                        Create</a>
                                 @else
                                     <a href="#" class="btn btn_primary mt-auto">You Can't Create New</a>
                                 @endcan
@@ -44,19 +44,18 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">View</h5>
+                                <h5 class="card-title">Current Job Requisition</h5>
                                 <p class="card-text">Track Existing Job Requisition</p>
-                                <a href="{{ route('v1.job-assignment-form.list') }}" class="btn btn_primary mt-auto">View
-                                    Existing</a>
+                                <a href="{{ route('v1.job-assignment-form.list') }}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">History</h5>
+                                <h5 class="card-title">Past Job Requisition</h5>
                                 <p class="card-text">View Job Requisition History</p>
-                                <a href="{{ route('v1.job-assignment-form.history')}}" class="btn btn_primary mt-auto">View History</a>
+                                <a href="{{ route('v1.job-assignment-form.history')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
                     </div>

@@ -41,7 +41,7 @@
                             <div class="card-body">
                                 <h5 class="card-title">Book A Vehicle</h5>
                                 @can('create-job-requisition')
-                                <a href="{{ route('v1.vehicle-bookings.create') }}" class="btn btn_primary">Create New Vehicle Booking</a>
+                                <a href="{{ route('v1.vehicle-bookings.create') }}" class="btn btn_primary">Book</a>
                                 @else
                                 <a href="#" class="btn btn_primary">You Can't Create New</a>
                                 @endcan
@@ -52,15 +52,15 @@
                         <div class="card text-center">
                             <div class="card-body">
                                 <h5 class="card-title">Current Vehicle Booking</h5>
-                                <a href="{{ route('v1.vehicle-bookings.list') }}" class="btn btn_primary">View Current Vehicle Booking</a>
+                                <a href="{{ route('v1.vehicle-bookings.list') }}" class="btn btn_primary">View</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body">
-                                <h5 class="card-title">Vehicle Booking History </h5>
-                                <a href="{{ route('v1.vehicle-bookings.histories') }}" class="btn btn_primary">View Vehicle Booking History</a>
+                                <h5 class="card-title">Past Vehicle Booking</h5>
+                                <a href="{{ route('v1.vehicle-bookings.histories') }}" class="btn btn_primary">View</a>
                             </div>
                         </div>
                     </div>

@@ -8,6 +8,11 @@ use App\Models\ClaimType;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 use App\Helpers\IdObfuscator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Response; // Import Response facade
+use Illuminate\Support\Facades\Log; // For logging errors
+use Auth;
+use Illuminate\Validation\Rule;
 
 class SubmitClaimService {
     /**
@@ -15,36 +20,54 @@ class SubmitClaimService {
      */
     public function store(Request $request)
     {
+        if ($request->input('submit_claim_id')) {
+            $submitClaimId = IdObfuscator::decode($request->input('submit_claim_id'));
+        }
         // 1. Validate the incoming request data
         $request->validate([
             'claim_serial_number' => 'nullable|string|max:255|unique:submit_claims,serial_number',
-            'claim_type_id' => 'required',
-            'start_at' => 'required|date', // Ensure at least one claim item
-            'end_at' => 'required|date',
+            'claim_type_id' => [
+                'required',
+                'exists:claim_types,id',
+                // Unique validation: claim_type_id must be unique for this submit_claim_id
+                Rule::unique('submit_claim_items')->where(function ($query) use ($submitClaimId) {
+                    return $query->where('submit_claim_id', $submitClaimId)
+                    ->where('data_status','!=',0);
+                }),
+            ],
+            'start_at' => 'required|date|before_or_equal:today',
+            'end_at' => 'required|date|before_or_equal:today|after_or_equal:start_at',
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required',
-            'items.*.category' => 'required|string|max:255',
+            'project_files' => 'nullable|array|max:5', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
         ]);
 
         // Use a database transaction to ensure atomicity
         // If any part fails, all changes are rolled back.
         try {
             DB::beginTransaction();
-
-            // 2. Create the main Claim record
-            $claim = SubmitClaim::create([
-                'serial_number' => $this->generateSerialNumber(),
-                'claim_date' => date('Y-m-d'),
-                'staff_id' => auth()->user()->id,
-                'data_status' => 1, // Default status
-                'total_amount' => 0, // Will be updated after saving items
-            ]);
-
             $totalAmount = 0;
+            if($request->input('submit_claim_id')){
 
-            // 3. Create Claim Items and associate them with the main claim
-            //foreach ($request->items as $itemData) {
-                SubmitClaimItem::create([
+                 $decodedId = IdObfuscator::decode($request->input('submit_claim_id'));
+                $claim = SubmitClaim::find($decodedId);
+                $totalAmount = $claim->total_amount;                
+
+            } else {
+
+                // 2. Create the main Claim record
+                $claim = SubmitClaim::create([
+                    'serial_number' => $this->generateSerialNumber(),
+                    'claim_date' => date('Y-m-d'),
+                    'staff_id' => auth()->user()->id,
+                    'data_status' => 1, // Default status
+                    'total_amount' => 0, // Will be updated after saving items
+                ]);
+
+            }            
+
+            $submitClaimItem = SubmitClaimItem::create([
                     'submit_claim_id' => $claim->id,
                     'description' => '-',
                     'amount' => $request->amount,
@@ -54,16 +77,37 @@ class SubmitClaimService {
                     'end_at' => $request->end_at,
                     'data_status' => 1,
                 ]);
-                //$totalAmount += $itemData['amount'];
-            //}
+
+                 $totalAmount = $totalAmount+$request->amount;
+                
+            if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $index => $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('submit_claim/' . $submitClaimItem->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $submitClaimItem->files()->create([
+                        'file_name' => $originalFileName,
+                        'file_path' => $path, // The path returned by store()
+                        'mime_type' => $fileMimeType,
+                        'file_size' => $fileSize,
+                        'description' => $request->input('project_file_descriptions')[$index] ?? null,
+                        'uploaded_by_user_id' => Auth::id(),
+                    ]);
+                }
+            }
 
             // 4. Update the total_amount for the main claim
-            $claim->update(['total_amount' => $request->amount]);
+            $claim->update(['total_amount' => $totalAmount]);
 
             DB::commit();
 
             // 5. Return a success response
-            return redirect()->route('v1.submit-claim')->with('success', 'Project has been stored successfully.');
+            return redirect()->route('v1.submit-claim.detail',['id'=>$request->input('submit_claim_id')])->with('success', 'Project has been stored successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -71,8 +115,6 @@ class SubmitClaimService {
             \Log::error('Claim submission failed: ' . $e->getMessage(), ['exception' => $e]);
             return redirect()->back()->withErrors(['errors' => 'Failed to submit claim. Please try again.'.$e->getMessage()])->withInput();
 
-            // Return an error response
-            //return response()->json(['message' => 'Failed to submit claim. Please try again.', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -100,6 +142,10 @@ class SubmitClaimService {
             ->where('data_status', '!=', 0)
             ->with(['staff', 'submitClaimItems'])
             ->orderBy('created_at', 'DESC'); // ✅ Keep as query builder
+            if ($request->has('status_filter') && $request->input('status_filter') !== '') {
+                $status = $request->input('status_filter');
+                $submitClaimsQuery->whereIn('data_status', [2,3]);
+            }
 
         return DataTables::eloquent($submitClaimsQuery) // ✅ Correct: passing builder, not collection
             ->addIndexColumn()
@@ -115,7 +161,7 @@ class SubmitClaimService {
             })
 
             ->addColumn('submit_claim_item_count', fn($claim) =>
-                $claim->submitClaimItems->count().' item(s)'
+                $claim->submitClaimItems->where('data_status','!=',0)->count().' item(s)'
             )
 
             ->addColumn('total_amount_currency', fn($claim) =>
@@ -123,6 +169,60 @@ class SubmitClaimService {
             )
             ->addColumn('claim_date',fn($claim) => 
                 $claim->claim_date->format('d M Y h:i')
+            )
+            ->addColumn('claim_status', function ($claim) {
+                return $claim->submit_claim_status;
+            })
+
+            ->addColumn('action', function ($claim)  use ($request) {
+                $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Claim Actions">';
+                if($claim->data_status==1){
+                    $btn .= '<a class="btn btn-primary btn-sm" href="'.route("v1.submit-claim.create").'?id='.$claim->obfuscated_id.'">Create Item</a>';
+                }
+                if($request->input('status_filter')){
+                    $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id,'from'=>'all']) . '">View</a>';
+                } else {
+                    $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id]) . '">View</a>';
+                }             
+                
+                 $btn .= '</div>';
+                return $btn;
+            })
+
+            ->escapeColumns([])
+            ->make(true);
+    }
+
+    public function getSubmitClaimItemsData(Request $request,$submit_claim_id)
+    {
+        $cacheKey = 'submit_claim_items_' . $submit_claim_id;
+        $cacheDuration = 60; // Cache for 60 seconds (1 minute)
+
+        // Use Cache::remember to get data from cache or execute query and store
+        $submitClaimItems = Cache::remember($cacheKey, $cacheDuration, function () use ($submit_claim_id) {
+            return SubmitClaimItem::query()
+                ->where('data_status', '!=', 0)
+                ->where('submit_claim_id', $submit_claim_id)
+                ->orderBy('created_at', 'DESC')
+                ->get(); // Execute the query and get the collection
+        });
+
+        return DataTables::collection($submitClaimItems) // ✅ Correct: passing builder, not collection
+            ->addIndexColumn()   
+            ->addColumn('claim_type', fn($claim) =>
+                $claim->claimType->name
+            )
+            ->addColumn('amount_currency', fn($claim) =>
+                $claim->currency . ' ' . number_format($claim->amount, 2)
+            )
+            ->addColumn('start_date',fn($claim) => 
+                $claim->start_at->format('d M Y')
+            )
+            ->addColumn('end_date',fn($claim) => 
+                $claim->end_at->format('d M Y')
+            )
+            ->addColumn('created_date',fn($claim) => 
+                $claim->created_at->format('d M Y h:i')
             )
             ->addColumn('claim_status', function ($claim) {
                 return match ($claim->data_status) {
@@ -133,13 +233,39 @@ class SubmitClaimService {
             })
 
             ->addColumn('action', function ($claim) {
-                return '<div class="btn-group btn-group-vertical" role="group" aria-label="Claim Actions">'
-                    . '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id]) . '">View</a>'
-                    . '</div>';
+                $btn = '<div class="btn-group btn-group" role="group" aria-label="Claim Actions">';
+                $btn .= '<a class="btn btn-info btn-sm view-item-btn" href="#" data-id="' . $claim->obfuscated_id . '">View</a>'; // Changed href to # and added class/data-id
+                if($claim->submitClaim->data_status==1){
+                    $btn .= '<a class="btn btn-warning btn-sm" href="" disabled>Edit</a>';
+                    $btn .= '<a class="btn btn-danger btn-sm delete-item-btn" href="#" data-id="' . $claim->obfuscated_id . '">Delete</a>';
+                }                
+                 $btn .= '</div>';
+                return $btn;
             })
 
             ->escapeColumns([])
             ->make(true);
+    }
+
+    public function getData($id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+        $claim = SubmitClaim::find($decodedId);
+        return $claim;
+    }
+
+    public function submitClaimDestroy($id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+        $claimItem = SubmitClaimItem::find($decodedId);
+        $claimItem->data_status = 0;
+        $claimItem->save();
+        $submitClaim = SubmitClaim::find($claimItem->submit_claim_id);
+        $submitClaim->total_amount = $submitClaim->total_amount - $claimItem->amount;
+        $submitClaim->save();
+        $cacheKey = 'submit_claim_items_' . $claimItem->submit_claim_id;
+        Cache::forget($cacheKey);
+        return Response::json(['message' => 'Item deleted successfully.'], 200);
     }
 
     public function show($id)
@@ -147,6 +273,97 @@ class SubmitClaimService {
         $decodedId = IdObfuscator::decode($id);
         $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
         return view('submit_claim.detail',compact('claim'))->with('title', 'Submit Claim Detail')->with('breadcrumb', ['Home', 'Staff Task','Submit Claim Detail']);
+    }
+
+    public function getSubmitClaimItemDetails($id)
+    {
+        try {
+            $decodedId = IdObfuscator::decode($id);
+            $item = SubmitClaimItem::where('id', $decodedId) // Assuming base64_decode for obfuscated_id
+                                   ->with(['claimType', 'files']) // Eager load relationships
+                                   ->firstOrFail();
+
+            // Prepare data for JSON response
+            $data = [
+                'id' => $item->id,
+                'description' => $item->description, // Accessor handles nl2br and escaping
+                'amount_currency' => $item->currency . ' ' . number_format($item->amount, 2),
+                'claim_type_name' => $item->claimType->name,
+                'data_status_label' => match ($item->data_status) {
+                    1 => 'Ongoing',
+                    2 => 'Completed',
+                    default => 'Unknown Status',
+                },
+                'start_date' => $item->start_at->format('d M Y'),
+                'end_date' => $item->end_at->format('d M Y'),
+                'created_at_formatted' => $item->created_at->format('d M Y h:i'),
+                'files' => $item->files->map(function ($file) {
+                    return [
+                        'id' => $file->id,
+                        'name' => $file->file_name,
+                        'url' => $file->file_url, // Uses the accessor to get public URL
+                        'mime_type' => $file->mime_type,
+                    ];
+                })->toArray(),
+            ];
+
+            return Response::json($data);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error("SubmitClaimItem not found for ID: {$id}. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Item not found.'], 404);
+        } catch (\Exception $e) {
+            Log::error("Error fetching SubmitClaimItem details for ID: {$id}. Error: " . $e->getMessage());
+            return Response::json(['message' => 'An error occurred.'], 500);
+        }
+    }
+
+    /**
+     * Update the data_status of a specific SubmitClaim.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id (obfuscated ID of the SubmitClaim)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            // Decode the obfuscated ID to get the real ID
+            $decodedId = IdObfuscator::decode($id);
+
+            $claim = SubmitClaim::findOrFail($decodedId);
+
+            // Validate the new status if needed (e.g., must be a specific value)
+            $request->validate([
+                'new_status' => 'required|integer|in:1,2,3,4', // Example: only allow 1, 2, or 3
+            ]);
+
+            $newStatus = $request->input('new_status');
+
+            // Prevent updating if already in a final state, or if status is not changing
+            if ($claim->data_status === $newStatus) {
+                return Response::json(['message' => 'Claim status is already ' . $newStatus . '.'], 200);
+            }
+
+            // Update the status
+            $claim->data_status = $newStatus;
+            $claim->save();
+
+            $submitClaimItemsCacheKey = 'submit_claim_items_' . $claim->id;
+            Cache::forget($submitClaimItemsCacheKey);
+            
+
+            return Response::json(['message' => 'Claim status updated successfully to submitted'], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error("SubmitClaim with ID {$id} not found for status update. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Claim not found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return Response::json(['message' => 'Validation error: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error("Error updating SubmitClaim status for ID {$id}. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Failed to update claim status. An error occurred.'], 500);
+        }
     }
 
 }

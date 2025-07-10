@@ -108,16 +108,9 @@
                             <label for="inputEmail4" class="form-label">Job Record ID</label>
                             <input type="text" class="form-control" name="job_record_id" value="{{ $job_no }}" readonly>
                     </div>
-                    <div class="col-md-3">
-                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
-                            <br>
-                            <input class="form-check-input" type="checkbox" value="1" name="job_status" />
-                            <label class="form-label" for="defaultCheck1">
-                                Yes
-                            </label>
-                    </div>
-                    <div class="col-md-6">
-                            <label for="inputPassword4" class="form-label">Type of Job </label>
+                    
+                    <div class="col-md-9">
+                            <label for="inputPassword4" class="form-label">Name of Job </label>
                             <input type="text" class="form-control" name="job_type"  value="{{ old('job_type')}}">
                     </div>
                     
@@ -162,7 +155,7 @@
                     <!-- Members and Manager -->
                     <div class="row mb-3">
                         
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="inputZip" class="form-label">Vehicle Require</label>
                             <br>
                             <input class="form-check-input" type="checkbox" value="1" name="is_vehicle_require" />
@@ -171,9 +164,17 @@
                             </label>
 
                         </div>
+                        <div class="col-md-3">
+                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
+                            <br>
+                            <input class="form-check-input" type="checkbox" value="1" name="job_status" />
+                            <label class="form-label" for="defaultCheck1">
+                                Yes
+                            </label>
+                        </div>
                         <!-- Project Files Upload Field ADDED HERE -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX, PNG/JPG)</label>
                             <div id="new-file-upload-container">
                                 {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
                                 @if(old('project_files'))
@@ -195,7 +196,7 @@
                                 @endif
                             </div>
                             <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX, PNG, JPG.</small>
                         </div>
                         <script>
                             $(document).ready(function() {
