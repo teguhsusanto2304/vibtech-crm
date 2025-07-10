@@ -206,7 +206,7 @@ class JobAssignmentController extends Controller
             'prsonnel_ids.*' => 'exists:users,id',
             'job_status' => 'nullable',
             'project_files' => 'nullable|array|max:5', // Max 5 new files
-            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
+            'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
         ]);
 
         // Create Job Assignment Form
@@ -288,6 +288,9 @@ class JobAssignmentController extends Controller
             'prsonnel_ids' => 'array',
             'prsonnel_ids.*' => 'exists:users,id',
             'job_status' => 'nullable',
+            'project_files' => 'nullable|array|max:5', // Max 5 new files
+            'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
+
         ]);
 
         // Find the existing job assignment
