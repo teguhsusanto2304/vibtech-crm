@@ -101,7 +101,12 @@ class SubmitClaim extends Model
         switch ($this->data_status) {
             case self::STATUS_APPROVED:
                 $statusHtml = '';
-                $notesHtml = '<div class="mb-3 mt-3"><strong>Transfer Doc:</strong> <div><a href="' . Storage::disk('public')->url($latestApproval->transfer_document_path) . '" target="_blank">View</a></div></div>';
+                if(!is_null($latestApproval)){
+                    $notesHtml = '<div class="mb-3 mt-3"><strong>Transfer Doc:</strong> <div><a href="' . Storage::disk('public')->url($latestApproval->transfer_document_path) . '" target="_blank">View</a></div></div>';
+                } else {
+                    $notesHtml = '<div class="mb-3 mt-3"><strong>Transfer Doc:</strong> <div>N/A</div></div>';
+                }
+                
                 break;
 
             case self::STATUS_REJECTED:
