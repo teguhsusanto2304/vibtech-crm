@@ -32,7 +32,7 @@ class SubmitClaimController extends Controller
 
     public function list()
     {
-        return view('submit_claim.list')->with('title', 'List of Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','List of Submit Claim']);
+        return view('submit_claim.list')->with('title', 'Your Submitted Claims')->with('breadcrumb', ['Home', 'Staff Task','Your Submitted Claims']);
     }
 
     public function getSubmitClaimsData(Request $request)
@@ -47,7 +47,7 @@ class SubmitClaimController extends Controller
 
     public function all()
     {
-        return view('submit_claim.list')->with('title', 'List of All Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','List of All Submit Claim']);
+        return view('submit_claim.list')->with('title', 'All Submitted Claims')->with('breadcrumb', ['Home', 'Staff Task','All Submitted Claims']);
     }
 
     public function create(Request $request)
@@ -57,7 +57,7 @@ class SubmitClaimController extends Controller
             $dataClaim = $this->submitClaimService->getData($request->query('id'));
         }
         $claimTypes = $this->submitClaimService->getSubmitClaimType();
-        return view('submit_claim.form',compact('claimTypes','dataClaim'))->with('title', 'Create A Submit Claim')->with('breadcrumb', ['Home', 'Staff Task','Create A Submit Claim']);
+        return view('submit_claim.form',compact('claimTypes','dataClaim'))->with('title', 'Submit New Claim')->with('breadcrumb', ['Home', 'Staff Task','Submit New Claim']);
     }
 
     public function store(Request $request)
@@ -80,8 +80,18 @@ class SubmitClaimController extends Controller
         return $this->submitClaimService->submitClaimDestroy($id);
     }
 
+    public function destroyClaim($id) // Renamed method
+    {
+        return $this->submitClaimService->destroyClaim($id);
+    }
+
     public function submitClaimUpdateStatus(Request $request, $id)
     {
         return $this->submitClaimService->updateStatus($request,$id);
+    }
+
+    public function handleApprovalAction(Request $request, $id)
+    {
+         return $this->submitClaimService->handleApprovalAction($request, $id);
     }
 }

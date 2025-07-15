@@ -75,7 +75,11 @@
                 'leave-application',
                 'v1.vehicle-bookings',
                 'referral-program',
-                'v1.submit-claim'
+                'v1.submit-claim',
+                'v1.submit-claim.create',
+                'v1.submit-claim.list',
+                'v1.submit-claim.all',
+                'v1.submit-claim.detail'
             ) ? 'active open' : '' }}">
                     <a href="{{ route('dashboard') }}" class="menu-link  menu-toggle">
                         <i class="menu-icon">
@@ -132,7 +136,13 @@
                         @endcan
                         @can('view-submit-claim')
                             <li class="no-bullet">
-                                <a href="{{ route('v1.submit-claim')}}" class="menu-link">
+                                <a href="{{ route('v1.submit-claim')}}" class="menu-link {{ request()->routeIs(
+                'v1.submit-claim',
+                'v1.submit-claim.create',
+                'v1.submit-claim.list',
+                'v1.submit-claim.all',
+                'v1.submit-claim.detail'
+            ) ? 'active open' : '' }}">
                                     <div class="text-truncate" data-i18n="Analytics">Submit Claim</div>
                                 </a>
                             </li>

@@ -28,6 +28,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/{submit_claim_id}/item-list/data', 'getSubmitClaimItemsData')->name('v1.submit-claim.item-list.data');
             Route::get('/submit-claim-items/{id}/details', 'getSubmitClaimItemDetails')->name('v1.submit-claim.submit-claim-items.details');
             Route::delete('/submit-claim-items/{id}/destroy', 'submitClaimDestroy')->name('v1.submit-claim.submit-claim-items.destroy');
+            Route::delete('/{id}/destroy', 'destroyClaim')->name('v1.submit-claim.destroy');
             Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.submit-claim.update-status');
+            Route::post('/{id}/action', 'handleApprovalAction')->name('v1.submit-claim.action');
+            //->middleware('can:approve-claims');
         });
     });

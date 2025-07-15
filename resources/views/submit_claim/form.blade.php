@@ -116,7 +116,7 @@
                                 <!-- Add more currencies as needed -->
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label for="claimAmount" class="form-label">Claim Amount:</label>
                             <input type="number" step="0.01" class="form-control" id="amount" name="amount" placeholder="Enter Claim Amount">
                         </div>
@@ -137,7 +137,7 @@
                                 @if(old('project_files'))
                                     @foreach(old('project_files') as $index => $oldFile)
                                         <div class="input-group mb-2 file-upload-item">
-                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                         </div>
                                     @endforeach
@@ -206,7 +206,7 @@
                                         const newFileInputHtml = `
                                             <div class="file-upload-item">
                                                 <div class="input-group mb-2">
-                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                 </div>
                                                 <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
@@ -290,6 +290,10 @@
                                 });
                             });
                         </script>
+                        <div class="col-md-6">
+                            <label for="claimAmount" class="form-label">Claim Purpose:</label>
+                            <textarea class="form-control" id="claim_purpose" name="claim_purpose" >@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
+                        </div>
                     </div>
                     <div class="col-md-12">
                         <h6>Submit Claim Header</h6>
@@ -317,7 +321,7 @@
                              @else
                                 {{ route('v1.submit-claim') }}
                             @endif" class="btn btn-warning">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Create Submit Claim</button>
+                            <button type="submit" class="btn btn-primary">@if(!is_null($dataClaim)) Add Claim @else Create Claim @endif</button>
                     </div>
                 </form>
 

@@ -76,30 +76,31 @@
                             <i class="fas fa-arrow-left me-1 mr-2"></i> Back to Claims List
                         </a>
                         @endif
-                        @if($claim->data_status==1 || $claim->data_status==4)
+                        @if($claim->data_status==\App\Models\SubmitClaim::STATUS_DRAFT || $claim->data_status==\App\Models\SubmitClaim::STATUS_REJECTED)
                         <a href="#" class="btn btn-info bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
                             data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
                             data-new-status="2">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
                                 Submit This Claim
                         </a>
                         <a href="{{ route('v1.submit-claim.create') }}?id={{ $claim->obfuscated_id }}" class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm">
-                            Create a new Claim Item
+                            Add New Claim Item
                         </a>
                         @endif
                         @can('view-all-submit-claim')
-                            @if($claim->data_status==2 && request()->query('from'))
-                        <a href="#" class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
-                            data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
-                            data-new-status="3">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
+                            @if($claim->data_status==\App\Models\SubmitClaim::STATUS_SUBMIT && request()->query('from'))
+                        <button class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#approveClaimModal" data-claim-id="{{ $claim->obfuscated_id }}">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
                                 Approve This Claim
-                        </a>
-                        <a href="#" class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
-                            data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
-                            data-new-status="4">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
+                        </button>
+                        <button class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#rejectClaimModal" data-claim-id="{{ $claim->obfuscated_id }}">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
                                 Reject This Claim
-                        </a>
+                        </button>
                         @endif
                         @endcan
+                        <button type="button" class="btn btn-info print-page-btn">
+                            <i class="fas fa-print"></i> Print Page
+                        </button>
                         
                     </div>
                 </div>
@@ -140,6 +141,7 @@
                     <strong>Status:</strong>
                     <div>
                         {!! $claim->submit_claim_status !!}
+                        {!! $claim->submit_claim_status_description !!}
                     </div>
                 </div>
                 <div class="mb-3">
@@ -170,6 +172,7 @@
                     <tr>
                         <th>No</th> <!-- For addIndexColumn() -->
                         <th>Claim Type</th>
+                        <th>Claim Purpose</th>
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Created Date</th>
@@ -184,7 +187,7 @@
                 <tfoot>
         <!-- NEW: Add a tfoot for summary rows -->
         <tr>
-            <th colspan="5" style="text-align:right">Total:</th>
+            <th colspan="6" style="text-align:right">Total:</th>
             <th class="dt-amount-right"></th> <!-- This will be for the sum of amounts -->
             <th></th> <!-- Empty for hidden currency column -->
             <th></th> <!-- Empty for action column -->
@@ -192,6 +195,70 @@
     </tfoot>
             </table>
             </div>
+
+            <!-- Approve Claim Modal -->
+        <div class="modal fade" id="approveClaimModal" tabindex="-1" aria-labelledby="approveClaimModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="approveClaimForm" enctype="multipart/form-data">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="approveClaimModalLabel">Approve Claim</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="claim_id" id="approveClaimId">
+                            <input type="hidden" name="action" value="approve">
+                            <p>Are you sure you want to approve this claim?</p>
+                            <div class="mb-3">
+                                <label for="transferDocument" class="form-label">Transfer Document (PDF, PNG, JPG - Max 5MB):</label>
+                                <input class="form-control" type="file" id="transferDocument" name="transfer_document" required>
+                                <div class="invalid-feedback" id="transferDocumentFeedback"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="transferDate" class="form-label">Transfer Date:</label>
+                                <input type="datetime-local" name="transfered_at" id="transfered_at" class="form-control">
+                                <div class="invalid-feedback" id="transferDateFeedback"></div>
+                            </div>
+                           
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Approve</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reject Claim Modal -->
+        <div class="modal fade" id="rejectClaimModal" tabindex="-1" aria-labelledby="rejectClaimModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="rejectClaimForm">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="rejectClaimModalLabel">Reject Claim</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="claim_id" id="rejectClaimId">
+                            <input type="hidden" name="action" value="reject">
+                            <p>Are you sure you want to reject this claim?</p>
+                            <div class="mb-3">
+                                <label for="rejectionReason" class="form-label">Reason for Rejection:</label>
+                                <textarea class="form-control" id="rejectionReason" name="notes" rows="4" required></textarea>
+                                <div class="invalid-feedback" id="rejectionReasonFeedback"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Reject</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
             <!-- Submit Claim Item Details Modal -->
             <div class="modal fade" id="submitClaimItemDetailModal" tabindex="-1" aria-labelledby="submitClaimItemDetailModalLabel" aria-hidden="true">
@@ -222,7 +289,9 @@
                                 <div class="col-md-6">
                                     <strong>Created Date:</strong> <span id="modalCreatedDate"></span>
                                 </div>
-                                
+                                <div class="col-md-6">
+                                    <strong>Claim Purpose:</strong> <span id="modalClaimPurpose"></span>
+                                </div>
                             </div>
                             
 
@@ -240,9 +309,68 @@
                     </div>
                 </div>
             </div>
+<style>
+        /* Hide elements when printing */
+        @media print {
+            /* Hide navigation, sidebar, header, footer, and buttons */
+            .layout-navbar,
+            .layout-menu,
+            .content-footer,
+            .breadcrumb,
+            .print-page-btn, /* Hide the print button itself */
+            .d-flex.justify-content-between.align-items-center.mb-3 .btn-secondary, /* Hide the back button */
+            .modal-backdrop, /* Hide modal backdrop if a modal is open */
+            .modal { /* Hide modals if they are open */
+                display: none !important;
+            }
 
+            /* Adjust layout for printing */
+            body {
+                margin: 0;
+                padding: 0;
+                color: #000; /* Ensure text is black for print */
+            }
+
+            .container-xxl {
+                width: 100% !important; /* Make container full width */
+                max-width: none !important; /* Remove max-width constraints */
+                padding: 0 !important; /* Remove padding */
+            }
+
+            .card {
+                border: 1px solid #ccc !important; /* Add subtle border to cards */
+                box-shadow: none !important; /* Remove shadows */
+                margin-bottom: 1rem !important; /* Add margin between cards */
+            }
+
+            .card-header {
+                background-color: #f0f0f0 !important; /* Light background for headers */
+                color: #000 !important; /* Ensure header text is black */
+                border-bottom: 1px solid #ccc !important;
+            }
+
+            .table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            .table th, .table td {
+                border: 1px solid #ccc !important; /* Ensure table borders are visible */
+                padding: 8px !important;
+            }
+
+            /* Ensure text is readable */
+            h1, h2, h3, h4, h5, h6, p, li, span {
+                color: #000 !important;
+            }
+        }
+    </style>
             <script>
         $(document).ready(function() {
+
+            $('.print-page-btn').on('click', function() {
+                window.print(); // Triggers the browser's print dialog
+            });
             
 
             $('.submit-claim-status-btn').on('click', function(e) {
@@ -274,15 +402,6 @@
                         },
                         success: function(response) {
                             alert(response.message);
-                            // After successful update, you might want to:
-                            // 1. Reload the DataTable (if it displays the main claims list)
-                            //    If this button is on a page showing *items* for a claim,
-                            //    and the main claim's status is displayed elsewhere, you might need a full page refresh.
-                            //    If it's on a claims *list* page, reload that DataTable.
-                            //    Example: If you have a main claims DataTable with ID 'mainClaimsTable'
-                            //    $('#mainClaimsTable').DataTable().ajax.reload(null, false);
-
-                            // 2. Or, if this button is on a detail page and you want to refresh everything:
                             location.reload(); // Full page refresh
                         },
                         error: function(xhr, status, error) {
@@ -352,6 +471,7 @@
                 $('#modalStartDate').text('Loading...');
                 $('#modalEndDate').text('Loading...');
                 $('#modalCreatedDate').text('Loading...');
+                $('#modalClaimPurpose').text('Loading...');
                 $('#modalFilesList').html('<p class="text-muted">Loading files...</p>');
                 $('#noFilesMessage').hide(); // Hide no files message while loading
 
@@ -366,10 +486,11 @@
                         $('#modalStartDate').text(response.start_date);
                         $('#modalEndDate').text(response.end_date);
                         $('#modalCreatedDate').text(response.created_at_formatted);
+                        $('#modalClaimPurpose').text(response.description);
                         // Populate files list
                         const filesListDiv = $('#modalFilesList');
                         filesListDiv.empty(); // Clear previous files
-
+                        let contentHTML = `<ul class="list-group list-group-flush">`;
                         if (response.files && response.files.length > 0) {
                             response.files.forEach(function(file) {
                                 let fileIcon = '';
@@ -385,12 +506,18 @@
                                 } else {
                                     fileIcon = '<i class="fas fa-file me-2"></i>';
                                 }
-                                filesListDiv.append(`
-                                    <a href="${file.url}" class="list-group-item list-group-item-action d-flex align-items-center" target="_blank">
-                                        ${fileIcon} ${file.name}
-                                    </a>
-                                `);
+                                contentHTML += `
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <h6>${file.description}</h6>
+                                                            <i class="fas fa-file-alt me-2"></i> <a href="/storage/${file.url}" target="_blank">${file.name}
+                                                            (${ (file.file_size / (1024 * 1024)).toFixed(2) } MB)</a>
+                                                        </span>
+                                                    </li>
+                                                `;
                             });
+                            contentHTML += `</ul>`;
+                            filesListDiv.append(contentHTML);
                             $('#noFilesMessage').hide();
                         } else {
                             filesListDiv.append('<p class="text-muted">No files attached.</p>');
@@ -431,6 +558,7 @@
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // 0
                     { data: 'claim_type', name: 'claim_type' },                                    // 1
+                    { data: 'description', name: 'description' },
                     { data: 'start_date', name: 'start_date' },                                    // 2
                     { data: 'end_date', name: 'end_date' },                                        // 3
                     { data: 'created_date', name: 'created_date' },                                // 4
@@ -441,7 +569,7 @@
                 ],
                 columnDefs: [
                     { 
-                        targets: 5, // ADJUSTED: Target 'amount_currency' is now at index 5
+                        targets: 6, // ADJUSTED: Target 'amount_currency' is now at index 5
                         className: 'dt-body-right dt-head-right' 
                     }
                 ],
@@ -465,21 +593,21 @@
                             .append('<td colspan="5" class="group-header"><strong>Currency: ' + group + '</strong></td>')
                             .append('<td class="group-total text-end"><strong>' + group + ' ' + formattedSum + '</strong></td>')
                             // ADJUSTED: colspan="2" for the remaining two columns (hidden currency, action)
-                            .append('<td colspan="2"></td>'); 
+                            .append('<td colspan="3"></td>'); 
                     }
                 },
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api();
 
                     // ADJUSTED: Target 'amount_currency' column (now at index 5)
-                    let totalAmount = api.column(5, { page: 'current' }).data().reduce(function (a, b) {
+                    let totalAmount = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
                         const amountStr = String(b).split(' ')[1]; 
                         return a + parseFloat(amountStr.replace(/,/g, '')) || 0;
                     }, 0);
 
                     // Update footer
                     // ADJUSTED: Target the correct footer cell (index 5 for Amount)
-                    $(api.column(5).footer()).html(
+                    $(api.column(6).footer()).html(
                         '<strong>' + new Intl.NumberFormat('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2
@@ -490,6 +618,138 @@
             $(window).on('load', function() {
                 dataTable.columns.adjust().draw();
             });
+
+            // Event listener for Approve Button (opens modal)
+            $('#approveClaimModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget); // Button that triggered the modal
+                const claimId = button.data('claim-id');
+                const modal = $(this);
+                modal.find('#approveClaimId').val(claimId);
+                // Clear previous validation feedback
+                modal.find('.form-control').removeClass('is-invalid');
+                modal.find('.invalid-feedback').text('');
+                modal.find('#transferDocument').val(''); // Clear file input
+                modal.find('#approvalNotes').val(''); // Clear notes
+            });
+
+            // Event listener for Reject Button (opens modal)
+            $('#rejectClaimModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget); // Button that triggered the modal
+                const claimId = button.data('claim-id');
+                const modal = $(this);
+                modal.find('#rejectClaimId').val(claimId);
+                // Clear previous validation feedback
+                modal.find('.form-control').removeClass('is-invalid');
+                modal.find('.invalid-feedback').text('');
+                modal.find('#rejectionReason').val(''); // Clear rejection reason
+            });
+
+            $('#approveClaimForm').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const claimId = form.find('#approveClaimId').val();
+                const actionUrl = `/v1/submit-claim/${claimId}/action`;
+                const formData = new FormData(this); // 'this' refers to the form element
+                
+                // Clear previous validation feedback
+                form.find('.form-control').removeClass('is-invalid');
+                form.find('.invalid-feedback').text('');
+
+                $.ajax({
+                    url: actionUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false, // Important for FormData
+                    contentType: false, // Important for FormData
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        displayMessage('success', response.message);
+                        $('#approveClaimModal').hide(); // Hide the modal
+                        location.reload(); // Reload page to update claim status and history
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'An error occurred.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            // Display validation errors
+                            if (xhr.responseJSON.errors) {
+                                for (const field in xhr.responseJSON.errors) {
+                                    const input = form.find(`[name="${field}"]`);
+                                    input.addClass('is-invalid');
+                                    input.next('.invalid-feedback').text(xhr.responseJSON.errors[field][0]);
+                                }
+                            }
+                        }
+                        displayMessage('danger', errorMessage);
+                    }
+                });
+            });
+
+            // Handle Reject Form Submission
+            $('#rejectClaimForm').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const claimId = form.find('#rejectClaimId').val();
+                const actionUrl = `/v1/submit-claim/${claimId}/action`;
+                const formData = new FormData(this); // 'this' refers to the form element
+
+                // Clear previous validation feedback
+                form.find('.form-control').removeClass('is-invalid');
+                form.find('.invalid-feedback').text('');
+
+                $.ajax({
+                    url: actionUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false, 
+                    contentType: false, 
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        displayMessage('success', response.message);
+                        $('#rejectClaimModal').hide(); // Hide the modal
+                        location.reload(); // Reload page to update claim status and history
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'An error occurred.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            // Display validation errors
+                            if (xhr.responseJSON.errors) {
+                                for (const field in xhr.responseJSON.errors) {
+                                    const input = form.find(`[name="${field}"]`);
+                                    input.addClass('is-invalid');
+                                    input.next('.invalid-feedback').text(xhr.responseJSON.errors[field][0]);
+                                }
+                            }
+                        }
+                        displayMessage('danger', errorMessage);
+                    }
+                });
+            });
+
+            // Helper function to display messages
+            function displayMessage(type, message) {
+                const msgDiv = $('#msg');
+                msgDiv.html(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+                // Scroll to message
+                $('html, body').animate({
+                    scrollTop: msgDiv.offset().top - 100
+                }, 500);
+            }
+        
         });
         
     </script>

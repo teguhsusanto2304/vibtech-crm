@@ -157,7 +157,7 @@
                                 @if(old('project_files'))
                                     @foreach(old('project_files') as $index => $oldFile)
                                         <div class="input-group mb-2 file-upload-item">
-                                            <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                            <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                         </div>
                                     @endforeach
@@ -165,7 +165,7 @@
                                     {{-- This is the initial input if no old data --}}
                                     <div class="file-upload-item">
                                             <div class="input-group mb-2">
-                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                                 <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
                                             </div>
                                             <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
@@ -200,7 +200,7 @@
                                         const newFileInputHtml = `
                                             <div class="file-upload-item">
                                                 <div class="input-group mb-2">
-                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                 </div>
                                                 <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">

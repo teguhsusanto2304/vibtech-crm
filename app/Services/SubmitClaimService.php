@@ -3,6 +3,7 @@ namespace App\Services;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\SubmitClaim;
+use App\Models\SubmitClaimApproval;
 use App\Models\SubmitClaimItem;
 use App\Models\ClaimType;
 use Illuminate\Support\Str;
@@ -45,6 +46,7 @@ class SubmitClaimService {
             'project_files' => 'nullable|array|max:5', // Max 5 new files
             'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
             'description' => 'required',
+            'claim_purpose'=> 'required'
         ]);
 
         // Use a database transaction to ensure atomicity
@@ -74,7 +76,7 @@ class SubmitClaimService {
 
             $submitClaimItem = SubmitClaimItem::create([
                     'submit_claim_id' => $claim->id,
-                    'description' => '-',
+                    'description' => $request->claim_purpose,
                     'amount' => $request->amount,
                     'currency' => $request->currency,
                     'claim_type_id' => $request->claim_type_id,
@@ -200,6 +202,7 @@ class SubmitClaimService {
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Claim Actions">';
                 if($claim->data_status==1){
                     $btn .= '<a class="btn btn-primary btn-sm" href="'.route("v1.submit-claim.create").'?id='.$claim->obfuscated_id.'">Create Item</a>';
+                    $btn .= '<a href="#" class="btn btn-danger btn-sm delete-claim-btn" data-id="'.$claim->obfuscated_id.'">Delete</a>';
                 }
                 if($request->input('status_filter')){
                     $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id,'from'=>'all']) . '">View</a>';
@@ -213,6 +216,49 @@ class SubmitClaimService {
 
             ->escapeColumns([])
             ->make(true);
+    }
+
+    /**
+     * Remove the specified SubmitClaim from storage.
+     *
+     * @param  string  $id  (obfuscated ID of the SubmitClaim)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroyClaim($id) // Renamed method
+    {
+        try {
+            $decodedId = IdObfuscator::decode($id);
+            $claim = SubmitClaim::find($decodedId);
+
+            // You might want to add a check here, e.g., only allow deletion if data_status is 1 (Draft)
+            if ($claim->data_status != 1) { // Example: Only allow deletion if it's a draft
+                return Response::json(['message' => 'Claim cannot be deleted unless it is in draft status.'], 403);
+            }
+
+            // Before deleting the claim, you might need to handle its associated items/files
+            // For example, delete related submit_claim_items first if not handled by CASCADE DELETE in DB
+            // $claim->submitClaimItems()->delete(); // If not using CASCADE DELETE
+
+            $claim->data_status=0;
+            $claim->save();
+
+            // Invalidate any relevant caches for the main claims list
+            Cache::forget('all_submit_claims_list_cache_key'); // Example: if you cache a general list
+            // If the getSubmitClaimsData method has a cache, invalidate it.
+            // This is important because the claim is removed from the list.
+            // If getSubmitClaimsData filters by staff_id or status, you might need more specific invalidation.
+            // For simplicity, if it's a general list, clear its cache.
+
+            Log::info("SubmitClaim with ID {$decodedId} deleted successfully.");
+            return Response::json(['message' => 'Claim deleted successfully.'], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error("SubmitClaim with ID {$id} not found for deletion. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Claim not found.'], 404);
+        } catch (\Exception $e) {
+            Log::error("Error deleting SubmitClaim with ID {$id}. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Failed to delete claim. An error occurred.'], 500);
+        }
     }
 
     public function getSubmitClaimItemsData(Request $request,$submit_claim_id)
@@ -324,8 +370,10 @@ class SubmitClaimService {
                     return [
                         'id' => $file->id,
                         'name' => $file->file_name,
-                        'url' => $file->file_url, // Uses the accessor to get public URL
+                        'description' => $file->description,
+                        'url' => $file->file_path, // Uses the accessor to get public URL
                         'mime_type' => $file->mime_type,
+                        'file_size' => $file->file_size
                     ];
                 })->toArray(),
             ];
@@ -386,6 +434,114 @@ class SubmitClaimService {
         } catch (\Exception $e) {
             Log::error("Error updating SubmitClaim status for ID {$id}. Error: " . $e->getMessage());
             return Response::json(['message' => 'Failed to update claim status. An error occurred.'], 500);
+        }
+    }
+
+    /**
+     * Handle the approval or rejection action for a SubmitClaim.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id (obfuscated ID of the SubmitClaim)
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function handleApprovalAction(Request $request, $id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+
+        try {
+            DB::beginTransaction(); // Start a database transaction
+
+            $claim = SubmitClaim::findOrFail($decodedId);
+
+            // Validate the request based on action
+            $rules = [
+                'action' => ['required', Rule::in(['approve', 'reject'])],
+                'notes' => ['nullable', 'string', 'max:1000'],
+                'transfer_document' => [
+                    Rule::requiredIf($request->input('action') === 'approve'), // Required only if approving
+                    'nullable',
+                    'file',         // Must be a file
+                    'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', // Allowed file types
+                    'max:5120',     // Max 5MB (5120 KB)
+                ],
+            ];
+
+            // If claim is already approved/rejected, prevent further action (optional)
+            if ($claim->data_status == SubmitClaim::STATUS_APPROVED || $claim->data_status == SubmitClaim::STATUS_REJECTED) {
+                 DB::rollBack();
+                 return Response::json(['message' => 'Claim has already been processed.'], 400);
+            }
+
+            // Only allow action if claim is in 'Pending Approval' status
+            if ($claim->data_status != SubmitClaim::STATUS_SUBMIT) {
+                DB::rollBack();
+                return Response::json(['message' => 'Claim is not in submit status.'], 400);
+            }
+
+
+            $validatedData = $request->validate($rules);
+
+            $action = $validatedData['action'];
+            $notes = $validatedData['notes'] ?? null;
+            $transferDocumentPath = null;
+
+            if ($action === 'approve') {
+                // Handle file upload for approval
+                if ($request->hasFile('transfer_document')) {
+                    $file = $request->file('transfer_document');
+                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $transferDocumentPath = $file->storeAs('public/claim_transfers', $fileName); // Store in storage/app/public/claim_transfers
+                } else {
+                    // This should not happen if requiredIf is working, but as a safeguard
+                    DB::rollBack();
+                    return Response::json(['message' => 'Transfer document is required for approval.'], 422);
+                }
+                $newStatus = SubmitClaim::STATUS_APPROVED;
+                $statusText = 'approved';
+            } else { // action is 'reject'
+                if (empty($notes)) {
+                    DB::rollBack();
+                    return Response::json(['message' => 'Rejection reason is required.'], 422);
+                }
+                $newStatus = SubmitClaim::STATUS_REJECTED;
+                $statusText = 'rejected';
+            }
+
+            // Update SubmitClaim status
+            $claim->data_status = $newStatus;
+            $claim->save();
+
+            // Create SubmitClaimApproval history record
+            SubmitClaimApproval::create([
+                'submit_claim_id' => $claim->id,
+                'approved_by_user_id' => auth()->id(), // Current authenticated user
+                'data_status' => $newStatus,
+                'notes' => $notes,
+                'transfered_at' => date('Y-m-d H:i:s'),
+                'transfer_document_path' => $transferDocumentPath,
+            ]); 
+
+            DB::commit(); // Commit the transaction
+
+            // Invalidate caches
+            Cache::forget('all_submit_claims_list_cache_key'); // Example: general list
+            Cache::forget('submit_claim_items_' . $claim->id); // Invalidate items cache for this claim
+
+            Log::info("SubmitClaim ID: {$claim->id} {$statusText} by User ID: " . auth()->id());
+            return Response::json(['message' => "Claim successfully {$statusText}."], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            Log::error("SubmitClaim with ID {$id} not found for approval action. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Claim not found.'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            Log::warning("Validation error during approval action for Claim ID {$id}: " . json_encode($e->errors()));
+            return Response::json(['message' => 'Validation failed.', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("An error occurred during approval action for Claim ID {$id}. Error: " . $e->getMessage());
+            return Response::json(['message' => 'An unexpected error occurred.'], 500);
         }
     }
 

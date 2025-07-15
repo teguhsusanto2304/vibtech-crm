@@ -31,7 +31,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">New Submit Claim</h5>
+                                <h5 class="card-title">Submit New Claim</h5>
                                 
                                     <a href="{{ route('v1.submit-claim.create') }}" class="btn btn_primary mt-auto">
                                         Create</a>
@@ -44,7 +44,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Your Submit Claim</h5>
+                                <h5 class="card-title">Your Submitted Claims</h5>
                                 <a href="{{ route('v1.submit-claim.list')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
@@ -54,7 +54,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">All Submit Claim</h5>
+                                <h5 class="card-title">All Submitted Claims</h5>
                                 <a href="{{ route('v1.submit-claim.all')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
