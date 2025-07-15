@@ -38,7 +38,7 @@
                 <div class="row gy-4">
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
+                            <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Book A Vehicle</h5>
                                 @can('create-job-requisition')
                                 <a href="{{ route('v1.vehicle-bookings.create') }}" class="btn btn_primary">Book</a>
@@ -50,7 +50,7 @@
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
+                            <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Current Vehicle Booking</h5>
                                 <a href="{{ route('v1.vehicle-bookings.list') }}" class="btn btn_primary">View</a>
                             </div>
@@ -58,7 +58,7 @@
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
-                            <div class="card-body">
+                            <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Past Vehicle Booking</h5>
                                 <a href="{{ route('v1.vehicle-bookings.histories') }}" class="btn btn_primary">View</a>
                             </div>

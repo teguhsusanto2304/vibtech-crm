@@ -42,6 +42,8 @@ class RouteServiceProvider extends ServiceProvider
                   ->group(base_path('routes/projectmanagement.php'));
             Route::middleware('web')
                   ->group(base_path('routes/submitclaim.php'));
+            Route::middleware('web')
+                  ->group(base_path('routes/meetingminute.php'));
         });
     }
 }
