@@ -28,7 +28,7 @@ class SubmitClaimService {
         // 1. Validate the incoming request data
         $request->validate([
             'claim_serial_number' => 'nullable|string|max:255|unique:submit_claims,serial_number',
-            'claim_type_id' => [
+           /*  'claim_type_id' => [
                 'required',
                 'exists:claim_types,id',
                 // Unique validation: claim_type_id must be unique for this submit_claim_id
@@ -38,6 +38,10 @@ class SubmitClaimService {
                     ->where('end_at',$request->end_at)
                     ->where('data_status','!=',0);
                 }),
+            ],**/
+            'claim_type_id' => [
+                'required',
+                'exists:claim_types,id',
             ],
             'start_at' => 'required|date|before_or_equal:today',
             'end_at' => 'required|date|before_or_equal:today|after_or_equal:start_at',
