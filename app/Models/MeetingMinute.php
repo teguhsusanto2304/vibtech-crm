@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Helpers\IdObfuscator;
 
 class MeetingMinute extends Model
 {
@@ -31,5 +32,10 @@ class MeetingMinute extends Model
     public function savedBy()
     {
         return $this->belongsTo(User::class, 'saved_by_user_id');
+    }
+
+     public function getObfuscatedIdAttribute(): string
+    {
+        return IdObfuscator::encode($this->attributes['id']); // <--- Call your encoder
     }
 }
