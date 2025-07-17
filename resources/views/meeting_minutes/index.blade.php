@@ -27,7 +27,7 @@
             <div class="tab-pane fade show active" id="btn-text-alignment-preview" role="tabpanel"
                 aria-labelledby="btn-text-alignment-preview-tab">
                 <div class="row gy-4 {{ $title == 'Job Requisition Form' ? 'equal-height-cards' : '' }}">
-                    @can('create-meeting-minute')
+                    @can('create-meeting-minutes')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
@@ -40,17 +40,8 @@
                         </div>
                     </div>                    
                     @endcan
-                    @can('view-meeting-minute')
-                    <div class="col-12 col-md-4">
-                        <div class="card text-center">
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Your meeting Minutes</h5>
-                                <a href="{{ route('v1.meeting-minutes.list')}}" class="btn btn_primary mt-auto">View</a>
-                            </div>
-                        </div>
-                    </div>
-                   @endcan
-                   @can('view-all-meeting-minute')
+                   
+                   @can('view-all-meeting-minutes')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">

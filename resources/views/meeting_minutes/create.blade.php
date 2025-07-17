@@ -48,7 +48,10 @@
 
                     <div class="mb-3">
                         <label for="topic" class="form-label">Meeting Topic:</label>
-                        <input type="text" class="form-control" id="topic" name="topic" required>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="topic" name="topic" required value="Morning Meeting">                            
+                            <button type="button" class="btn btn-outline-secondary clear-input-btn" data-target-input="topic">Clear</button>
+                        </div>
                         <div class="invalid-feedback" id="topicFeedback"></div>
                     </div>
 
@@ -92,6 +95,7 @@
                             </div>
                         @endforeach
                     </div>
+                    <hr class="my-4">
 
                     <div id="speakerNotesContainer" class="mt-4">
                         <!-- Speaker notes textareas will be dynamically added here -->
@@ -106,6 +110,21 @@
     </div>
     <script>
         $(document).ready(function() {
+            $('.clear-input-btn').on('click', function() {
+        // Get the ID of the target input from the data-target-input attribute of the clicked button
+                const targetInputId = $(this).data('target-input');
+
+                // Select the target input field using its ID
+                const $targetInput = $(`#${targetInputId}`);
+
+                // Check if the input field exists before trying to clear it
+                if ($targetInput.length) {
+                    $targetInput.val(''); // Clear the input's value
+                    $targetInput.trigger('input'); // Optional: Trigger 'input' event if other JS depends on it
+                    $targetInput.focus(); // Optional: Put the cursor back into the input field
+                }
+            });
+
             const speakerNotesContainer = $('#speakerNotesContainer');
             const users = @json($users); // Pass users data from PHP to JS
 
