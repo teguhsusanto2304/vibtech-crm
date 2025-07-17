@@ -34,6 +34,16 @@ class SubmitClaimItem extends Model
         return $this->belongsTo(SubmitClaim::class);
     }
 
+    /**
+     * A SubmitClaimItem can have many approvals specific to this item.
+     */
+    public function submitClaimItemApproval()
+    {
+        // The foreign key is 'submit_claim_item_id' on the SubmitClaimApproval model.
+        // The local key on this model (SubmitClaimItem) is 'id'.
+        return $this->hasMany(SubmitClaimApproval::class, 'submit_claim_item_id');
+    }
+
     public function claimType()
     {
         return $this->belongsTo(ClaimType::class);

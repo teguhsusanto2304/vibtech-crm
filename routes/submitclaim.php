@@ -23,7 +23,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/all', 'all')->name('v1.submit-claim.all');
             Route::get('/{id}/detail', 'detail')->name('v1.submit-claim.detail');
             Route::get('/create', 'create')->name('v1.submit-claim.create');
+            Route::get('/{id}/edit', 'edit')->name('v1.submit-claim.edit');
             Route::post('/store', 'store')->name('v1.submit-claim.store');
+            Route::put('/{id}/update', 'update')->name('v1.submit-claim.update');
             Route::get('/list/data', 'getSubmitClaimsData')->name('v1.submit-claim.list.data');
             Route::get('/{submit_claim_id}/item-list/data', 'getSubmitClaimItemsData')->name('v1.submit-claim.item-list.data');
             Route::get('/submit-claim-items/{id}/details', 'getSubmitClaimItemDetails')->name('v1.submit-claim.submit-claim-items.details');
@@ -31,6 +33,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}/destroy', 'destroyClaim')->name('v1.submit-claim.destroy');
             Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.submit-claim.update-status');
             Route::post('/{id}/action', 'handleApprovalAction')->name('v1.submit-claim.action');
+            Route::post('/{id}/action-claim-item', 'handleRejectedAction')->name('v1.submit-claim.action-claim-item');
             //->middleware('can:approve-claims');
         });
     });

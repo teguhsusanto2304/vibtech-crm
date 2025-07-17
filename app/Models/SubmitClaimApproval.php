@@ -13,6 +13,7 @@ class SubmitClaimApproval extends Model
     const STATUS_REJECTED = 4;
     protected $fillable = [
         'submit_claim_id',
+        'submit_claim_item_id',
         'approved_by_user_id',
         'data_status',
         'notes',
@@ -29,6 +30,16 @@ class SubmitClaimApproval extends Model
     public function submitClaim()
     {
         return $this->belongsTo(SubmitClaim::class);
+    }
+
+    /**
+     * An approval can optionally belong to a specific SubmitClaimItem.
+     */
+    public function submitClaimItem()
+    {
+        // The foreign key is 'submit_claim_item_id' on this model.
+        // The local key on the related model (SubmitClaimItem) is 'id'.
+        return $this->belongsTo(SubmitClaimItem::class, 'submit_claim_item_id');
     }
 
     public function approver()

@@ -90,12 +90,9 @@
                             @if($claim->data_status==\App\Models\SubmitClaim::STATUS_SUBMIT && request()->query('from'))
                         <button class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
                             data-bs-toggle="modal" data-bs-target="#approveClaimModal" data-claim-id="{{ $claim->obfuscated_id }}">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Approve This Claim
+                                Complete This Claim
                         </button>
-                        <button class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
-                            data-bs-toggle="modal" data-bs-target="#rejectClaimModal" data-claim-id="{{ $claim->obfuscated_id }}">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Reject This Claim
-                        </button>
+                       
                         @endif
                         @endcan
                         <button type="button" class="btn btn-info print-page-btn">
@@ -178,6 +175,7 @@
                         <th>Created Date</th>
                         <th class="dt-amount-right">Amount</th>
                         <th class="d-none">Currency</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -187,7 +185,7 @@
                 <tfoot>
         <!-- NEW: Add a tfoot for summary rows -->
         <tr>
-            <th colspan="6" style="text-align:right">Total:</th>
+            <th colspan="7" style="text-align:right">Total:</th>
             <th class="dt-amount-right"></th> <!-- This will be for the sum of amounts -->
             <th></th> <!-- Empty for hidden currency column -->
             <th></th> <!-- Empty for action column -->
@@ -242,7 +240,8 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" name="claim_id" id="rejectClaimId">
+                            <input type="text" name="claim_id" id="rejectClaimId">
+                            <input type="text" name="claim_item_id" id="rejectClaimItemId">
                             <input type="hidden" name="action" value="reject">
                             <p>Are you sure you want to reject this claim?</p>
                             <div class="mb-3">
@@ -304,7 +303,16 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <div class="btn-group" role="group" aria-label="Basic example">
+                                @can('view-all-submit-claim')
+                                <button type="button" id="approvedSubmitClaimIdButton" class="btn btn-success" data-bs-dismiss="modal">Approved</button>
+                                 <button class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
+                                    id="submitClaimIdButton" data-bs-toggle="modal" data-bs-target="#rejectClaimModal" data-claim-id="{{ $claim->obfuscated_id }}"  data-claim-item-id="">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
+                                        Reject This Claim
+                                </button>
+                                @endcan
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -487,6 +495,7 @@
                         $('#modalEndDate').text(response.end_date);
                         $('#modalCreatedDate').text(response.created_at_formatted);
                         $('#modalClaimPurpose').text(response.description);
+                        $('#submitClaimIdButton').data('claim-item-id', response.id);
                         // Populate files list
                         const filesListDiv = $('#modalFilesList');
                         filesListDiv.empty(); // Clear previous files
@@ -518,6 +527,10 @@
                             });
                             contentHTML += `</ul>`;
                             filesListDiv.append(contentHTML);
+                            if(response.data_status==4){
+                                $('#submitClaimIdButton').prop('disabled', true);
+                                $('#approvedSubmitClaimIdButton').prop('disabled', true);
+                            }
                             $('#noFilesMessage').hide();
                         } else {
                             filesListDiv.append('<p class="text-muted">No files attached.</p>');
@@ -564,7 +577,8 @@
                     { data: 'created_date', name: 'created_date' },                                // 4
                     // REMOVED: { data: 'claim_status', name: 'claim_status', orderable: false, searchable: false },
                     { data: 'amount_currency', name: 'amount_currency' },                          // 5 - ADJUSTED INDEX
-                    { data: 'currency', name: 'currency', visible: false },                        // 6 - ADJUSTED INDEX
+                    { data: 'currency', name: 'currency', visible: false },   
+                    { data: 'claim_status', name: 'claim_status' },                       // 6 - ADJUSTED INDEX
                     { data: 'action', name: 'action', orderable: false, searchable: false },       // 7 - ADJUSTED INDEX
                 ],
                 columnDefs: [
@@ -593,7 +607,7 @@
                             .append('<td colspan="5" class="group-header"><strong>Currency: ' + group + '</strong></td>')
                             .append('<td class="group-total text-end"><strong>' + group + ' ' + formattedSum + '</strong></td>')
                             // ADJUSTED: colspan="2" for the remaining two columns (hidden currency, action)
-                            .append('<td colspan="3"></td>'); 
+                            .append('<td colspan="4"></td>'); 
                     }
                 },
                 footerCallback: function (row, data, start, end, display) {
@@ -636,8 +650,10 @@
             $('#rejectClaimModal').on('show.bs.modal', function(event) {
                 const button = $(event.relatedTarget); // Button that triggered the modal
                 const claimId = button.data('claim-id');
+                const claimItemId = button.data('claim-item-id');
                 const modal = $(this);
                 modal.find('#rejectClaimId').val(claimId);
+                modal.find('#rejectClaimItemId').val(claimItemId);
                 // Clear previous validation feedback
                 modal.find('.form-control').removeClass('is-invalid');
                 modal.find('.invalid-feedback').text('');
@@ -693,8 +709,8 @@
             $('#rejectClaimForm').on('submit', function(e) {
                 e.preventDefault();
                 const form = $(this);
-                const claimId = form.find('#rejectClaimId').val();
-                const actionUrl = `/v1/submit-claim/${claimId}/action`;
+                const claimId = form.find('#rejectClaimItemId').val();
+                const actionUrl = `/v1/submit-claim/${claimId}/action-claim-item`;
                 const formData = new FormData(this); // 'this' refers to the form element
 
                 // Clear previous validation feedback

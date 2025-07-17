@@ -158,7 +158,11 @@
                     ],
                     order: [[ 0, 'asc' ]]
                 });
-                mainClaimsDataTable.column(4).search(1).draw();
+                @if(request()->routeIs('v1.submit-claim.all'))
+                    mainClaimsDataTable.column(4).search(2).draw();
+                @else
+                    mainClaimsDataTable.column(4).search(1).draw();
+                @endif
                 $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                     const selectedStatus = $(e.target).data('status'); // Get 'active' or 'inactive' from data-status attribute
                     mainClaimsDataTable.column(4).search(selectedStatus).draw();

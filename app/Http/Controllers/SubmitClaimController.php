@@ -60,9 +60,25 @@ class SubmitClaimController extends Controller
         return view('submit_claim.form',compact('claimTypes','dataClaim'))->with('title', 'Submit New Claim')->with('breadcrumb', ['Home', 'Staff Task','Submit New Claim']);
     }
 
+    public function edit(Request $request,$id)
+    {
+        $dataClaim = null;
+        if($request->query('id')){
+            $dataClaim = $this->submitClaimService->getData($request->query('id'));
+        }
+        $dataClaimItem = $this->submitClaimService->getSubmitClaimItemData($id);
+        $claimTypes = $this->submitClaimService->getSubmitClaimType();
+        return view('submit_claim.edit',compact('claimTypes','dataClaim','dataClaimItem'))->with('title', 'Submit New Claim')->with('breadcrumb', ['Home', 'Staff Task','Submit New Claim']);
+    }
+
     public function store(Request $request)
     {
         return  $this->submitClaimService->store($request);
+    }
+
+    public function update(Request $request, $id)
+    {
+        return  $this->submitClaimService->update($request,$id);
     }
 
     public function detail($id)
@@ -93,5 +109,10 @@ class SubmitClaimController extends Controller
     public function handleApprovalAction(Request $request, $id)
     {
          return $this->submitClaimService->handleApprovalAction($request, $id);
+    }
+
+    public function handleRejectedAction(Request $request, $id)
+    {
+        return $this->submitClaimService->handleRejectedAction($request, $id);
     }
 }
