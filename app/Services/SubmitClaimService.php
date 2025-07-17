@@ -409,13 +409,54 @@ class SubmitClaimService {
             )
             ->addColumn('claim_status', function ($claim) {
                 $notes = null;
+                $verified_by = null;
+                $verified_at = null;
                 foreach($claim->submitClaimItemApproval as $claimReject){
                     $notes .= $claimReject->notes;
+                    $verified_by .= $claimReject->approver->name;
+                    $verified_at = $claimReject->created_at->format('d M Y H:i:s');
                 }
                 return match ($claim->data_status) {
                     1 => '<span class="badge bg-warning">Draft</span>',
-                    2 => '<span class="badge bg-success">Approved</span>',
-                    4 => '<span class="badge bg-danger">Rejected</span><p><small>'.$notes.'</small></p>',
+                    3 => '<span class="badge bg-success">Approved</span><div class="container-fluid p-0">
+
+                        <!-- Row for Rejected By -->
+                        <div class="row g-0 mb-1 align-items-baseline">
+                            <div class="col-6 text-nowrap"><small><strong>Approved By</strong></small></div>
+                            <div class="col-auto me-1">:<small></small></div>
+                            <div class="col"><small>'.$verified_by.'</small></div>
+                        </div>
+
+                        <!-- Row for Rejected At -->
+                        <div class="row g-0 align-items-baseline">
+                            <div class="col-4 text-nowrap"><small><strong>Approved At</strong></small></div>
+                            <div class="col-auto me-1">:<small></small></div>
+                            <div class="col"><small>'.$verified_at.'</small></div>
+                        </div>
+                    </div>',
+                    4 => '<span class="badge bg-danger">Rejected</span>
+                    <div class="container-fluid p-0">
+                        <!-- Row for Reason -->
+                        <div class="row g-0 mb-1 align-items-baseline">
+                            <div class="col-4 text-nowrap"><small><strong>Reason</strong></small></div>
+                            <div class="col-auto me-1">:<small></small></div>
+                            <div class="col"><small>'.$notes.'</small></div>
+                        </div>
+
+                        <!-- Row for Rejected By -->
+                        <div class="row g-0 mb-1 align-items-baseline">
+                            <div class="col-6 text-nowrap"><small><strong>Rejected By</strong></small></div>
+                            <div class="col-auto me-1">:<small></small></div>
+                            <div class="col"><small>'.$verified_by.'</small></div>
+                        </div>
+
+                        <!-- Row for Rejected At -->
+                        <div class="row g-0 align-items-baseline">
+                            <div class="col-4 text-nowrap"><small><strong>Rejected At</strong></small></div>
+                            <div class="col-auto me-1">:<small></small></div>
+                            <div class="col"><small>'.$verified_at.'</small></div>
+                        </div>
+                    </div>',
                     default => '<span class="badge bg-secondary">Unknown Status</span>',
                 };
             })
@@ -692,13 +733,7 @@ class SubmitClaimService {
             $rules = [
                 'action' => ['required', Rule::in(['approve', 'reject'])],
                 'notes' => ['nullable', 'string', 'max:1000'],
-                'transfer_document' => [
-                    Rule::requiredIf($request->input('action') === 'approve'), // Required only if approving
-                    'nullable',
-                    'file',         // Must be a file
-                    'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png', // Allowed file types
-                    'max:5120',     // Max 5MB (5120 KB)
-                ],
+                
             ];
 
            
@@ -717,16 +752,7 @@ class SubmitClaimService {
             $transferDocumentPath = null;
 
             if ($action === 'approve') {
-                // Handle file upload for approval
-                if ($request->hasFile('transfer_document')) {
-                    $file = $request->file('transfer_document');
-                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $transferDocumentPath = $file->storeAs('public/claim_transfers', $fileName); // Store in storage/app/public/claim_transfers
-                } else {
-                    // This should not happen if requiredIf is working, but as a safeguard
-                    DB::rollBack();
-                    return Response::json(['message' => 'Transfer document is required for approval.'], 422);
-                }
+                
                 $newStatus = SubmitClaim::STATUS_APPROVED;
                 $statusText = 'approved';
             } else { // action is 'reject'
@@ -764,8 +790,8 @@ class SubmitClaimService {
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
-            Log::error("SubmitClaim with ID {$id} not found for approval action. Error: " . $e->getMessage());
-            return Response::json(['message' => 'Claim not found.'], 404);
+            //Log::error("SubmitClaim with ID {$id} not found for approval action. Error: " . $e->getMessage());
+            return Response::json(['message' => 'Claim Item not found.'.$id], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             Log::warning("Validation error during approval action for Claim ID {$id}: " . json_encode($e->errors()));

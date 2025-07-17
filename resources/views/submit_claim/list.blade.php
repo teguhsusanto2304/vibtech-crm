@@ -63,7 +63,7 @@
                         <button class="nav-link active" id="submited-claims-tab" data-bs-toggle="tab" data-bs-target="#submited-claims-pane" type="button" role="tab" aria-controls="submited-claims-pane" aria-selected="false" data-status="2">Submitted</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="approved-claims-tab" data-bs-toggle="tab" data-bs-target="#approved-claims-pane" type="button" role="tab" aria-controls="approved-claims-pane" aria-selected="false" data-status="3">Approved</button>
+                        <button class="nav-link" id="approved-claims-tab" data-bs-toggle="tab" data-bs-target="#approved-claims-pane" type="button" role="tab" aria-controls="approved-claims-pane" aria-selected="false" data-status="3">All Completed Claims</button>
                     </li>
                     @else
                     <li class="nav-item" role="presentation">
@@ -73,7 +73,7 @@
                         <button class="nav-link" id="submited-claims-tab" data-bs-toggle="tab" data-bs-target="#submited-claims-pane" type="button" role="tab" aria-controls="submited-claims-pane" aria-selected="false" data-status="2">Submitted</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="approved-claims-tab" data-bs-toggle="tab" data-bs-target="#approved-claims-pane" type="button" role="tab" aria-controls="approved-claims-pane" aria-selected="false" data-status="3">Approved</button>
+                        <button class="nav-link" id="approved-claims-tab" data-bs-toggle="tab" data-bs-target="#approved-claims-pane" type="button" role="tab" aria-controls="approved-claims-pane" aria-selected="false" data-status="3">Completed Claims</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="rejected-claims-tab" data-bs-toggle="tab" data-bs-target="#rejected-claims-pane" type="button" role="tab" aria-controls="rejected-claims-pane" aria-selected="false" data-status="4">Rejected</button>

@@ -90,7 +90,7 @@
                             @if($claim->data_status==\App\Models\SubmitClaim::STATUS_SUBMIT && request()->query('from'))
                         <button class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
                             data-bs-toggle="modal" data-bs-target="#approveClaimModal" data-claim-id="{{ $claim->obfuscated_id }}">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Complete This Claim
+                                Complete Claim Process
                         </button>
                        
                         @endif
@@ -229,6 +229,33 @@
             </div>
         </div>
 
+         <!-- Approve Claim Item Modal -->
+        <div class="modal fade" id="approveClaimItemModal" tabindex="-1" aria-labelledby="approveClaimModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="approveClaimItemForm" >
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="approveClaimModalLabel">Approve Claim Item</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="approve_claim_id" id="approveClaimItemClaimId">
+                            <input type="hidden" name="approve_claim_item_id" id="approveClaimItemClaimItemId">
+                            <input type="hidden" name="action" value="approve">
+                            <p>Are you sure you want to approve this claim item?</p>
+                            
+                           
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Approve</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Reject Claim Modal -->
         <div class="modal fade" id="rejectClaimModal" tabindex="-1" aria-labelledby="rejectClaimModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -240,8 +267,8 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="text" name="claim_id" id="rejectClaimId">
-                            <input type="text" name="claim_item_id" id="rejectClaimItemId">
+                            <input type="hidden" name="claim_id" id="rejectClaimId">
+                            <input type="hidden" name="claim_item_id" id="rejectClaimItemId">
                             <input type="hidden" name="action" value="reject">
                             <p>Are you sure you want to reject this claim?</p>
                             <div class="mb-3">
@@ -305,7 +332,10 @@
                         <div class="modal-footer">
                             <div class="btn-group" role="group" aria-label="Basic example">
                                 @can('view-all-submit-claim')
-                                <button type="button" id="approvedSubmitClaimIdButton" class="btn btn-success" data-bs-dismiss="modal">Approved</button>
+                                 <button  class="btn btn-success bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
+                                    id="approvedSubmitClaimIdButton" data-bs-toggle="modal" data-bs-target="#approveClaimItemModal" data-approve-claim-id="{{ $claim->obfuscated_id }}"  data-approve-claim-item-id="">
+                                    Approved
+                                </button>
                                  <button class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm"
                                     id="submitClaimIdButton" data-bs-toggle="modal" data-bs-target="#rejectClaimModal" data-claim-id="{{ $claim->obfuscated_id }}"  data-claim-item-id="">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
                                         Reject This Claim
@@ -496,6 +526,7 @@
                         $('#modalCreatedDate').text(response.created_at_formatted);
                         $('#modalClaimPurpose').text(response.description);
                         $('#submitClaimIdButton').data('claim-item-id', response.id);
+                        $('#approvedSubmitClaimIdButton').data('approve-claim-item-id', response.id);
                         // Populate files list
                         const filesListDiv = $('#modalFilesList');
                         filesListDiv.empty(); // Clear previous files
@@ -660,6 +691,19 @@
                 modal.find('#rejectionReason').val(''); // Clear rejection reason
             });
 
+            $('#approveClaimItemModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget); // Button that triggered the modal
+                const claimId = button.data('approve-claim-id');
+                const claimItemId = button.data('approve-claim-item-id');
+                const modal = $(this);
+                modal.find('#approveClaimItemClaimId').val(claimId);
+                modal.find('#approveClaimItemClaimItemId').val(claimItemId);
+                // Clear previous validation feedback
+                modal.find('.form-control').removeClass('is-invalid');
+                modal.find('.invalid-feedback').text('');
+                modal.find('#rejectionReason').val(''); // Clear rejection reason
+            });
+
             $('#approveClaimForm').on('submit', function(e) {
                 e.preventDefault();
                 const form = $(this);
@@ -683,6 +727,51 @@
                     success: function(response) {
                         displayMessage('success', response.message);
                         $('#approveClaimModal').hide(); // Hide the modal
+                        location.reload(); // Reload page to update claim status and history
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'An error occurred.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            // Display validation errors
+                            if (xhr.responseJSON.errors) {
+                                for (const field in xhr.responseJSON.errors) {
+                                    const input = form.find(`[name="${field}"]`);
+                                    input.addClass('is-invalid');
+                                    input.next('.invalid-feedback').text(xhr.responseJSON.errors[field][0]);
+                                }
+                            }
+                        }
+                        displayMessage('danger', errorMessage);
+                    }
+                });
+            });
+
+            $('#approveClaimItemForm').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const claimId = form.find('#approveClaimItemClaimItemId').val();
+                const actionUrl = `/v1/submit-claim/${claimId}/action-claim-item`;
+                const formData = new FormData(this); // 'this' refers to the form element
+
+                // Clear previous validation feedback
+                form.find('.form-control').removeClass('is-invalid');
+                form.find('.invalid-feedback').text('');
+
+                $.ajax({
+                    url: actionUrl,
+                    type: 'POST',
+                    data: formData,
+                    processData: false, 
+                    contentType: false, 
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        displayMessage('success', response.message);
+                        $('#approveClaimItemModal').hide(); // Hide the modal
                         location.reload(); // Reload page to update claim status and history
                     },
                     error: function(xhr) {

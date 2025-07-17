@@ -73,7 +73,7 @@ class SubmitClaim extends Model
         return match ($this->data_status) {
             self::STATUS_DRAFT => '<span class="badge bg-warning"><small>Draft</small></span>',
             self::STATUS_SUBMIT => '<span class="badge bg-info"><small>Submitted</small></span>',
-            self::STATUS_APPROVED => '<span class="badge bg-success"><small>Approved</small></span>',
+            self::STATUS_APPROVED => '<span class="badge bg-success"><small>Completed</small></span>',
             self::STATUS_REJECTED => '<span class="badge bg-danger"><small>Rejected</small></span>',
             default => '<span class="badge bg-danger"><small>unknown</small></span>',
         };
