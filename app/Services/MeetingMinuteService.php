@@ -14,6 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf; // Import the PDF Facade
 use ZipArchive; // Import ZipArchive for creating ZIP files
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class MeetingMinuteService 
 {
@@ -256,7 +257,7 @@ class MeetingMinuteService
         Storage::disk('local')->deleteDirectory($tempDir); // Delete the temporary directory
 
         // Return the ZIP file as a download
-        return response()->download($zipFilePath)->deleteFileAfterSend(true);
+        return response()->download($zipFilePath)->deleteFileAfterSend(true)->header('Content-Type', 'application/zip');;
 
     }
 
