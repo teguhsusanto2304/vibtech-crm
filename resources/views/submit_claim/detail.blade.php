@@ -201,13 +201,13 @@
                     <form id="approveClaimForm" enctype="multipart/form-data">
                         @csrf
                         <div class="modal-header">
-                            <h5 class="modal-title" id="approveClaimModalLabel">Approve Claim</h5>
+                            <h5 class="modal-title" id="approveClaimModalLabel">Complete Claim</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" name="claim_id" id="approveClaimId">
                             <input type="hidden" name="action" value="approve">
-                            <p>Are you sure you want to approve this claim?</p>
+                            <p>Are you sure you want to complete this claim?</p>
                             <div class="mb-3">
                                 <label for="transferDocument" class="form-label">Transfer Document (PDF, PNG, JPG - Max 5MB):</label>
                                 <input class="form-control" type="file" id="transferDocument" name="transfer_document" required>
@@ -218,11 +218,16 @@
                                 <input type="datetime-local" name="transfered_at" id="transfered_at" class="form-control">
                                 <div class="invalid-feedback" id="transferDateFeedback"></div>
                             </div>
+                            <div class="mb-3">
+                                <label for="rejectionReason" class="form-label">Reason for Complete:</label>
+                                <textarea class="form-control" id="approveReason" name="notes" rows="4" required></textarea>
+                                <div class="invalid-feedback" id="rejectionReasonFeedback"></div>
+                            </div>
                            
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-success">Approve</button>
+                            <button type="submit" class="btn btn-success">Complete</button>
                         </div>
                     </form>
                 </div>

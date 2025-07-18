@@ -111,6 +111,36 @@
 
     <script>
         $(document).ready(function() {
+
+            $('#bulkExportBtn').on('click', function() {
+                const month = $('#filter_month').val();
+                const year = $('#filter_year').val();
+                
+                // Construct the URL with current filters
+                // Ensure this route name matches the one you define in web.php
+                const exportUrl = `{{ route("v1.meeting-minutes.bulk-export-pdf") }}?month=${month}&year=${year}`;
+                
+                // Redirect the browser to this URL to trigger the download
+                window.location.href = exportUrl;
+
+                // Optional: Provide user feedback that download is starting
+                displayMessage('info', 'Generating and preparing your ZIP file for download. This may take a moment...');
+            });
+
+            // Helper function to display messages (ensure this function exists as it's used above)
+            function displayMessage(type, message) {
+                const msgDiv = $('#msg');
+                msgDiv.html(`
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+                $('html, body').animate({
+                    scrollTop: msgDiv.offset().top - 100
+                }, 500);
+            }
+            
             let meetingMinutesTable; // Declare DataTable instance globally in this scope
 
             function initializeDataTable(month = '', year = '') {

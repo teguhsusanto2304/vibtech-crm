@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.meeting-minutes.update-status');
             Route::post('/{id}/action', 'handleApprovalAction')->name('v1.meeting-minutes.action');
             Route::get('/bulk-export-pdf','pdf')->name('v1.meeting-minutes.bulk-export-pdf');
+            Route::get('/bulk-export-pdf', 'bulkExportPdf')->name('v1.meeting-minutes.bulk-export-pdf');
             //->middleware('can:approve-claims');
         });
     });

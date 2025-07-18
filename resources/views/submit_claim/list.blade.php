@@ -75,7 +75,7 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="approved-claims-tab" data-bs-toggle="tab" data-bs-target="#approved-claims-pane" type="button" role="tab" aria-controls="approved-claims-pane" aria-selected="false" data-status="3">Completed Claims</button>
                     </li>
-                    <li class="nav-item" role="presentation">
+                    <li class="nav-item invisible" role="presentation">
                         <button class="nav-link" id="rejected-claims-tab" data-bs-toggle="tab" data-bs-target="#rejected-claims-pane" type="button" role="tab" aria-controls="rejected-claims-pane" aria-selected="false" data-status="4">Rejected</button>
                     </li>
                     @endif

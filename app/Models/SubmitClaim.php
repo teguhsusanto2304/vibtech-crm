@@ -14,6 +14,7 @@ class SubmitClaim extends Model
     const STATUS_SUBMIT = 2; // New status for claims awaiting admin action
     const STATUS_APPROVED = 3;
     const STATUS_REJECTED = 4;
+    const STATUS_DELETED = 0;
     use HasFactory;
     protected $fillable = [
         'serial_number',
@@ -102,7 +103,14 @@ class SubmitClaim extends Model
             case self::STATUS_APPROVED:
                 $statusHtml = '';
                 if(!is_null($latestApproval)){
-                    $notesHtml = '<div class="mb-3 mt-3"><strong>Transfer Doc:</strong> <div><a href="' . Storage::disk('public')->url($latestApproval->transfer_document_path) . '" target="_blank">View</a></div></div>';
+                    $notesHtml = '<div class="mb-3 mt-3">
+                    <strong>Transfer Doc:</strong> 
+                    <div>
+                        <a href="/storage/'.str_replace('public/', '', $latestApproval->transfer_document_path).'" target="_blank">View Transfer Document</a>
+                    </div>
+                </div>
+                <div class="mb-3 mt-3"><strong>Notes:</strong> <div>' . e($latestApproval->notes) . '</div></div>';
+                    
                 } else {
                     $notesHtml = '<div class="mb-3 mt-3"><strong>Transfer Doc:</strong> <div>N/A</div></div>';
                 }
@@ -111,10 +119,6 @@ class SubmitClaim extends Model
 
             case self::STATUS_REJECTED:
                 $statusHtml = '';
-                
-                    
-                    
-                
                 $notesHtml = '<div class="mb-3 mt-3"><strong>Reason:</strong> <div>' . e($latestApproval->notes) . '</div></div>';
                 // Check if latestApproval exists, its status is 'rejected', and it has notes
                 if ($latestApproval && $latestApproval->status === 'rejected' && $latestApproval->notes) {
@@ -137,7 +141,7 @@ class SubmitClaim extends Model
     {
         // Check if the relationship is loaded to prevent N+1 query issue
         if ($this->relationLoaded('submitClaimItems')) {
-            $items = $this->submitClaimItems()->where('data_status',1)->get();
+            $items = $this->submitClaimItems()->whereIn('data_status',[SubmitClaim::STATUS_DRAFT,SubmitClaim::STATUS_APPROVED])->get();
         } else {
             // If not loaded, fetch them (consider eager loading this relationship in your controller)
             $items = $this->submitClaimItems()->where('data_status',1)->get();

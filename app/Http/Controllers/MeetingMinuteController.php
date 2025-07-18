@@ -65,4 +65,19 @@ class MeetingMinuteController extends Controller
         return $this->meetingMinuteService->show($id);
     }
 
+    public function bulkExportPdf(Request $request)
+    {
+        return $this->meetingMinuteService->bulkExportPdf($request);
+    }
+
+    public function pdfPreview(MeetingMinute $minute)
+    {
+        return $this->meetingMinuteService->pdfPreview($minute);
+    }
+
+    public function downloadPdf(MeetingMinute $minute)
+    {
+        return $this->meetingMinuteService->downloadPdf($minute);
+    }
+
 }

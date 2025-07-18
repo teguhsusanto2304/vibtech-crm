@@ -381,13 +381,18 @@ class SubmitClaimService {
         $cacheDuration = 60; // Cache for 60 seconds (1 minute)
 
         // Use Cache::remember to get data from cache or execute query and store
-        $submitClaimItems = Cache::remember($cacheKey, $cacheDuration, function () use ($submit_claim_id) {
+        /**$submitClaimItems = Cache::remember($cacheKey, $cacheDuration, function () use ($submit_claim_id) {
             return SubmitClaimItem::query()
                 ->where('data_status', '!=', 0)
                 ->where('submit_claim_id', $submit_claim_id)
                 ->orderBy('created_at', 'DESC')
                 ->get(); // Execute the query and get the collection
-        });
+        });**/
+        $submitClaimItems = SubmitClaimItem::query()
+                ->where('data_status', '!=', SubmitClaim::STATUS_DELETED)
+                ->where('submit_claim_id', $submit_claim_id)
+                ->orderBy('created_at', 'DESC')
+                ->get(); 
 
         return DataTables::collection($submitClaimItems) // ✅ Correct: passing builder, not collection
             ->addIndexColumn()   
