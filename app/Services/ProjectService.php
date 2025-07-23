@@ -61,6 +61,7 @@ class ProjectService {
                 'description' => $validatedData['description'],
                 'start_at' => $validatedData['start_at'],
                 'end_at' => $validatedData['end_at'],
+                'phase' => $validatedData['phases'],
                 'project_manager_id' => Auth::id(), // Set the authenticated user as the project manager
             ]);
 
@@ -96,6 +97,16 @@ class ProjectService {
                         'uploaded_by_user_id' => Auth::id(),
                     ]);
                 }
+            }
+            for($iphases = 0; $iphases < $request->phases+1; $iphases++){
+                $project->phases()->create([
+                    'phase' => $iphases+1,
+                    'name' => 'Phase #'.($iphases+1).' of '.$validatedData['name'],
+                    'description' => 'Phase #'.($iphases+1).' of '.$validatedData['name'].' description',
+                    'start_date' => date('Y-m-d'),
+                    'end_date' => date('Y-m-d'),
+                    'data_status'=>1
+                ]);
             }
 
 
