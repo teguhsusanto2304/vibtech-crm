@@ -202,7 +202,7 @@
                         $('#submitMinutesBtn').prop('disabled', true).text('Submitting...');
                     },
                     success: function(response) {
-                        window.location.href = '{{ route("v1.meeting-minutes.list") }}'; 
+                        window.location.href = '{{ route("v1.meeting-minutes.create") }}'; 
                     },
                     error: function(xhr) {
                         let errorMessage = 'An error occurred.';

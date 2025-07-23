@@ -26,7 +26,7 @@ class MeetingMinuteService
      */
     public function create()
     {
-        $users = User::orderBy('name')->get(); // Get all users/staff for attendee selection
+        $users = User::orderBy('name')->whereNot('user_status',0)->get(); // Get all users/staff for attendee selection
         $breadcrumb = ['Dashboard', 'Meeting Minutes', 'Record New'];
         $title = 'Record New Meeting Minutes';
 

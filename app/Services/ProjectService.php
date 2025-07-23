@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectStage;
 use App\Models\ProjectFile;
 use App\Models\ProjectMember;
+use App\Models\ProjectPhase;
 use Auth;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectStageLog;
@@ -13,6 +14,8 @@ use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class ProjectService {
 
@@ -48,6 +51,7 @@ class ProjectService {
             'addProjectMembers.*' => 'integer|exists:users,id', // Each member ID must be an integer and exist in users table
             'project_files' => 'nullable|array|max:5', // Max 5 new files
             'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
+            'phases' => 'required|numeric|min:1|max:30',
         ]);
 
         try {
@@ -121,6 +125,38 @@ class ProjectService {
                 'message' => 'Failed to create project. Please try again later.'.$e->getMessage()
             ], 500); // 500 Internal Server Error
         }
+    }
+
+    /**
+     * Mendapatkan daftar stage berdasarkan project dan phase yang dipilih.
+     * Digunakan untuk AJAX.
+     *
+     * @param  \App\Models\Project  $project
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStagesByPhase(Project $project, Request $request)
+    {
+        $phaseId = $request->input('phase_id');
+
+        // Simpan phase yang dipilih ke sesi
+        Session::put('selected_project_phase_id_' . $project->id, $phaseId);
+        // Hapus stage dan task dari sesi jika phase berubah
+        Session::forget('selected_project_stage_id_' . $project->id);
+        Session::forget('selected_project_task_id_' . $project->id);
+
+        if (!$phaseId) {
+            return response()->json([]);
+        }
+
+        // Ambil stages yang terkait dengan phase_id dan project_id
+        $stages = ProjectStage::where('project_phase_id', $phaseId)
+                              ->whereHas('phase', function ($query) use ($project) {
+                                  $query->where('project_id', $project->id);
+                              })
+                              ->get(['id', 'name']); // Hanya ambil kolom yang dibutuhkan
+
+        return response()->json($stages);
     }
 
     public function getProjectsData(Request $request)
@@ -383,13 +419,13 @@ class ProjectService {
             ], 409); // Conflict
         }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // 5. Attach the new member to the project
             // The attach() method is used for adding a single new association in a many-to-many relationship.
             $project->projectMembers()->attach($memberIdToAdd);
 
-            \DB::commit();
+            DB::commit();
 
             // Return success response with updated member count or new member data
             return response()->json([
@@ -405,7 +441,7 @@ class ProjectService {
             ]);
 
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             \Log::error("Error adding member {$memberIdToAdd} to project {$project->id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -446,13 +482,13 @@ class ProjectService {
             ], 404); // Not Found
         }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // 4. Detach the member from the project
             // Pass the ID of the user to detach.
             $project->projectMembers()->detach($user_id);
 
-            \DB::commit();
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -461,7 +497,7 @@ class ProjectService {
             ]);
 
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             \Log::error("Error detaching member {$user_id} from project {$project->id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -484,7 +520,7 @@ class ProjectService {
         $project = Project::find($decodedId);
         
         if($project_stage_id=='-'){
-            \DB::beginTransaction();
+            DB::beginTransaction();
             try {
                 $projectStage = new ProjectStage;
                 // 5. Update the ProjectStage status and completed_at timestamp
@@ -492,10 +528,11 @@ class ProjectService {
                 $projectStage->completed_at = Carbon::now();
                 $projectStage->kanban_stage_id = $request->input('kanban_stage_id');
                 $projectStage->project_id = $decodedId;
+                $projectStage->project_phase_id = Session::get('selected_project_phase_id_' . $project->id);
                 $projectStage->notes = 'N/A';
                 $projectStage->save();
 
-                \DB::commit();
+                DB::commit();
 
                 return response()->json([
                     'success' => true,
@@ -504,7 +541,7 @@ class ProjectService {
                 ]);
 
             } catch (\Exception $e) {
-                \DB::rollBack();
+                DB::rollBack();
                 \Log::error("Error completing project stage {$projectStage->id} for project {$project->id}: " . $e->getMessage());
                 return response()->json([
                     'success' => false,
@@ -559,14 +596,14 @@ class ProjectService {
             //    ], 400); // Bad Request
             //}
 
-            \DB::beginTransaction();
+            DB::beginTransaction();
             try {
                 // 5. Update the ProjectStage status and completed_at timestamp
                 $projectStage->data_status = 2;
                 $projectStage->completed_at = Carbon::now();
                 $projectStage->save();
 
-                \DB::commit();
+                DB::commit();
 
                 return response()->json([
                     'success' => true,
@@ -575,7 +612,7 @@ class ProjectService {
                 ]);
 
             } catch (\Exception $e) {
-                \DB::rollBack();
+                DB::rollBack();
                 \Log::error("Error completing project stage {$projectStage->id} for project {$project->id}: " . $e->getMessage());
                 return response()->json([
                     'success' => false,
@@ -625,7 +662,7 @@ class ProjectService {
         //     ], 400);
         // }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // 4. Update the Project's overall status and completion timestamp
             // Assuming you have a 'status' column and 'completed_at' timestamp on your Project model
@@ -633,7 +670,7 @@ class ProjectService {
             $project->updated_at = Carbon::now();
             $project->save();
 
-            \DB::commit();
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -642,12 +679,77 @@ class ProjectService {
             ]);
 
         } catch (\Exception $e) {
-           \DB::rollBack();
+           DB::rollBack();
             \Log::error("Error completing project {$project->id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while marking the project complete. Please try again.'
             ], 500); // Internal Server Error
+        }
+    }
+
+    /**
+     * Mark a specific project phase as 'completed'.
+     *
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function completePhase(Request $request, $project_id, $phase_id)
+    {
+        // 1. Basic Authorization Check (Optional but Recommended)
+        // Ensure the current user has permission to complete phases
+        // if (!Auth::user()->can('complete-project-phase', $phase)) {
+        //     return response()->json(['success' => false, 'message' => 'Unauthorized to complete this phase.'], 403);
+        // }
+        $decodedId = IdObfuscator::decode($project_id);
+        $phase = ProjectPhase::find($phase_id);
+
+        // 2. Verify Phase Belongs to Project
+        if ($phase->project_id !== $decodedId) {
+            return response()->json(['success' => false, 'message' => 'Phase not found for this project.'], 404);
+        }
+
+        // 3. Validation: Check if all required stages are completed
+        // Assuming '8' is the total number of stages that *must* be completed
+        // This '8' should ideally come from a configuration or another attribute on ProjectPhase/Project
+        // For now, we'll use a hardcoded 8 as per your condition.
+        $requiredCompletedStages = 8; // Define this clearly
+
+        if ($phase->completed_stages_count < $requiredCompletedStages) {
+            return response()->json([
+                'success' => false,
+                'message' => "All stages must be completed before marking the phase as complete. Currently {$phase->completed_stages_count}/{$requiredCompletedStages} stages are completed."
+            ], 422); // 422 Unprocessable Entity
+        }
+
+        // 4. Prevent re-completion
+        if ($phase->data_status === ProjectPhase::STATUS_COMPLETED) {
+            return response()->json(['success' => false, 'message' => 'This phase is already marked as completed.'], 409); // 409 Conflict
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update the phase status
+            $phase->data_status = ProjectPhase::STATUS_COMPLETED; // Assuming 'data_status' is the column for phase status
+            $phase->save();
+
+            // Optional: Log the action
+            // \Log::info("Project Phase Completed", [
+            //     'project_id' => $project->id,
+            //     'phase_id' => $phase->id,
+            //     'completed_by' => Auth::id()
+            // ]);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Project phase marked as completed successfully!']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error completing project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
+            return response()->json(['success' => false, 'message' => 'An unexpected error occurred while completing the phase.'], 500);
         }
     }
 
@@ -717,7 +819,7 @@ class ProjectService {
     {
         $projectFile = ProjectFile::findOrFail($projectFileId); // Find the file
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             // Delete the file from storage
             if (Storage::disk('public')->exists($projectFile->file_path)) {
@@ -727,7 +829,7 @@ class ProjectService {
             // Delete the file record from the database
             $projectFile->delete();
 
-            \DB::commit();
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -735,7 +837,7 @@ class ProjectService {
             ]);
 
         } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::rollBack();
             \Log::error("Error deleting project file {$projectFile->id}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -751,7 +853,12 @@ class ProjectService {
     public function getStageBulletinsData($projectStageId,$projectId)
     {
         // Eager load the 'createdBy' relationship to get user names
-        $bulletins = ProjectStageLog::where(['stage_id'=>$projectStageId,'project_id'=>$projectId])->orderBy('created_at','DESC')->get();
+        $bulletins = ProjectStageLog::where([
+            'stage_id' => $projectStageId,
+            'project_id' => $projectId,
+            'project_phase_id' => Session::get('selected_project_phase_id_' . $projectId)
+            ])
+            ->orderBy('created_at','DESC')->get();
 
         return response()->json([
             'bulletins' => $bulletins->map(function ($bulletin) {
@@ -784,6 +891,7 @@ class ProjectService {
         // Create a NEW ProjectStageLog record
         $bulletin = ProjectStageLog::create([
             'project_id' => $projectId,       // Assign the project ID
+            'project_phase_id' => Session::get('selected_project_phase_id_' . $projectId),
             'stage_id' => $projectStageId,   // Assign the stage ID
             'description' => $request->input('description'),
             'created_by' => Auth::id(),

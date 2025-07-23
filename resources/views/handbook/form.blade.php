@@ -42,10 +42,18 @@
             @endif
             <div class="card">
                 <div class="card-body">
+                    @if (Route::currentRouteName() === 'v1.staff-resources.create') 
+                    <form class="row g-3"
+                        action="{{  route('v1.staff-resources.store') }}"
+                        method="post"
+                        enctype="multipart/form-data">
+                    @endif
+                    @if (Route::currentRouteName() === 'v1.employee-handbooks.create') 
                     <form class="row g-3"
                         action="{{  route('v1.employee-handbooks.store') }}"
                         method="post"
                         enctype="multipart/form-data">
+                    @endif
                         @csrf
 
                         <div class="col-md-8">
@@ -59,12 +67,16 @@
                                 placeholder="Enter description">
                         </div>
                         <div class="col-md-12">
-                            <label for="staffName" class="form-label">PDF Files</label>
-                            <input type="file" class="form-control" name="path_file" accept=".pdf">
+                            <label for="staffName" class="form-label">Upload Files (.pdf, .png, .jpg, .doc, .docx)</label>
+                            <input type="file" class="form-control" name="path_file" accept=".pdf, .png, .jpg, .doc, .docx">
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Submit</button>
-                            <a href="{{ route('v1.employee-handbooks.list')}}" class="btn btn-warning">Cancel</a>
+                            @if (Route::currentRouteName() === 'v1.employee-handbooks.create') 
+                                <a href="{{ route('v1.employee-handbooks.list')}}" class="btn btn-warning">Cancel</a>
+                            @else
+                                <a href="{{ route('v1.staff-resources.list')}}" class="btn btn-warning">Cancel</a>
+                            @endif
                         </div>
                     </form>
                 </div>

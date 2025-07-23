@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('project_manager_id')->constrained('users')->onDelete('cascade');
             $table->date('start_at');
             $table->date('end_at');
+            $table->integer('phase');
             $table->integer('data_status')->default(1);
             $table->timestamps();
         });

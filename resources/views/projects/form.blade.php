@@ -143,7 +143,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Project Manager</label>
+                            <label class="form-label">Project Lead</label>
                             <div class="d-flex align-items-center p-2 border rounded bg-white">
                                 <img src="{{ asset(auth()->user()->avatar_url) }}" alt="Manager" class="rounded-circle me-2" width="40" height="40">
                                 <span class="fw-semibold text-dark">You</span>
@@ -151,7 +151,7 @@
                         </div>
                         <!-- Project Files Upload Field ADDED HERE -->
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                            <label class="form-label">Upload New Project Files (PNG, JPG, PDF, DOC/DOCX)</label>
                             <div id="new-file-upload-container">
                                 {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
                                 @if(old('project_files'))
@@ -284,8 +284,14 @@
                                 });
                             });
                         </script>
-                    </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phase(s)</label>
+                            <input type="number" name="phases" id="phases" max="30" class="form-control" value="1">
+                            <div class="invalid-feedback"></div>
+                        </div>
 
+                    </div>
+                    
                     <!-- Buttons -->
                     <div class="col-12">
                             <a href="{{ route('v1.project-management')}}" class="btn btn-warning">Cancel</a>
@@ -361,6 +367,23 @@
 
         // --- Select2 Initialization ---
         $(document).ready(function() {
+            $('#phases').on('input', function() {
+                const maxValue = parseInt($(this).attr('max'));
+                const currentValue = parseInt($(this).val());
+
+                if (currentValue > maxValue) {
+                    $(this).addClass('is-invalid');
+                    // Assuming you have a div for feedback right after the input
+                    $(this).next('.invalid-feedback').text(`The value cannot exceed ${maxValue}.`).addClass('d-block');
+                } else if (currentValue <= 0) {
+                    $(this).addClass('is-invalid');
+                    // Assuming you have a div for feedback right after the input
+                    $(this).next('.invalid-feedback').text(`The value cannot less more 1.`).addClass('d-block');
+                } else {
+                    $(this).removeClass('is-invalid');
+                    $(this).next('.invalid-feedback').text('').removeClass('d-block');
+                }
+            });
             $('#addProjectMembers').select2({
                 placeholder: "Select project members", // Text shown when no items are selected
                 allowClear: true, // Allows clearing all selections

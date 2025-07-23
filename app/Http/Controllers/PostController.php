@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 use App\Services\CommonService;
 use App\Mail\NewMemoNotification;
-use App\Mail\UpdateMemoNotification;
+use App\Mail\NewHandbookNotification;
 
 class PostController extends Controller
 {
@@ -38,10 +38,10 @@ class PostController extends Controller
     public function handbook(Request $request)
     {
         if (auth()->user()->can('create-employee-handbook')) {
-            $posts = Post::where('post_type', 1)
+            $posts = Post::where('post_type', Post::TYPE_HANDBOOK)
                 ->whereNot('data_status', 3)->latest()->paginate(20);
         } else {
-            $posts = Post::where('post_type', 1)
+            $posts = Post::where('post_type', Post::TYPE_HANDBOOK)
                 ->where('data_status', 1)->latest()->paginate(20);
         }
 
@@ -61,18 +61,44 @@ class PostController extends Controller
         return view('handbook.list', compact('posts', 'selectedPost'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
     }
 
+    public function staffResources(Request $request)
+    {
+        if (auth()->user()->can('create-staff-resources')) {
+            $posts = Post::where('post_type', Post::TYPE_STAFF_RESOURCES)
+                ->whereNot('data_status', 3)->latest()->paginate(20);
+        } else {
+            $posts = Post::where('post_type', Post::TYPE_STAFF_RESOURCES)
+                ->where('data_status', 1)->latest()->paginate(20);
+        }
+
+        $selectedPost = null;
+        if ($request->has('post_id')) {
+            $selectedPost = Post::find($request->post_id);
+
+            $notif = request('notif');
+
+            if ($notif) {
+                Auth::user()->notifications()
+                    ->where('id', $request->notif)
+                    ->update(['read_at' => now()]);
+            }
+        }
+
+        return view('handbook.list', compact('posts', 'selectedPost'))->with('title', 'Staff Resources')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Staff Resources']);
+    }
+
     public function memo(Request $request)
     {
         $totalRelevantUsersCount = User::where('user_status', 1)->count();
 
         if (auth()->user()->can('create-management-memo')) {
-            $posts = Post::where('post_type', 2)
+            $posts = Post::where('post_type', Post::TYPE_MEMO)
                 ->whereNot('data_status', 3)
                 ->withCount('userRead')
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
-            $posts = Post::where('post_type', 2)
+            $posts = Post::where('post_type', Post::TYPE_MEMO)
                 ->where('data_status', 1)
                 ->withCount('userRead')
                 ->orderBy('created_at', 'desc')
@@ -97,11 +123,23 @@ class PostController extends Controller
         return view('handbook.form')->with('title', 'Create a New Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Create a New Employee Handbook']);
     }
 
+    public function createStaffResources()
+    {
+        return view('handbook.form')->with('title', 'Create a New Staff Resources')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Staff Resources', 'Create a New Staff Resources']);
+    }
+
     public function read_handbook($id)
     {
         $post = Post::findOrFail($id);
 
         return view('handbook.read', compact('post'))->with('title', 'Read Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Read Employee Handbook']);
+    }
+
+    public function readStaffResources($id)
+    {
+        $post = Post::findOrFail($id);
+
+        return view('handbook.read', compact('post'))->with('title', 'Read Staff Resources')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Staff Resources', 'Read Staff Resources']);
     }
 
     public function create_memo()
@@ -165,6 +203,44 @@ class PostController extends Controller
             ->with('success', 'Employee handbook has created!');
     }
 
+    public function storeStaffResources(Request $request)
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'pdf' => 'nullable|file|mimes:pdf,doc,docx,png,jpg|max:5120', // max 5MB
+        ]);
+        $data['content'] = $request->input('title');
+        $data['post_type'] = Post::TYPE_STAFF_RESOURCES;
+        $data['data_status'] = 1;
+        $data['created_by'] = auth()->user()->id;
+
+        if ($request->hasFile('path_file')) {
+            $file = $request->file('path_file');
+            $filename = Str::random(20).'.'.$file->getClientOriginalExtension();
+            // $path = $file->storeAs('public/pdfs', $filename);
+            $file->move(public_path('pdfs'), $filename);
+            $data['path_file'] = 'pdfs/'.$filename;
+        }
+
+        $post = Post::create($data);
+
+        /**$users = User::where(['user_status'=>1])->get();
+        foreach($users as $user)
+        {
+            $data = [
+                'employee_name' => $user->name,
+                'creator_name' => $post->user->name,
+                'id' => $post->id,
+                'email'=> $user->email
+            ];
+            $this->commonService->sendEmail($data,NewHandbookNotification::class);
+        }**/
+
+        return redirect()->route('v1.staff-resources.list')
+            ->with('success', 'Staff Resources has created!');
+    }
+
     public function store_memo(Request $request)
     {
         $request->validate([
@@ -211,6 +287,13 @@ class PostController extends Controller
         return view('handbook.edit', compact('handbook'))->with('title', 'Edit Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbooks', 'Edit a Employee Handbook']);
     }
 
+    public function editStaffResources($id)
+    {
+        $handbook = Post::findOrFail($id);
+
+        return view('handbook.edit', compact('handbook'))->with('title', 'Edit Staff Resources')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Staff Resources', 'Edit a Staff Resources']);
+    }
+
     public function edit_memo(string $id)
     {
         $post = Post::findOrFail($id);
@@ -238,7 +321,7 @@ class PostController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'pdf' => 'nullable|file|mimes:pdf|max:5120', // max 5MB
+            'pdf' => 'nullable|file|mimes:pdf,doc,docx,png,jpg|max:5120', // max 5MB
         ]);
 
         if ($request->hasFile('path_file')) {
@@ -252,6 +335,28 @@ class PostController extends Controller
         $post->update($data);
 
         return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
+    }
+
+    public function updateStaffResources(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'pdf' => 'nullable|file|mimes:pdf,doc,docx,png,jpg|max:5120', // max 5MB
+        ]);
+
+        if ($request->hasFile('path_file')) {
+            $file = $request->file('path_file');
+            $filename = Str::random(20).'.'.$file->getClientOriginalExtension();
+            // $path = $file->storeAs('public/pdfs', $filename);
+            $file->move(public_path('pdfs'), $filename);
+            $data['path_file'] = 'pdfs/'.$filename;
+            // $request->merge($data);
+        }
+        $post->update($data);
+
+        return redirect()->route('v1.staff-resources.list')->with('success', 'Staff Resources updated successfully.');
     }
 
     public function update_memo(Request $request, $id)

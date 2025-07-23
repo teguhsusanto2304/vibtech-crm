@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
+    const TYPE_MEMO = 1;
+    const TYPE_HANDBOOK = 2; // New status for claims awaiting admin action
+    const TYPE_STAFF_RESOURCES = 3;
     use HasFactory;
 
     protected $fillable = ['title', 'content', 'path_file', 'description', 'post_type', 'data_status', 'created_by'];

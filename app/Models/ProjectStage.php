@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProjectStage extends Model
 {
+    const STATUS_ACTIVE = 1;
+    const STATUS_COMPLETED =2;
+    const STATUS_DELETED = 0;
     use HasFactory;
     protected $table = 'project_stages';
 
@@ -20,6 +23,7 @@ class ProjectStage extends Model
     protected $fillable = [
         'project_id',
         'kanban_stage_id',
+        'project_phase_id',
         'data_status',
         'completed_at',
         'completed_task',
@@ -42,6 +46,11 @@ class ProjectStage extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+     public function projectPhase()
+    {
+        return $this->belongsTo(ProjectPhase::class);
     }
 
     /**

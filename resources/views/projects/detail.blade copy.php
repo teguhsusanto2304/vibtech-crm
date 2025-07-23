@@ -304,89 +304,6 @@
                                     </div>
                                 </div>
                                 {{-- END: Search Input for Project Members --}}
-                                <div class="mt-5"> {{-- Add margin-top for spacing --}}
-                                    @php
-                                        $currentPhase = \App\Models\ProjectPhase::find($selectedPhaseId);
-                                        if($currentPhase->completed_stages_count < 8 || $currentPhase->data_status === \App\Models\ProjectPhase::STATUS_COMPLETED)
-                                            $disabled = 'disabled';
-                                        else
-                                            $disabled = '';                                        
-                                    @endphp
-                                    <label for="memberCurrentPhase" class="form-label" >Current Phase</label> {{-- Visually hidden label for accessibility --}}
-                                        <label class="detail-value text-muted">#{{ $currentPhase->phase }}</label>
-                                        <p><label class="form-label col-3">Name  </label><label class="form-label col-3">: {{ $currentPhase->name }}</label><br>
-                                        <label class="form-label col-3"><small>Description </label><label class="form-label col-4">: {{ $currentPhase->description }}</small></label><br>
-                                        <label class="form-label col-3"><small>Due Date </label><label class="form-label col-4">: <span class="badge {{ $currentPhase->status_date_badge }} rounded-pill ms-2">
-                                        <i class="fas fa-clock me-1"></i> {{ $currentPhase->end_date ? $currentPhase->end_date->format('d M Y') : 'N/A' }}
-                                        </span></small></label><br>
-                                        <label class="form-label col-3"><small>Status </label><label class="form-label col-4">: <span class="badge bg-small {{ $currentPhase->phase_status_badge }} rounded-pill ms-2">{{ $currentPhase->phase_status }}</span></small>
-                                        <button type="button"
-                                            id="completePhaseBtn_{{ $currentPhase->id }}" {{-- Unique ID for this specific button --}}
-                                            class="btn btn-sm btn-outline-success ms-2 complete-phase-btn ms-4" {{-- Class for JS targeting --}}
-                                            data-phase-project-id="{{ $project->obfuscated_id ?? $project->id }}" {{-- Pass project ID --}}
-                                            data-phase-phase-id="{{ $currentPhase->obfuscated_id ?? $currentPhase->id }}" {{-- Pass phase ID --}}
-                                            {{ $disabled }} {{-- Apply disabled attribute --}}
-                                            title="{{ $disabled ? 'Complete all stages (8) to enable' : 'Mark this phase as complete' }}">
-                                        <i class="fas fa-check me-1"></i> Complete 
-                                    </button></label> </p>  
-                                    <script>
-                                        $(document).ready(function() {
-                                            // ... (Your existing JavaScript code) ...
-
-                                            // Event listener for the "Complete" phase button
-                                            $(document).on('click', '.complete-phase-btn', function() {
-                                                const $button = $(this);
-                                                const projectId = $button.data('phase-project-id');
-                                                const phaseId = $button.data('phase-phase-id');
-
-                                                // Prevent action if button is disabled
-                                                if ($button.is(':disabled')) {
-                                                    return;
-                                                }
-
-                                                if (!confirm('Are you sure you want to mark this phase as COMPLETE? This action cannot be undone.')) {
-                                                    return; // User cancelled
-                                                }
-
-                                                // Show loading state
-                                                $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Completing...');
-
-                                                $.ajax({
-                                                    url: `/v1/project-management/${projectId}/phases/${phaseId}/complete`, // API endpoint
-                                                    type: 'PUT', // Or PATCH/PUT if you prefer
-                                                    data: {
-                                                        _token: "{{ csrf_token() }}" // Laravel CSRF token
-                                                    },
-                                                    success: function(response) {
-                                                        if (response.success) {
-                                                            alert(response.message);
-                                                            // Reload the page or update the UI to reflect the new status
-                                                            location.reload(); // Simple reload for now
-                                                        } else {
-                                                            alert(response.message || 'Failed to complete phase.');
-                                                            $button.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Complete'); // Re-enable button
-                                                        }
-                                                    },
-                                                    error: function(xhr) {
-                                                        let errorMessage = 'An error occurred. Please try again.';
-                                                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                                                            errorMessage = xhr.responseJSON.message;
-                                                        } else if (xhr.status === 403) {
-                                                            errorMessage = 'You are not authorized to complete this phase.';
-                                                        } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                                                            errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
-                                                        }
-                                                        alert(errorMessage);
-                                                        console.error('Error completing phase:', xhr.responseText);
-                                                        $button.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Complete'); // Re-enable button
-                                                    }
-                                                });
-                                            });
-
-                                            // ... (Rest of your existing JavaScript code) ...
-                                        });
-                                    </script>                                     
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -548,29 +465,19 @@
                                             </div>
                                         </div>
                                         <div class="row mt-2">
-                                            <div class="col-md-7">
+                                            <div class="col-md-9">
                                                 <p class="mb-1 text-muted small">{{ \Illuminate\Support\Str::limit($phase->description, 150, '...') }}</p> {{-- Truncated Description --}}
                                             </div>
-                                            <div class="col-md-5 text-end text-muted"> {{-- Status and Buttons together --}}
-                                                {{-- Status Badge (if you want it here, next to buttons, or keep both if desired) --}}
-                                                <span class="badge {{  $phase->phase_status_badge }} rounded-pill me-2">{{ $phase->phase_status }}</span>
-
+                                            <div class="col-md-3 text-end">
                                                 {{-- Action Buttons --}}
                                                 @php
                                                     $projectId = property_exists($project, 'obfuscated_id') ? $project->obfuscated_id : $project->id;
                                                     $phaseId = property_exists($phase, 'obfuscated_id') ? $phase->obfuscated_id : $phase->id;
                                                 @endphp
-                                                <a href="{{ route('v1.project-management.phase', [$project->obfuscated_id, $phaseId]) }}" class="btn btn-info btn-sm me-1" title="View Phase Details">
+                                                <a href="" class="btn btn-info btn-sm me-1" title="View Phase Details">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
-                                                @if($phase->data_status!=\App\Models\ProjectPhase::STATUS_COMPLETED)
-                                                <a href="{{ route('v1.project-management.phase', [$projectId, $phaseId]) }}" class="btn btn-primary btn-sm me-1" title="Edit Phase">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                @endif
-                                                <button type="button" class="btn btn-danger btn-sm delete-phase-btn invisible" data-project-id="{{ $projectId }}" data-phase-id="{{ $phaseId }}" title="Delete Phase">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
+                                                
                                             </div>
                                         </div>
                                     </div>
@@ -605,7 +512,6 @@
                                     // Find the ProjectStage for the previous kanban stage related to THIS project
                                     $previousProjectStage = $project->projectStages
                                     ->where('kanban_stage_id', $prevStageId) // Use $prevStageId here
-                                    ->where('project_phase_id', $selectedPhaseId)
                                     ->first();
 
                                     // Check if the previous ProjectStage exists and its status is 'completed'
@@ -635,7 +541,6 @@
                                 // Get the specific ProjectStage for *this project and this kanbanStage*
                                 $currentProjectStage = $project->projectStages
                                 ->where('kanban_stage_id', $kanbanStage->id)
-                                ->where('project_phase_id', $selectedPhaseId)
                                 ->first();
 
                                 // Determine if the "Complete Stage" button should be enabled
@@ -728,7 +633,6 @@
                                     // Assuming you have $project->projectStages eager loaded with tasks
                                     $projectStage = $project->projectStages() // Access the relationship as a Query Builder
                                         ->where('kanban_stage_id', $kanbanStage->id)
-                                        ->where('project_phase_id', $selectedPhaseId)
                                         ->where('data_status', '!=', 0) // 'whereNot' for DB is 'whereColumn', or simple '!='
                                         ->first();
 
@@ -890,7 +794,6 @@
                                         @csrf
                                         <input type="hidden" name="project_stage_id" id="modalProjectStageId">
                                         <input type="hidden" name="project_id" id="modalProjectId">
-                                        <input type="hidden" name="project_phase_id" id="modalProjectPhaseId">
                                         <div class="mb-3">
                                             <textarea class="form-control" id="newBulletinDescription" name="description" rows="3" placeholder="Enter new bulletin here..." required></textarea>
                                         </div>
@@ -982,7 +885,6 @@
                         const modalStageName = $('#modalStageName');
                         const modalProjectStageIdInput = $('#modalProjectStageId');
                         const modalProjectIdInput = $('#modalProjectId');
-                        const modalProjectPhaseIdInput = $('#modalProjectPhaseId');
                         const addBulletinForm = $('#addBulletinForm');
                         const newBulletinDescription = $('#newBulletinDescription');
                         const formMessages = $('#formMessages');

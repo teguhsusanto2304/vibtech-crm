@@ -27,9 +27,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/add-member', 'addMember')->name('v1.project-management.add-member');
             Route::delete('/{project_id}/remove-member/{user_id}', 'removeMember')->name('v1.project-management.remove-member');
             Route::get('/{project}/detail', 'detail')->name('v1.project-management.detail');
+            Route::get('/{project_id}/{id}/phase', 'phase')->name('v1.project-management.phase');
             Route::get('/{project}/management-detail', 'managementDetail')->name('v1.project-management.management-detail');
             Route::put('/{project_id}/complete', 'markProjectComplete')->name('v1.project-management.complete');
             Route::put('/{project_id}/stages/{project_stage_id}/complete', 'markComplete')->name('v1.project-management.stages.complete');
+            Route::put('/{project_id}/phases/{phase_id}/complete', 'completePhase')->name('v1.project-management.phases.complete');
             Route::get('/{id}/edit', 'edit')->name('v1.project-management.edit');
             Route::delete('/{project}/destroy', 'destroy')->name('v1.project-management.destroy');
             Route::delete('/{projectFileId}/file-destroy', 'fileDestroy')->name('v1.project-management.file-destroy');

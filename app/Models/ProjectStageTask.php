@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProjectStageTask extends Model
 {
+    const STATUS_ON_GOING = 1;
+    const STATUS_PENDING_REVIEW = 2; // New status for claims awaiting admin action
+    const STATUS_OVERDUE = 3;
+    const STATUS_COMPLETED = 4;
+    const STATUS_DELETED = 0;
     use HasFactory;
     /**
      * The table associated with the model.
@@ -106,11 +111,11 @@ class ProjectStageTask extends Model
     public function getTaskStatusAttribute(): string
     {
         $result = '';
-        if($this->data_status==1){
+        if($this->data_status==self::STATUS_ON_GOING){
             $result = 'Task Ongoing';
-        } elseif($this->data_status==2){
+        } elseif($this->data_status==self::STATUS_PENDING_REVIEW){
             $result ='Task Pending Review';
-        } elseif($this->data_status==3){
+        } elseif($this->data_status==self::STATUS_OVERDUE){
             $result = 'Task Overdue';
         } else {
             $result = 'Task Completed';

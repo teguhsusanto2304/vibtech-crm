@@ -32,7 +32,7 @@ class JobAssignmentController extends Controller
 
     public function index()
     {
-        return view('job_assignment.index')->with('title', 'Job Requisition Form')->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form']);
+        return view('job_assignment.index')->with('title', 'Job Requisition')->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition']);
     }
 
     public function create()
@@ -76,8 +76,8 @@ class JobAssignmentController extends Controller
         $vehicles = Vehicle::all();
 
         return view('job_assignment.form', compact('job_no', 'users', 'vehicles'))
-            ->with('title', 'Job Requisition Form')
-            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Create']);
+            ->with('title', 'Job Requisition')
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition', 'Create']);
     }
 
     public function edit($id)
@@ -122,8 +122,8 @@ class JobAssignmentController extends Controller
         $selectedUsers = $job->personnel()->pluck('users.id')->toArray(); // Fetch selected users
 
         return view('job_assignment.edit', compact('job', 'users', 'vehicles', 'selectedUsers'))
-            ->with('title', 'Edit Job Requisition Form')
-            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'Edit']);
+            ->with('title', 'Edit Job Requisition')
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition', 'Edit']);
     }
 
     public function list(Request $request)
@@ -135,7 +135,7 @@ class JobAssignmentController extends Controller
 
         return view('job_assignment.list', compact('job_type', 'job_no', 'users', 'vehicles'))
             ->with('title', 'View Job Requisition')
-            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition Form', 'View Job Requisition']);
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition', 'View Job Requisition']);
     }
 
     public function respond(Request $request)
@@ -213,7 +213,7 @@ class JobAssignmentController extends Controller
             }
         }
 
-        return redirect()->route('v1.job-assignment-form.view', ['id' => $request->input('job_id'), 'respond' => 'yes'])->with('success', 'Job Requisition Form has been respond Successfully');
+        return redirect()->route('v1.job-assignment-form.view', ['id' => $request->input('job_id'), 'respond' => 'yes'])->with('success', 'Job Requisition has been respond Successfully');
     }
 
     public function store(Request $request)

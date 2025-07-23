@@ -62,7 +62,7 @@
                             <img src="{{ $attendee->user->avatar_url ?? 'https://placehold.co/40x40/cccccc/333333?text=N/A' }}" alt="{{ $attendee->user->name ?? 'N/A' }} Avatar" class="rounded-circle me-2" width="30" height="30">
                             <h6 class="mb-0">{{ $attendee->user->name ?? 'Unknown Attendee' }} Notes:</h6>
                         </div>
-                        <p class="mb-0">{{ $attendee->speaker_notes ?? 'No notes recorded for this attendee.' }}</p>
+                        <p class="mb-0">{!! nl2br(e($attendee->speaker_notes ?? 'No notes recorded for this attendee.')) !!}</p>
                     </div>
                 @empty
                     <p class="text-muted">No attendees recorded for this meeting.</p>

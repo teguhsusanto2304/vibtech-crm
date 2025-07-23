@@ -44,10 +44,19 @@
 
         <div class="card">
             <div class="card-body">
-                <form class="row g-3"
+                
+                    @if (Route::currentRouteName() === 'v1.staff-resources.edit') 
+                    <form class="row g-3"
+                      action="{{ route('v1.staff-resources.update', $handbook->id) }}"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    @endif
+                    @if (Route::currentRouteName() === 'v1.employee-handbooks.edit') 
+                    <form class="row g-3"
                       action="{{ route('v1.employee-handbooks.update', $handbook->id) }}"
                       method="POST"
                       enctype="multipart/form-data">
+                    @endif
                     @csrf
                     @method('PUT')
 

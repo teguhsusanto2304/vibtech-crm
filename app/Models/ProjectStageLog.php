@@ -23,6 +23,7 @@ class ProjectStageLog extends Model
      */
     protected $fillable = [
         'project_id',
+        'project_phase_id',
         'stage_id',
         'description',
         'created_by', // IMPORTANT: Keep this as 'cerated_by' if that's the exact column name in your DB.

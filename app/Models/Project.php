@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
+    const STATUS_ACTIVE = 1;
+    const STATUS_COMPLETE = 2; // New status for claims awaiting admin action
+    const STATUS_APPROVED = 3;
+    const STATUS_REJECTED = 4;
+    const STATUS_DELETED = 0;
     use HasFactory;
     protected $fillable = [
         'name',
@@ -17,6 +22,7 @@ class Project extends Model
         'project_manager_id',
         'start_at',
         'end_at',
+        'phase',
         'data_status'
     ];
     protected $casts = [
@@ -134,7 +140,7 @@ class Project extends Model
 
     public function getWorkProgressPercentageAttribute(): int
     {
-        return round($this->projectStages->where('data_status', 2)->count() * 12.5);
+        return round($this->phases->where('data_status', 2)->count() * 12.5);
     }
 
     public function getCanCreateTaskAttribute(): int
@@ -164,5 +170,10 @@ class Project extends Model
     public function stageLogs(): HasMany
     {
         return $this->hasMany(ProjectStageLog::class, 'project_id');
+    }
+
+    public function phases()
+    {
+        return $this->hasMany(ProjectPhase::class);
     }
 }

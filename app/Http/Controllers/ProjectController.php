@@ -7,6 +7,7 @@ use App\Services\ProjectService;
 use App\Services\NotificationService;
 use App\Services\CommonService;
 use Illuminate\Http\Request; 
+use Illuminate\Support\Facades\Session;
 
 class ProjectController extends Controller
 {
@@ -80,12 +81,45 @@ class ProjectController extends Controller
         if (!$project) {
                 return redirect()->route('v1.project-management.list')->with('errors', 'Data not finded');
         }
+
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        $phases = $project->phases()->get();
+        if (is_null($selectedPhaseId) && $phases->isNotEmpty()) {
+            
+            $firstPhase = $phases->first(); // Ambil phase pertama
+            $selectedPhaseId = $firstPhase->id; // Gunakan ID phase pertama sebagai default
+
+            Session::put('selected_project_phase_id_' . $project->id, $selectedPhaseId);
+            $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        }
+
+        if (Session::get('selected_project_phase_id_' . $project->id) != $selectedPhaseId) {
+            Session::forget('selected_project_phase_id_' . $project->id);
+            Session::put('selected_project_phase_id_' . $project->id, $selectedPhaseId);
+            $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        }
         
         $users = $this->commonService->getUsers();
         $users = $users->where('id', '!=', auth()->user()->id);
         $kanbanStages = $this->commonService->getKanbanStages();
         $creators = $this->projectService->getFileCreator($id);
-        return view('projects.detail',compact('project','kanbanStages','users','creators'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        return view('projects.detail',compact('project','kanbanStages','users','creators','selectedPhaseId'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+    }
+
+    public function phase($project_id,$id)
+    {
+        $project = $this->projectService->getProject($project_id);
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+
+        if ($selectedPhaseId != $id) {
+            Session::forget('selected_project_phase_id_' . $project->id);
+            Session::put('selected_project_phase_id_' . $project->id, $id);
+            Session::get('selected_project_phase_id_' . $project->id);
+        }
+
+        return redirect()->route('v1.project-management.detail', ['project' => $project_id])
+                         ->with('success', 'You has choosen phases filter.');
+
     }
 
     public function managementDetail($id)
@@ -119,6 +153,11 @@ class ProjectController extends Controller
     public function markProjectComplete(Request $request, $project_id)
     {
         return $this->projectService->markProjectComplete($request, $project_id);
+    }
+
+    public function completePhase(Request $request, $project_id, $phase_id)
+    {
+        return $this->projectService->completePhase($request, $project_id, $phase_id);
     }
 
     public function getProjectsData(Request $request)

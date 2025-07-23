@@ -237,6 +237,16 @@ Route::middleware('auth')->group(function () {
             Route::put('/{id}/{status}/destroy', 'destroy_handbook')->name('v1.employee-handbooks.destroy');
         });
 
+        Route::prefix('staff-resources')->controller(PostController::class)->group(function () {
+            Route::get('/list', 'staffResources')->name('v1.staff-resources.list');
+            Route::get('/create', 'createStaffResources')->name('v1.staff-resources.create');
+            Route::post('/store', 'storeStaffResources')->name('v1.staff-resources.store');
+            Route::get('/{id}/edit', 'editStaffResources')->name('v1.staff-resources.edit');
+            Route::get('/{id}/read', 'readStaffResources')->name('v1.staff-resources.read');
+            Route::put('/{id}/update', 'updateStaffResources')->name('v1.staff-resources.update');
+            Route::put('/{id}/{status}/destroy', 'destroyStaffResources')->name('v1.staff-resources.destroy');
+        });
+
         Route::prefix('whistleblowing-policy')->controller(WhistleblowningPolicyController::class)->group(function () {
             Route::get('/', 'index')->name('v1.whistleblowing-policy');
             Route::get('/create', 'create')->name('v1.whistleblowing-policy.create');

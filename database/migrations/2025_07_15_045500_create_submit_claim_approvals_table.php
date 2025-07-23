@@ -19,6 +19,10 @@ return new class extends Migration
             $table->text('notes')->nullable(); // For rejection reason or approval notes
             $table->string('transfer_document_path')->nullable(); // Path to the uploaded document
             $table->dateTime('transfered_at')->nullable();
+             $table->foreignId('submit_claim_item_id')
+                  ->nullable()
+                  ->constrained('submit_claim_items')
+                  ->onDelete('set null');
             $table->timestamps();
         });
     }

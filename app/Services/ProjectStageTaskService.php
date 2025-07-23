@@ -8,6 +8,7 @@ use DB;
 use App\Helpers\IdObfuscator;
 use App\Models\ProjectFile;
 use App\Models\ProjectTaskLog;
+use Illuminate\Support\Facades\Session;
 
 class ProjectStageTaskService {
     /**
@@ -43,6 +44,7 @@ class ProjectStageTaskService {
                 [
                     'project_id' => $project_id,
                     'kanban_stage_id' => $stage_id,
+                    'project_phase_id' => Session::get('selected_project_phase_id_' . $project_id)
                 ],
                 [
                     'data_status' => 1, // Default status for a newly created ProjectStage
