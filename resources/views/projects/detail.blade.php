@@ -200,7 +200,7 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#project-files" type="button" role="tab" aria-controls="project-files" aria-selected="false">
-                        Project Documentation
+                        Project Documentation ({{$project->files->count()}})
                     </a>
                 </li>
             </ul>
@@ -307,13 +307,22 @@
                                 <div class="mt-5"> {{-- Add margin-top for spacing --}}
                                     @php
                                         $currentPhase = \App\Models\ProjectPhase::find($selectedPhaseId);
-                                        if($currentPhase->completed_stages_count < 8 || $currentPhase->data_status === \App\Models\ProjectPhase::STATUS_COMPLETED)
-                                            $disabled = 'disabled';
-                                        else
-                                            $disabled = '';                                        
+                                        if($currentPhase){
+                                            $phase = $currentPhase->phase;
+                                            if($currentPhase->completed_stages_count < 8 || $currentPhase->data_status === \App\Models\ProjectPhase::STATUS_COMPLETED)
+                                                $disabled = 'disabled';
+                                            else
+                                                $disabled = ''; 
+
+                                        } else {
+                                            $disabled = '';
+                                            $phase = 0;  
+                                        }
+                                                                                                                              
                                     @endphp
+                                    @if($currentPhase)
                                     <label for="memberCurrentPhase" class="form-label" >Current Phase</label> {{-- Visually hidden label for accessibility --}}
-                                        <label class="detail-value text-muted">#{{ $currentPhase->phase }}</label>
+                                        <label class="detail-value text-muted">#{{ $phase }}</label>
                                         <p><label class="form-label col-3">Name  </label><label class="form-label col-3">: {{ $currentPhase->name }}</label><br>
                                         <label class="form-label col-3"><small>Description </label><label class="form-label col-4">: {{ $currentPhase->description }}</small></label><br>
                                         <label class="form-label col-3"><small>Due Date </label><label class="form-label col-4">: <span class="badge {{ $currentPhase->status_date_badge }} rounded-pill ms-2">
@@ -385,7 +394,8 @@
 
                                             // ... (Rest of your existing JavaScript code) ...
                                         });
-                                    </script>                                     
+                                    </script>  
+                                    @endif                                   
                                 </div>
                             </div>
                         </div>
