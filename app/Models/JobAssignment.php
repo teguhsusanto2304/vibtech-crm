@@ -27,7 +27,9 @@ class JobAssignment extends Model
 
     protected $casts = [
         'created_at'=>'datetime',
-        'updated_at'=>'datetime'
+        'updated_at'=>'datetime',
+        'start_at'=>'date',
+        'end_at'=>'date'
     ];
 
     public function jobType()

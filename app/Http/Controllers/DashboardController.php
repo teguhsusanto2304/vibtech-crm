@@ -305,4 +305,138 @@ class DashboardController extends Controller
         return view('search.results', compact('query', 'results'));
     }
 
+    /**
+     * Fetch events for a specific date.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getEventsByDateModal(Request $request)
+    {
+        $date = $request->query('date'); // Get the date from the query parameter
+
+       
+
+        try {
+            $eventAt = $request->query('date'); // Get the date from the query parameter (e.g., 'YYYY-MM-DD')
+
+        if (empty($eventAt)) {
+            return response()->json(['success' => false, 'message' => 'Date parameter is required.'], 400);
+        }
+
+        // Parse the date using Carbon and ensure it's a date-only string for comparisons
+        $filterDate = Carbon::parse($eventAt)->format('Y-m-d');
+        $now = Carbon::now(); // Get the current datetime for comparisons
+        $formattedEvents = []; // This will hold our final array of events
+
+        // --- Fetch Job Assignments ---
+        $jobAssignments = JobAssignment::where('is_publish', 1)
+            ->with(['personnel']) // Eager load personnel and their users to avoid N+1 queries
+            ->where(function ($query) use ($filterDate, $now) {
+                // Condition 1: Job spans across or includes the filterDate
+                $query->where('start_at', '<=', $filterDate . ' 23:59:59') // Job starts on or before filterDate
+                      ->where('end_at', '>=', $filterDate . ' 00:00:00'); // Job ends on or after filterDate
+                      // ->where('end_at', '>=', $now->subDays(1)); // Exclude past jobs relative to 'now' (this might be too strict)
+            })
+            // Or Condition 2: Job with null start_at, but ends on or after filterDate
+            ->orWhere(function ($query) use ($filterDate, $now) {
+                $query->whereNull('start_at')
+                      ->where('end_at', '>=', $filterDate . ' 00:00:00');
+                      // ->where('end_at', '>=', $now->subDays(1)); // Exclude past jobs
+            })
+            // Or Condition 3: Job with null end_at, but starts on or before filterDate
+            ->orWhere(function ($query) use ($filterDate, $now) {
+                $query->where('start_at', '<=', $filterDate . ' 23:59:59')
+                      ->whereNull('end_at');
+                      // ->where('start_at', '>=', $now->startOfDay()); // Ensure job hasn't started in the future
+            })
+            // Or Condition 4: Job with both start_at and end_at null, but created recently
+            ->orWhere(function ($query) use ($filterDate, $now) {
+                $query->whereNull('start_at')
+                      ->whereNull('end_at')
+                      ->where('created_at', '>=', $now->subDays(30)); // Example: created in last 30 days if no dates
+            })
+            ->get();
+
+        $colorClasses = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'dark'];
+        $eventID=null;
+        foreach ($jobAssignments as $job) {
+            if($eventID<>$job->id){
+            $personsHtml = '';
+            // Loop through eager loaded personnel
+            foreach ($job->personnel as $index => $person) {
+                
+                $randomColor = $colorClasses[array_rand($colorClasses)];
+                $personsHtml .= "<span class='badge rounded-pill text-bg-{$randomColor}'>".$person->name.'</span> ';
+
+                if (($index + 1) % 2 == 0) { // Add a line break after every 2 persons
+                    $personsHtml .= '<br>';
+                }
+            }
+
+            // Determine time range for Job Assignment
+            $jobStartTime = $job->start_at ? $job->start_at->format('d M Y') : 'N/A';
+            $jobEndTime = $job->end_at ? $job->end_at->format('d M Y') : 'N/A';
+            $jobTimeRange = ($job->start_at || $job->end_at) ? "{$jobStartTime} - {$jobEndTime}" : 'Full Day';
+
+            $formattedEvents[] = [
+                'id' => 'job_' . $job->id, // Prefix ID to distinguish from bookings
+                'title' => "<div class='callout-event'><label class='text-success'>".$job->job_type.'</label><br>'.$personsHtml.'</div>',
+                'description' => $job->description ?? 'No description.', // Assuming description exists
+                'time' => $jobTimeRange,
+                'type' => 'Job Assignment',
+                'is_vehicle_require' => $job->is_vehicle_require, // Keep this if needed
+            ];
+             }
+            $eventID = $job->id;
+        }
+
+        // --- Fetch Vehicle Bookings ---
+        $vehicleBookings = VehicleBooking::where('start_at', '<=', $filterDate . ' 23:59:59')
+            ->where('end_at', '>=', $filterDate . ' 00:00:00')
+            ->with('vehicle') // Eager load vehicle details
+            ->get();
+        $eventID=null;
+        foreach ($vehicleBookings as $booking) {
+            if($eventID<>$booking->id){
+            $vehicleName = $booking->vehicle->name ?? 'Unknown Vehicle';
+            $randomColor = $colorClasses[array_rand($colorClasses)]; // Get a random color for vehicle badge
+
+            // Determine time range for Vehicle Booking
+            $bookingStartTime = $booking->start_at ? Carbon::parse($booking->start_at)->format('d M Y H:i') : 'N/A';
+            $bookingEndTime = $booking->end_at ? Carbon::parse($booking->end_at)->format('d M Y H:i') : 'N/A';
+            $bookingTimeRange = ($booking->start_at || $booking->end_at) ? "{$bookingStartTime} - {$bookingEndTime}" : 'Full Day';
+                $formattedEvents[] = [
+                    
+                    'id' => 'booking_' . $booking->id, // Prefix ID to distinguish
+                    'title' => "<div class='callout'><label class='text-primary' style='font-size: 0.8em;'>".$booking->purposes."</label>
+                                <p><span class='badge rounded-pill text-bg-{$randomColor}' style='font-size: 0.7em;'>".$vehicleName.'</span></p></div>',
+                    'description' => $booking->notes ?? 'No notes.', // Assuming notes exists on VehicleBooking
+                    'time' => $bookingTimeRange,
+                    'type' => 'Vehicle Booking',
+                    'is_vehicle_require' => 99, // Keep this if needed
+                ];
+            }
+            $eventID = $booking->id;
+                
+        }
+
+        // Sort events by time if possible, or by type
+        usort($formattedEvents, function($a, $b) {
+            // Simple sorting by time string, assuming H:i format or 'N/A'/'Full Day'
+            // You might need more robust sorting if times are complex
+            $timeA = $a['time'] === 'N/A' || $a['time'] === 'Full Day' ? '00:00' : substr($a['time'], 0, 5);
+            $timeB = $b['time'] === 'N/A' || $b['time'] === 'Full Day' ? '00:00' : substr($b['time'], 0, 5);
+            return strcmp($timeA, $timeB);
+        });
+
+
+            return response()->json(['success' => true, 'events' => $formattedEvents]);
+
+        } catch (\Exception $e) {
+            \Log::error("Error fetching events for date {$date}: {$e->getMessage()}", ['exception' => $e]);
+            return response()->json(['success' => false, 'message' => 'An error occurred while fetching events.'.$e->getMessage()], 500);
+        }
+    }
+
 }

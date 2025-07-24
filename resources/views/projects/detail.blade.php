@@ -574,9 +574,15 @@
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
                                                 @if($phase->data_status!=\App\Models\ProjectPhase::STATUS_COMPLETED)
-                                                <a href="{{ route('v1.project-management.phase', [$projectId, $phaseId]) }}" class="btn btn-primary btn-sm me-1" title="Edit Phase">
+                                               <button type="button"
+                                                        class="btn btn-primary btn-sm edit-phase-modal-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#phaseDetailEditModal"
+                                                        data-project-id="{{ $projectId }}"
+                                                        data-phase-id="{{ $phaseId }}"
+                                                        title="Edit Phase">
                                                     <i class="fas fa-edit"></i> Edit
-                                                </a>
+                                                </button>
                                                 @endif
                                                 <button type="button" class="btn btn-danger btn-sm delete-phase-btn invisible" data-project-id="{{ $projectId }}" data-phase-id="{{ $phaseId }}" title="Delete Phase">
                                                     <i class="fas fa-trash"></i> Delete
@@ -593,6 +599,134 @@
                         </div>
                     </div>
                 </div>
+                <div class="modal fade" id="phaseDetailEditModal" tabindex="-1" aria-labelledby="phaseDetailEditModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="phaseDetailEditModalLabel">Phase Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                            {{-- Content will be loaded here via AJAX --}}
+                               <div id="modal-content-placeholder" class="py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading phase details...</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                {{-- The "Save Changes" button will be dynamically shown/hidden by JS --}}
+                                    <button type="submit" form="editPhaseForm" class="btn btn-primary d-none" id="savePhaseChangesBtn">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function() {
+                        const phaseDetailEditModal = new bootstrap.Modal(document.getElementById('phaseDetailEditModal'));
+                        const modalTitle = $('#phaseDetailEditModalLabel');
+                        const modalBody = $('#modal-content-placeholder');
+                        const saveChangesBtn = $('#savePhaseChangesBtn');
+
+                        // Event listener for both View and Edit buttons
+                        $(document).on('click', '.view-phase-modal-btn, .edit-phase-modal-btn', function() {
+                            const isEditMode = $(this).hasClass('edit-phase-modal-btn');
+                            const projectId = $(this).data('project-id');
+                            const phaseId = $(this).data('phase-id');
+
+                            // Reset modal content and show loading spinner
+                            modalTitle.text('Loading Phase Details...');
+                            modalBody.html(`
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Loading phase details...</p>
+                                </div>
+                            `);
+                            saveChangesBtn.addClass('d-none'); // Hide save button initially
+                            // phaseDetailEditModal.show(); // Show modal immediately
+
+                            // Determine the URL based on mode (could be the same endpoint returning different views)
+                            let fetchUrl = `/v1/project-management/${projectId}/phases/${phaseId}/get-details?mode=edit`; // Route to fetch details
+
+                            $.ajax({
+                                url: fetchUrl,
+                                type: 'GET',
+                                success: function(response) {
+                                    if (response.success && response.html) {
+                                        modalBody.html(response.html); // Insert rendered HTML into modal body
+                                        modalTitle.text(isEditMode ? `Edit Phase: ${response.phase_name}` : `Phase Details: ${response.phase_name}`);
+
+                                        if (isEditMode) {
+                                            saveChangesBtn.removeClass('d-none'); // Show save button for edit mode
+                                            // Attach form ID to save button
+                                            saveChangesBtn.attr('form', 'editPhaseForm');
+                                        } else {
+                                            saveChangesBtn.addClass('d-none'); // Ensure hidden for view mode
+                                        }
+                                    } else {
+                                        modalBody.html('<p class="text-danger">Failed to load phase details. ' + (response.message || '') + '</p>');
+                                        modalTitle.text('Error');
+                                        saveChangesBtn.addClass('d-none');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    let errorMessage = 'An error occurred while fetching phase details.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    }
+                                    modalBody.html(`<p class="text-danger">${errorMessage}</p>`);
+                                    modalTitle.text('Error');
+                                    saveChangesBtn.addClass('d-none');
+                                    console.error('AJAX Error:', xhr.responseText);
+                                }
+                            });
+                        });
+
+                        // Handle form submission for editing (if the modal form is submitted)
+                        $(document).on('submit', '#editPhaseForm', function(e) {
+                            e.preventDefault(); // Prevent default form submission
+
+                            const form = $(this);
+                            const projectId = form.data('project-id'); // Get from form's data attribute
+                            const phaseId = form.data('phase-id');     // Get from form's data attribute
+
+                            // Disable button and show spinner
+                            saveChangesBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+
+                            $.ajax({
+                                url: `/v1/project-management/${projectId}/phases/${phaseId}`, // Your update route
+                                type: 'POST', // Or 'PUT'/'PATCH' with method spoofing
+                                data: form.serialize() + '&_method=PUT', // Include CSRF token and method spoofing
+                                success: function(response) {
+                                    if (response.success) {
+                                        alert(response.message);
+                                        phaseDetailEditModal.hide(); // Hide the modal
+                                        location.reload(); // Reload page to reflect changes
+                                    } else {
+                                        alert(response.message || 'Failed to update phase.');
+                                        saveChangesBtn.prop('disabled', false).html('Save Changes');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    let errorMessage = 'An error occurred. Please try again.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                        // Display validation errors if any
+                                        errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                                    }
+                                    alert(errorMessage);
+                                    saveChangesBtn.prop('disabled', false).html('Save Changes');
+                                    console.error('AJAX Error:', xhr.responseText);
+                                }
+                            });
+                        });
+                    });
+                </script>
                 <hr>                
                 <div class="horizontal-scroll-wrapper" style="height: 500px;"> {{-- Custom wrapper for overflow --}}
                     <div class="row flex-nowrap">

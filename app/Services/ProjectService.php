@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProjectService {
 
@@ -1043,6 +1044,90 @@ class ProjectService {
                          ->orderBy('name')
                          ->get(['id', 'name']);
         return $uploaders;
+    }
+
+    /**
+     * Fetch project phase details to populate a modal.
+     * Returns rendered HTML for view/edit form.
+     *
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPhaseDetailsForModal($projectId, $phaseId, Request $request)
+    {
+        $phase = ProjectPhase::find($phaseId);
+        $project = Project::find($projectId);
+
+        // Determine if this is for viewing or editing based on request (or button class in JS)
+        // For simplicity, we'll assume the same endpoint renders the content and JS handles read-only vs editable fields
+        // Or you can pass an additional parameter like /get-details?mode=edit
+        $mode = $request->query('mode', 'view'); // Default to view mode
+
+        // Render the partial Blade view with the phase data
+        // You'll need to create this Blade partial (e.g., resources/views/projects/phases/_modal_content.blade.php)
+        $html = view('projects.phases._modal_content', compact('phase', 'project', 'mode'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+            'phase_name' => $phase->name // Send name for modal title
+        ]);
+    }
+
+    /**
+     * Update the specified project phase in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateProjectPhase(Request $request, $projectId, $phaseId)
+    {
+        $phase = ProjectPhase::find($phaseId);
+        $decodedId = IdObfuscator::decode($projectId);
+        $project = Project::find($decodedId);
+
+        if ($phase->project_id !== $project->id) {
+            return response()->json(['success' => false, 'message' => 'Phase not found for this project.'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422); // Unprocessable Entity
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $phase->update($request->only([
+                'name',
+                'description',
+                'start_date',
+                'end_date',
+                'data_status' // Allow updating status via edit form
+            ]));
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Phase updated successfully!']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error updating project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
+            return response()->json(['success' => false, 'message' => 'An unexpected error occurred during update.'], 500);
+        }
     }
     
 }

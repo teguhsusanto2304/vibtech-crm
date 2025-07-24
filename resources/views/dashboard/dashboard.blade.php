@@ -139,7 +139,7 @@
                             <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
                                 aria-label="Close"></button>
                         </div>
-                        <div class="offcanvas-body">
+                        <div class="offcanvas-body" >
                             <form class="event-form pt-0" id="eventForm" onsubmit="return false">
                                 <div class="mb-6 form-control-validation">
                                     <label class="form-label" for="eventTitle">Date Selected</label>
@@ -153,7 +153,7 @@
                     </div>
                 </div>
                 <!-- Calendar Sidebar -->
-                <div class="col app-calendar-sidebar border-end" id="app-calendar-sidebar">
+                <div class="col app-calendar-sidebar border-end " style="display: none;" id="app-calendar-sidebar">
                     <div class="border-bottom p-6 my-sm-0 mb-4">
                         <p>Date Selected :<strong id="eventDate"></strong></p>
                     </div>
@@ -250,6 +250,8 @@
                     window.events = @json($events);
                 </script>
                 <script>
+                    let eventDetailsModalInstance;
+                    
                     document.addEventListener("DOMContentLoaded", function () {
                         var isRtl = false;
                         let k = isRtl ? "rtl" : "ltr";
@@ -485,7 +487,7 @@
                                 },
                                 datesSet: function () {
                                     I();
-                                    highlightCurrentDate();
+                                    //highlightCurrentDate();
                                 },
                                 viewDidMount: function () {
                                     I();
@@ -498,6 +500,7 @@
                         }
 
                         function highlightCurrentDate() {
+                            eventDetailsModalInstance = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
                             const today = new Date();
                             const todayFormatted = today.toISOString().slice(0, 10); // Format as YYYY-MM-DD
 
@@ -534,6 +537,60 @@
                     });
 
                     function fetchEvents(eventAt) {
+                        const $eventsLoadingSpinner = $('#events-loading-spinner');
+                        const $eventsDisplayArea = $('#events-display-area');
+                        const $noEventsMessage = $('#no-events-message');
+
+                        // Reset modal content
+                        $eventsDisplayArea.empty().addClass('d-none');
+                        $noEventsMessage.addClass('d-none');
+                        $eventsLoadingSpinner.removeClass('d-none'); // Show spinner
+
+                        // Show the modal
+                        eventDetailsModalInstance.show();
+
+                        $.ajax({
+                            url: `/v1/dashboard/events?date=${eventAt}`, // Replace with your actual API endpoint for events
+                            type: 'GET',
+                            success: function(response) {
+                                $eventsLoadingSpinner.addClass('d-none'); // Hide spinner
+
+                                if (response.success && response.events.length > 0) {
+                                    $eventsDisplayArea.removeClass('d-none');
+                                    $.each(response.events, function(index, event) {
+                                        // Append each event to the display area
+                                        $eventsDisplayArea.append(`
+                                            <div class="card mb-2">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">${event.title}</h5>
+                                                    <p class="card-text">
+                                                        <strong>Time:</strong> ${event.time || 'N/A'}<br>
+                                                        
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        `);
+                                    });
+                                } else {
+                                    $noEventsMessage.removeClass('d-none'); // Show no events message
+                                }
+                            },
+                            error: function(xhr) {
+                                $eventsLoadingSpinner.addClass('d-none'); // Hide spinner
+                                $eventsDisplayArea.addClass('d-none'); // Hide display area
+                                $noEventsMessage.addClass('d-none'); // Hide no events message
+
+                                let errorMessage = 'Failed to load events. Please try again.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                $eventsDisplayArea.html(`<div class="alert alert-danger">${errorMessage}</div>`).removeClass('d-none');
+                                console.error('Error fetching events:', xhr.responseText);
+                            }
+                        });
+                    }
+
+                    function fetchEventsOld(eventAt) {
                         fetch(`/v1/dashboard/eventsbydate/${eventAt}`) // Replace with your actual API URL
                             .then((response) => response.json()) // Convert response to JSON
                             .then((data) => {
@@ -646,7 +703,37 @@
         </div>
     </div>
 
-
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" aria-labelledby="eventDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventDetailsModalLabel">Events for <span id="eventDate"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="events-list-container">
+                    <!-- Events will be loaded here -->
+                    <div class="text-center py-5" id="events-loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading events...</p>
+                    </div>
+                    <div id="events-display-area" class="d-none">
+                        <!-- Event items will be appended here -->
+                    </div>
+                    <div id="no-events-message" class="alert alert-info text-center d-none">
+                        No events scheduled for this date.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 @endsection

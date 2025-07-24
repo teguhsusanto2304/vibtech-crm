@@ -199,4 +199,14 @@ class ProjectController extends Controller
     {
         return $this->projectService->getProjectFileData($request);
     }
+
+    public function getPhaseDetailsForModal($projectId, $phaseId, Request $request)
+    {
+        return $this->projectService->getPhaseDetailsForModal($projectId, $phaseId, $request);
+    }
+
+    public function updateProjectPhase(Request $request, $projectId, $phaseId)
+    {
+        return $this->projectService->updateProjectPhase($request, $projectId, $phaseId);
+    }
 }
