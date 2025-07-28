@@ -54,7 +54,7 @@
                         <a class="nav-link active" id="others-tab" data-bs-toggle="tab" href="#others" role="tab">Projects You’re In</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="my-tab" data-bs-toggle="tab" href="#my" role="tab">Projects You Manage</a>
+                        <a class="nav-link" id="my-tab" data-bs-toggle="tab" href="#my" role="tab">Projects You Lead</a>
                     </li>
                 </ul>
 
@@ -69,7 +69,7 @@
                                         <th>Description</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
-                                        <th>Project Manager</th>
+                                        <th>Project Lead</th>
                                         <th>Members</th>
                                         <th>Progress</th>
                                         <th>Status</th>
@@ -90,7 +90,7 @@
                                         <th>Description</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
-                                        <th>Project Manager</th>
+                                        <th>Project Lead</th>
                                         <th>Members</th>
                                         <th>Progress</th>
                                         <th>Status</th>

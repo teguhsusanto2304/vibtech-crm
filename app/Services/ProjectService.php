@@ -47,7 +47,18 @@ class ProjectService {
             'name' => 'required|string|max:255',
             'description' => 'nullable|string', // Description can be optional
             'start_at' => 'required|date',
-            'end_at' => 'required|date|after_or_equal:start_at', // End date must be on or after start date
+            'end_at' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) use ($request) {
+                    $startDate = \Carbon\Carbon::parse($request->start_at);
+                    $endDate = \Carbon\Carbon::parse($value);
+
+                    if ($startDate->copy()->addDays(2)->gt($endDate)) {
+                        $fail('The end date must be at least 2 days after the start date.');
+                    }
+                }
+            ], // End date must be on or after start date
             'addProjectMembers' => 'required|array', // Expecting an array of user IDs
             'addProjectMembers.*' => 'integer|exists:users,id', // Each member ID must be an integer and exist in users table
             'project_files' => 'nullable|array|max:5', // Max 5 new files
@@ -99,7 +110,7 @@ class ProjectService {
                     ]);
                 }
             }
-            for($iphases = 0; $iphases < $request->phases+1; $iphases++){
+            for($iphases = 0; $iphases < $request->phases; $iphases++){
                 $project->phases()->create([
                     'phase' => $iphases+1,
                     'name' => 'Phase #'.($iphases+1).' of '.$validatedData['name'],
@@ -332,7 +343,18 @@ class ProjectService {
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_at' => 'required|date',
-            'end_at' => 'required|date|after_or_equal:start_at',
+            'end_at' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) use ($request) {
+                    $startDate = \Carbon\Carbon::parse($request->start_at);
+                    $endDate = \Carbon\Carbon::parse($value);
+
+                    if ($startDate->copy()->addDays(2)->gt($endDate)) {
+                        $fail('The end date must be at least 2 days after the start date.');
+                    }
+                }
+            ],
             'addProjectMembers' => 'required|array',
             'addProjectMembers.*' => 'integer|exists:users,id',
         ]);
@@ -996,7 +1018,18 @@ class ProjectService {
                 return $query->uploadedBy->name.'<p><small>'.$query->created_at->format('l, F d, Y \a\t h:i A').'</small></p>' ?? 'N/A';
             })
             ->addColumn('associated_task', function (ProjectFile $file) {
-                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>'.$file->task->projectStage->kanbanStage->name.'</small></span>':'<span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
+                $allPhaseValues = [];
+                $allPhaseNameValues = [];
+
+                if ($file && $file->project) {
+                    foreach ($file->project->projectStages as $projectStage) {
+                        if ($projectStage->projectPhase) {
+                            $allPhaseValues[] = $projectStage->projectPhase->phase;
+                            $allPhaseNameValues[] = $projectStage->projectPhase->name;
+                        }
+                    }
+                }
+                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' -  '.$allPhaseNameValues[0].'</small></span><br><span class="badge badge-sm bg-info"><small>Stage - '.$file->task->projectStage->kanbanStage->name.'</small></span><br><span class="badge badge-sm bg-warning"><small>Task - '.$file->task->name.'</small></span>':'<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' -  '.$allPhaseNameValues[0].'</small></span><br><span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
                 
             })
             ->addColumn('file_size_formatted', function (ProjectFile $file) {

@@ -252,7 +252,7 @@
                         <div class="col-md-5 mb-4">
                             <!-- Project Manager -->
                             <div class="d-flex align-items-center mb-3">
-                                <strong class="me-3">Project Manager:</strong>
+                                <strong class="me-3">Project Lead:</strong>
                                 <img src="{{ $project->projectManager->avatar_url }}" alt="{{ $project->projectManager->name }}'s avatar" {{-- Improved alt text --}}
                                     class="rounded-circle member-avatar-wrapper"
                                     data-bs-placement="top"
@@ -415,7 +415,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 invisible">
                             <label for="section_filter" class="form-label">Section:</label>
                             <select class="form-select" id="section_filter">
                                 <option value="">All Sections</option>
@@ -1339,18 +1339,18 @@
                                         </div>
                                         <div class="tab-pane fade" id="task-files-tab-pane" role="tabpanel" aria-labelledby="task-files-tab" tabindex="0">
                                             <div class="col-md-12 mt-3">
-                                                    <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                                                    <label class="form-label">Upload New Project Files (PNG, .JPG, PDF, DOC/DOCX)</label>
                                                     <div id="new-file-upload-container">
                                                             <div class="file-upload-item">
                                                                 <div class="input-group mb-2">
-                                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                                    <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                                 </div>
                                                                 <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                                             </div>
                                                     </div>
                                                     <button type="button" class="btn btn-outline-primary btn-sm" id="update-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                                                    <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                                                    <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PNG, JPG, PDF, DOC, DOCX.</small>
                                             </div>
                                             <div class="col-sm-12" id="editTaskStageFiles"></div>
                                         </div>
@@ -2117,6 +2117,10 @@
                                 <h5 class="modal-title" id="createTaskModalLabel">Create New Task for <span id="modalStageName"></span></h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
+                            <div id="form-error-alert" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
+                                <span id="error-message-content"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                             <form id="createTaskForm" enctype="multipart/form-data">
                                 @csrf
                                 <div class="modal-body">
@@ -2141,6 +2145,9 @@
                                         <div class="col-md-6">
                                             <label for="taskEndDate" class="form-label">Due Date</label>
                                             <input type="date" class="form-control" id="taskEndDate" required name="end_date">
+                                            <div class="invalid-feedback" id="taskEndDateFeedback">
+                                                The due date cannot exceed the project phase end date.
+                                            </div>
                                         </div>                                    
                                         <div class="col-md-6">
                                             <label for="taskEndDate" class="form-label">Task Status</label>
@@ -2158,22 +2165,22 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label for="taskEndDate" class="form-label">Update Log</label>
-                                            <input type="text" class="form-control" id="updateLog" name="update_log" placeholder="e.g., Update your activity">
+                                            <input type="text" class="form-control" id="updateLog" name="update_log" placeholder="e.g., Update your activity" required>
                                         </div>
                                     </div>
                                          <div class="col-md-12 mt-3">
-                                            <label class="form-label">Upload New Project Files (PDF, DOC/DOCX)</label>
+                                            <label class="form-label">Upload New Project Files (PNG, JPG, PDF, DOC/DOCX)</label>
                                             <div id="create-new-file-upload-container">
                                                 <div class="file-upload-item">
                                                     <div class="input-group mb-2">
-                                                        <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                        <input type="file" name="project_files[]" class="form-control" accept=".png, .jpg, .pdf,.doc,.docx">
                                                         <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                     </div>
                                                     <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
                                                 </div>
                                             </div>
                                             <button type="button" class="btn btn-outline-primary btn-sm" id="create-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PNG, JPG, PDF, DOC, DOCX.</small>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -2208,7 +2215,7 @@
                                         const newFileInputHtml = `
                                             <div class="file-upload-item">
                                                 <div class="input-group mb-2">
-                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                 </div>
                                                 <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
@@ -2752,6 +2759,74 @@
                     }
                 });
             });
+
+            // Function to display an error message in the Bootstrap alert
+            function displayFormError(message) {
+                const $errorAlert = $('#form-error-alert');
+                const $errorMessageContent = $('#error-message-content');
+
+                $errorMessageContent.html(message); // Use .html() to allow for <br> tags from join('\n')
+                $errorAlert.removeClass('d-none').addClass('show'); // Show the alert
+                
+                // Optional: Scroll to the alert so the user sees it immediately
+                $('html, body').animate({
+                    scrollTop: $errorAlert.offset().top - 50 // Adjust offset as needed
+                }, 500);
+            }
+
+            // Function to hide the error alert
+            function hideFormError() {
+                $('#form-error-alert').addClass('d-none').removeClass('show');
+                $('#error-message-content').empty();
+            }
+
+            const taskEndDateInput = $('#taskEndDate');
+        const taskEndDateFeedback = $('#taskEndDateFeedback');
+
+        // Function to perform the client-side validation
+        function validateTaskEndDate() {
+            const taskEndDate = taskEndDateInput.val();
+            const phaseEndDate = '{{ $currentPhase->end_date->format('Y-m-d') }}'; //createModalPhaseEndDateInput.val();
+            const phaseNumber = '{{ $currentPhase->phase }}';
+
+            if (!taskEndDate) {
+                // If end_date is nullable and empty, consider it valid client-side
+                // Server-side will handle 'required' if needed.
+                taskEndDateInput.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            }
+
+            // If phaseEndDate is not set, we cannot validate against it, so pass client-side
+            // Server-side validation is still critical for this case.
+            if (!phaseEndDate) {
+                taskEndDateInput.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            }
+
+            // Convert to Date objects for comparison.
+            // Use new Date(dateString) for reliable parsing.
+            const taskDate = new Date(taskEndDate);
+            const phaseDate = new Date(phaseEndDate);
+
+            // Set times to end of day for inclusive comparison (as dates often mean end of day)
+            taskDate.setHours(23, 59, 59, 999);
+            phaseDate.setHours(23, 59, 59, 999);
+
+            if (taskDate > phaseDate) {
+                taskEndDateInput.addClass('is-invalid');
+                taskEndDateFeedback.text('The due date cannot exceed the project phase #'+phaseNumber+' end date (' + phaseEndDate + ').');
+                return false;
+            } else {
+                taskEndDateInput.removeClass('is-invalid').addClass('is-valid');
+                return true;
+            }
+        }
+
+            taskEndDateInput.on('change', function() {
+            validateTaskEndDate();
+        });
+
+        
 
             // Handle the "Create Task" form submission via AJAX
             $('#createTaskForm').on('submit', function(e) {

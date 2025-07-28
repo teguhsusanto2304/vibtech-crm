@@ -3,6 +3,7 @@ namespace App\Services;
 use Illuminate\Http\Request;
 use App\Models\ProjectStageTask;
 use App\Models\ProjectStage;
+use App\Models\ProjectPhase;
 use Auth;
 use DB;
 use App\Helpers\IdObfuscator;
@@ -22,14 +23,45 @@ class ProjectStageTaskService {
     public function store(Request $request, $project_id, $stage_id)
     {
         $project_id =  IdObfuscator::decode($project_id);
+        $projectPhaseId = Session::get('selected_project_phase_id_' . $project_id);
         // 2. Validate the incoming request
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
+            'end_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:start_date', // Ensure end_date is not before start_date
+                function ($attribute, $value, $fail) use ($projectPhaseId) {
+                    // Fetch the parent ProjectPhase
+                    $parentPhase = ProjectPhase::find($projectPhaseId);
+
+                    if (!$parentPhase) {
+                        $fail('The associated project phase could not be found.');
+                        return;
+                    }
+
+                    // If the parent phase has no end_date, then this rule might not apply
+                    if (is_null($parentPhase->end_date)) {
+                        // Option 1: Allow any end_date if parent phase has no end date
+                        return;
+                        // Option 2: Fail if parent phase has no end date but this does
+                        // $fail('Cannot set end date if parent phase has no end date.');
+                        // return;
+                    }
+
+                    // Convert the input end_date and parent phase's end_date to Carbon instances for comparison
+                    $inputEndDate = \Carbon\Carbon::parse($value)->endOfDay(); // End of day for inclusive comparison
+                    $phaseEndDate = \Carbon\Carbon::parse($parentPhase->end_date)->endOfDay(); // End of day for inclusive comparison
+
+                    if ($inputEndDate->greaterThan($phaseEndDate)) {
+                        $fail("The {$attribute} cannot be after the parent phase's end date (" . $phaseEndDate->format('Y-m-d') . ").");
+                    }
+                },
+            ],
             'assigned_to_user_id' => 'nullable|integer|exists:users,id',
-            'update_log' => 'nullable|string',
+            'update_log' => 'required|string',
             'project_files' => 'nullable|array|max:3', // Max 5 new files
             'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
             // 'status' => 'required|string|in:pending,in_progress,completed,blocked', // If status is user-selectable

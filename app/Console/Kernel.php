@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
                  ->onFailure(function () {
                      Log::error('Scheduler: Old client data deletion command failed.');
                  });
+        $schedule->command('crawl:exchange-rates')->hourly();
     }
 
     /**
