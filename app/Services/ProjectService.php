@@ -1022,14 +1022,38 @@ class ProjectService {
                 $allPhaseNameValues = [];
 
                 if ($file && $file->project) {
-                    foreach ($file->project->projectStages as $projectStage) {
-                        if ($projectStage->projectPhase) {
-                            $allPhaseValues[] = $projectStage->projectPhase->phase;
-                            $allPhaseNameValues[] = $projectStage->projectPhase->name;
+                    // Prefer checking if projectStages has items
+                    if ($file->project->projectStages && $file->project->projectStages->isNotEmpty()) {
+                        foreach ($file->project->projectStages as $projectStage) {
+                            if ($projectStage->projectPhase) {
+                                $allPhaseValues[] = $projectStage->projectPhase->phase;
+                                $allPhaseNameValues[] = $projectStage->projectPhase->name;
+                            }
+                        }
+                    } elseif ($file->project->phases && $file->project->phases->isNotEmpty()) {
+                        foreach ($file->project->phases as $projectPhase) {
+                            $allPhaseValues[] = $projectPhase->phase;
+                            $allPhaseNameValues[] = $projectPhase->name;
                         }
                     }
+
+                    // Fallback if no phase info found
+                    if (empty($allPhaseValues)) {
+                        $allPhaseValues[] = '-';
+                        $allPhaseNameValues[] = 'Unknown';
+                    }
+
+                    // Build return output
+                    if (!is_null($file->project_stage_task_id) && $file->task && $file->task->projectStage && $file->task->projectStage->kanbanStage) {
+                        return '<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' - '.$allPhaseNameValues[0].'</small></span><br>' .
+                            '<span class="badge badge-sm bg-info"><small>Stage - '.$file->task->projectStage->kanbanStage->name.'</small></span><br>' .
+                            '<span class="badge badge-sm bg-warning"><small>Task - '.$file->task->name.'</small></span>';
+                    } else {
+                        return '<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' - '.$allPhaseNameValues[0].'</small></span><br>' .
+                            '<span class="badge bg-success"><small>Project</small></span>';
+                    }
                 }
-                return !is_null($file->project_stage_task_id) ? '<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' -  '.$allPhaseNameValues[0].'</small></span><br><span class="badge badge-sm bg-info"><small>Stage - '.$file->task->projectStage->kanbanStage->name.'</small></span><br><span class="badge badge-sm bg-warning"><small>Task - '.$file->task->name.'</small></span>':'<span class="badge badge-sm bg-primary"><small>Phase #'.$allPhaseValues[0].' -  '.$allPhaseNameValues[0].'</small></span><br><span class="badge bg-success"><small>Project</small></span>'; // Display task name or 'Project-level'
+
                 
             })
             ->addColumn('file_size_formatted', function (ProjectFile $file) {

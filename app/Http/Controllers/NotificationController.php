@@ -18,6 +18,22 @@ class NotificationController extends Controller
         return response()->json($notifications->take(5));
     }
 
+    public function getSpecificallyNotifications()
+    {
+        $notifications = DatabaseNotification::where('notifiable_id', Auth::id())
+            ->whereNull('read_at')
+            // Group the OR conditions for the 'data' column
+            ->where(function ($query) {
+                $query->where('data', 'LIKE', '%"message":"%management-memo%"%')
+                      ->orWhere('data', 'LIKE', '%"message":"%employee-handbooks%"%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // return response()->json(Auth::user()->unreadNotifications->take(5));
+        return response()->json($notifications);
+    }
+
     public function markAllRead()
     {
         Auth::user()->unreadNotifications->markAsRead();
