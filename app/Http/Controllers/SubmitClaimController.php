@@ -115,4 +115,14 @@ class SubmitClaimController extends Controller
     {
         return $this->submitClaimService->handleRejectedAction($request, $id);
     }
+
+    public function exchange(Request $request)
+    {
+        return $this->submitClaimService->exchange($request);
+    }
+
+    public function getRates(Request $request)
+    {
+        return $this->submitClaimService->getRates($request);
+    }
 }

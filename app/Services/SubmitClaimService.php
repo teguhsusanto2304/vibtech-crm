@@ -6,6 +6,7 @@ use App\Models\SubmitClaim;
 use App\Models\SubmitClaimApproval;
 use App\Models\SubmitClaimItem;
 use App\Models\ClaimType;
+use App\Models\ExchangeRate;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 use App\Helpers\IdObfuscator;
@@ -806,6 +807,63 @@ class SubmitClaimService {
             Log::error("An error occurred during approval action for Claim ID {$id}. Error: " . $e->getMessage());
             return Response::json(['message' => 'An unexpected error occurred.'], 500);
         }
+    }
+
+    public function exchange()
+    {
+        // You might want to pass an initial date or data here,
+        // but for AJAX, the JS will fetch it on load.
+        $today = \Carbon\Carbon::now()->format('Y-m-d');
+        return view('submit_claim.exchange.list', compact('today'));
+    }
+
+    /**
+     * Fetch exchange rates based on a specific date.
+     * Returns JSON data for AJAX requests.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRates(Request $request)
+    {
+        $filterDate = $request->query('date'); // Get the date from the query parameter
+
+        $query = ExchangeRate::query();
+
+        if ($filterDate) {
+            // Ensure the date is valid and format it for database query
+            try {
+                $parsedDate = \Carbon\Carbon::parse($filterDate)->format('Y-m-d');
+                $query->whereDate('rate_date', $parsedDate);
+            } catch (\Exception $e) {
+                // Handle invalid date format
+                return response()->json(['success' => false, 'message' => 'Invalid date format provided.'], 400);
+            }
+        } else {
+            // If no date is provided, default to today's rates or latest rates
+            // Option 1: Default to today's rates
+            $query->whereDate('rate_date', \Carbon\Carbon::now()->format('Y-m-d'));
+            // Option 2: Default to the latest rates available (e.g., max rate_date)
+            // $latestDate = ExchangeRate::max('rate_date');
+            // if ($latestDate) {
+            //     $query->whereDate('rate_date', $latestDate);
+            // }
+        }
+
+        $rates = $query->orderBy('currency')->get();
+
+        // Format the data for the frontend
+        $formattedRates = $rates->map(function ($rate) {
+            return [
+                'id' => $rate->id,
+                'rate_date' => \Carbon\Carbon::parse($rate->rate_date)->format('d M Y'), // Format for display
+                'currency' => $rate->currency,
+                'rate' => number_format($rate->rate, 4), // Format rate to 4 decimal places
+                'created_at' => $rate->created_at->format('d M Y H:i'),
+            ];
+        });
+
+        return response()->json(['success' => true, 'rates' => $formattedRates]);
     }
 
 }

@@ -60,6 +60,16 @@
                         </div>
                     </div>
                    @endcan
+                   @can('view-exchange-rate')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Exchange Rate</h5>
+                                <a href="{{ route('v1.submit-claim.exchange-rates')}}" class="btn btn_primary mt-auto">View</a>
+                            </div>
+                        </div>
+                    </div>
+                   @endcan
                 </div>
             </div>
         </div>
