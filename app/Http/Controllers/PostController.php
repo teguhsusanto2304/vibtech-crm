@@ -130,6 +130,13 @@ class PostController extends Controller
 
     public function read_handbook($id)
     {
+        $notif = request('notif');
+
+        if ($id) {
+            Auth::user()->notifications()
+                ->where('id', $notif)
+                ->update(['read_at' => now()]);
+        }
         $post = Post::findOrFail($id);
 
         return view('handbook.read', compact('post'))->with('title', 'Read Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Hanbooks', 'Read Employee Handbook']);
