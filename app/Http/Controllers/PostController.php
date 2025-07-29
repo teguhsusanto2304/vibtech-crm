@@ -180,7 +180,7 @@ class PostController extends Controller
             'pdf' => 'nullable|file|mimes:pdf|max:5120', // max 5MB
         ]);
         $data['content'] = $request->input('title');
-        $data['post_type'] = 1;
+        $data['post_type'] = \App\Models\Post::TYPE_HANDBOOK;
         $data['data_status'] = 1;
         $data['created_by'] = auth()->user()->id;
 
@@ -260,7 +260,7 @@ class PostController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'content' => $request->content,
-            'post_type' => 2,
+            'post_type' => \App\Models\Post::TYPE_MEMO,
             'created_by' => auth()->user()->id,
         ]);
 

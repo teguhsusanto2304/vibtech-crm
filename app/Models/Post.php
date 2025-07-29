@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    const TYPE_MEMO = 1;
-    const TYPE_HANDBOOK = 2; // New status for claims awaiting admin action
+    const TYPE_MEMO = 2;
+    const TYPE_HANDBOOK = 1; // New status for claims awaiting admin action
     const TYPE_STAFF_RESOURCES = 3;
     use HasFactory;
 
