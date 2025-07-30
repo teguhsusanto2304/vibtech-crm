@@ -193,7 +193,7 @@
             </ul>
         </li>
 
-        @can('view-staff-resources')
+        
             <li class="menu-item">
                 <a href="{{ route('v1.staff-resources.list') }}" class="menu-link">
                     <i class="menu-icon">
@@ -204,7 +204,7 @@
                     <div class="text-truncate" data-i18n="Dashboards">Staff Resources</div>
                 </a>
             </li>
-        @endcan
+        
 
         @can('view-client-database')
             <li class="menu-item">

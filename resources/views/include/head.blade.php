@@ -58,3 +58,35 @@
         }
       </style>
   </head>
+  <script>
+    (function () {
+        let idleTime = 0;
+        const maxIdleMinutes = 10; // 30 minutes
+        const logoutUrl = "{{ route('logout') }}";
+
+        // Reset idle timer on activity
+        function resetIdleTimer() {
+            idleTime = 0;
+        }
+
+        // Detect user activity
+        ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt =>
+            window.addEventListener(evt, resetIdleTimer)
+        );
+
+        // Start interval timer to track idle time
+        setInterval(() => {
+            idleTime++;
+
+            if (idleTime >= maxIdleMinutes) {
+                // Auto logout after 30 minutes of no activity
+                document.getElementById('autoLogoutForm').submit();
+            }
+        }, 60000); // check every minute
+    })();
+</script>
+
+<form id="autoLogoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
+

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\SendBulkEmailJob;
 
 class JobAssignmentController extends Controller
 {
@@ -217,6 +218,117 @@ class JobAssignmentController extends Controller
     }
 
     public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'job_record_id' => 'required|string',
+            'job_type' => 'required',
+            'business_name' => 'required|string|max:255',
+            'business_address' => 'required|string|max:255',
+            'scope_of_work' => 'required|string',
+            'start_at' => 'required|date|after_or_equal:today',
+            'end_at' => 'required|date|after_or_equal:start_at',
+            'prsonnel_ids' => 'array',
+            'prsonnel_ids.*' => 'exists:users,id',
+            'job_status' => 'nullable',
+            'project_files' => 'nullable|array|max:5',
+            'project_files.*' => 'file|mimes:png,jpg,pdf,doc,docx|max:10240',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Create Job Assignment
+            $jobAssignment = JobAssignment::create([
+                'job_record_id' => $validated['job_record_id'],
+                'job_type' => $validated['job_type'],
+                'business_name' => $validated['business_name'],
+                'business_address' => $validated['business_address'],
+                'scope_of_work' => $validated['scope_of_work'],
+                'start_at' => $validated['start_at'],
+                'end_at' => $validated['end_at'],
+                'is_vehicle_require' => $request->boolean('is_vehicle_require'),
+                'user_id' => auth()->id(),
+                'job_status' => $request->filled('job_status'),
+            ]);
+
+            // ✅ File uploads
+            if ($request->hasFile('project_files')) {
+                $descriptions = $request->input('project_file_descriptions', []);
+                $filesData = [];
+
+                foreach ($request->file('project_files') as $index => $file) {
+                    $filesData[] = [
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $file->store("projects/{$jobAssignment->id}/files", 'public'),
+                        'mime_type' => $file->getClientMimeType(),
+                        'file_size' => $file->getSize(),
+                        'description' => $descriptions[$index] ?? null,
+                        'uploaded_by_user_id' => auth()->id(),
+                    ];
+                }
+
+                $jobAssignment->files()->createMany($filesData);
+            }
+
+            // ✅ Attach personnel & send notifications in batch
+            $personnelIds = $validated['prsonnel_ids'] ?? [];
+
+            if (!empty($personnelIds)) {
+                $jobAssignment->personnel()->attach($personnelIds);
+
+                $users = User::whereIn('id', $personnelIds)->get();
+                $jobUrl = route('v1.job-assignment-form.view', ['id' => $jobAssignment->id, 'respond' => 'yes']);
+                $delay = 0;
+                $i=1;
+                foreach ($users as $user) {
+                    // Queue the notification
+                    $user->notify(new UserNotification(
+                        "You have been invited to Job ID {$jobAssignment->job_record_id}",
+                        'success',
+                        $jobUrl
+                    ));                   
+
+
+                    // Increase delay every 6 emails to throttle
+                    if (($i + 1) % 6 === 0) {
+                        $delay += 15; // delay next batch by 5 seconds
+                    }
+
+
+                    // Queue the email
+                    $this->sendEmail([
+                        'email' => $user->email,
+                        'originator' => auth()->user()->name,
+                        'personel' => $user->name,
+                        'job_record_id' => $validated['job_record_id'],
+                        'type_job' => $validated['job_type'],
+                        'scope_of_work' => $validated['scope_of_work'],
+                        'start_at' => $validated['start_at'],
+                        'end_at' => $validated['end_at'],
+                        'is_vehicle_require' => $request->has('is_vehicle_require') ? 'Yes' : 'No',
+                        'url' => $jobUrl,
+                        'delay'=>$delay
+                    ]);
+                    $i++;
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('v1.job-assignment-form.view', [
+                'id' => $jobAssignment->id,
+                'respond' => 'no',
+            ])->with('success', 'Job Requisition Form Created Successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            report($e);
+            return back()->with('error', 'Failed to create Job Assignment: ' . $e->getMessage());
+        }
+    }
+
+
+    public function storeOld(Request $request)
     {
         $validated = $request->validate([
             'job_record_id' => 'required|string',
@@ -825,7 +937,15 @@ class JobAssignmentController extends Controller
 
     public function sendEmail($data)
     {
-        Mail::to($data['email'])->send(new ConfirmationMail($data));
+        //Mail::to($data['email'])->send(new ConfirmationMail($data));
+         //SendBulkEmailJob::dispatch('teguh.susanto@hotmail.com', $data)
+         ///       ->delay(now()->addSeconds(120));
+         $delay = 0;
+        //for ($i = 0; $i < count( $data); $i++) {
+            SendBulkEmailJob::dispatch($data['email'], $data)
+                ->delay(now()->addSeconds(120));
+            //$delay += 5; // add 5s per email
+        //}
 
         return response()->json(['message' => 'Vibtech Genesis Staff Portal']);
     }
@@ -843,8 +963,19 @@ class JobAssignmentController extends Controller
             'is_vehicle_require' => 'No',
             'url' => 'http://localhost:8000/v1/job-assignment-form/view/8/no',
         ];
+        $delay = 0;
 
-        Mail::to('teguh.susanto@hotmail.com')->send(new ConfirmationMail($booking));
+        for ($i = 0; $i <= 10; $i++) {
+            // Queue email with delay if needed
+            SendBulkEmailJob::dispatch('teguh.susanto@hotmail.com', $booking)
+                ->delay(now()->addSeconds($delay));
+
+            // Increase delay every 6 emails to throttle
+            if (($i + 1) % 6 === 0) {
+                $delay += 15; // delay next batch by 5 seconds
+            }
+        }
+        
 
         return response()->json(['message' => 'Vibtech Genesis Staff Portal']);
     }

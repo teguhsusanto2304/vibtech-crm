@@ -61,7 +61,7 @@
                     </div>
                    @endcan
                    @can('view-exchange-rate')
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4 invisible">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Exchange Rate</h5>
