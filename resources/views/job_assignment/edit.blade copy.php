@@ -101,74 +101,79 @@
 @endif
         <div class="card">
             <div class="card-body">
-                <form action="{{ route('v1.job-assignment-form.store')}}" method="POST" class="p-4 row g-3" enctype="multipart/form-data">
-                    @csrf
+                <form class="row g-3" action="{{ route('v1.job-assignment-form.update', $job->id) }}" method="post" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
                     <!-- Project Name -->
                      <div class="col-md-3">
                             <label for="inputEmail4" class="form-label">Job Record ID</label>
-                            <input type="text" class="form-control" name="job_record_id" value="{{ $job_no }}" readonly>
+                            <input type="text" class="form-control" name="job_record_id" value="{{ $job->job_record_id }}" readonly>
                     </div>
                     
-                    <div class="col-md-9">
-                            <label for="inputPassword4" class="form-label">Name of Job </label>
-                            <input type="text" class="form-control" name="job_type"  value="{{ old('job_type')}}">
+                    <div class="col-md-6">
+                            <label for="inputPassword4" class="form-label">Type of Job </label>
+                            <input type="text" class="form-control" name="job_type"  value="{{ old('job_type', $job->job_type) }}">
                     </div>
                     
                     <div class="col-6">
                             <label for="inputAddress" class="form-label">Business Name</label>
-                            <input type="text" class="form-control" name="business_name" value="{{ old('business_name')}}" placeholder="Enter business name">
+                            <input type="text" class="form-control" name="business_name" value="{{ old('business_name', $job->business_name) }}" placeholder="Enter business name">
                     </div>
                     <div class="col-6">
                             <label for="inputAddress2" class="form-label">Business Address</label>
-                            <input type="text" class="form-control" name="business_address" value="{{ old('business_address')}}"
+                            <input type="text" class="form-control" name="business_address" value="{{ old('business_address', $job->business_address) }}"
                                 placeholder="Enter business address">
                     </div>
                     <div class="col-md-12">
                             <label for="inputCity" class="form-label">Scope of work</label>
                             <textarea class="form-control" name="scope_of_work" cols="6" rows="3"
-                                placeholder="Enter scope of work">{{ old('scope_of_work')}}</textarea>
+                                placeholder="Enter scope of work">{{ old('scope_of_work', $job->scope_of_work) }}</textarea>
                     </div>
-                    <div class="col-12">
-                        <div class="row">                            
-                            <div class="col-3">
-                                    
-                            </div>
-                            <div class="col-3">
-                                    
-                            </div>
-                        </div>
+                    <div class="col-3">
+                            <label for="inputAddress" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_at" value="{{ old('start_at', $job->start_at->format('Y-m-d')) }}">
+                    </div>
+                    <div class="col-3">
+                            <label for="inputAddress2" class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_at" value="{{ old('end_at', $job->end_at->format('Y-m-d')) }}">
+                    </div>
+                    <div class="col-6">
+                            <label for="addProjectMembers" class="form-label">Sent To</label>
+                            <select name="prsonnel_ids[]" id="personnel-multiple" class="form-select" multiple="multiple">
+                                @foreach ($users as $dept => $departmentUsers)
+                                    <optgroup label="{{ $dept }}">
+                                        @foreach ($departmentUsers as $user)
+                                            <option value="{{ $user->id }}"
+                                data-avatar-url="{{ $user->avatar_url }}"
+                                data-initials="{{ $user->name }}" {{ in_array($user->id, $selectedUsers) ? 'selected' : '' }}>{{ $user->name }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                    </div>
+                    
+                    <!-- Members and Manager -->
+                    <div class="row mb-3">
                         
-                    </div>
- 
-    <div class="row">
-        <div class="col-md-6">               
-                <div class="row"> <!-- Nested Row -->
-                    <div class="col-6 mb-3">
-                        <label for="inputAddress" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" name="start_at">
-                    </div>
-                    <div class="col-6 mb-3">
-                        <label for="inputAddress2" class="form-label">End Date</label>
-                        <input type="date" class="form-control" name="end_at">
-                    </div>
-                    <div class="col-6">
-                        <label for="inputZip" class="form-label">Vehicle Require</label>
+                        <div class="col-md-3">
+                            <label for="inputZip" class="form-label">Vehicle Require</label>
                             <br>
-                        <input class="form-check-input" type="checkbox" value="1" name="is_vehicle_require" />
-                        <label class="form-label" for="defaultCheck1">
+                            <input class="form-check-input" type="checkbox" value="1" name="is_vehicle_require" {{ $job->is_vehicle_require ? 'checked' : '' }} />
+                            <label class="form-label" for="defaultCheck1">
                                 Yes
-                        </label>
-                    </div>
-                    <div class="col-6">
-                        <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
+                            </label>
+                        </div>
+                        <div class="col-md-9">
+                            <label for="inputZip" class="form-label">Publish on dashboard calendar</label>
                             <br>
-                            <input class="form-check-input" type="checkbox" value="1" name="job_status" />
+                            <input class="form-check-input" type="checkbox" value="1" name="job_status"{{ $job->job_status ? 'checked' : '' }} />
                             <label class="form-label" for="defaultCheck1">
                                 Yes
                             </label>
                     </div>
-                    <div class="col-12 mt-3">
-                            <label class="form-label">Upload Job Files (PNG, JPG, PDF, DOC/DOCX, PNG/JPG)</label>
+                        <!-- Project Files Upload Field ADDED HERE -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Upload Job Files (PDF, DOC/DOCX, PNG/JPG)</label>
                             <div id="new-file-upload-container">
                                 {{-- Initial file input will be added by JavaScript or rendered if old input exists --}}
                                 @if(old('project_files'))
@@ -182,7 +187,7 @@
                                     {{-- This is the initial input if no old data --}}
                                     <div class="file-upload-item">
                                             <div class="input-group mb-2">
-                                                <input type="file" name="project_files[]" class="form-control" accept=".png, .jpg, .pdf,.doc,.docx">
+                                                <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
                                                 <button type="button" class="btn btn-outline-danger btn-sm remove-file-input" style="display: none;"><i class="fas fa-trash"></i></button>
                                             </div>
                                             <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
@@ -190,8 +195,8 @@
                                 @endif
                             </div>
                             <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
-                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PNG, JPG, PDF, DOC, DOCX, PNG, JPG.</small>
-                        
+                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PDF, DOC, DOCX.</small>
+                        </div>
                         <script>
                             $(document).ready(function() {
                                 // ... (Your existing JavaScript code for Select2, modals, tooltips, etc.) ...
@@ -213,11 +218,11 @@
                                 // Function to add a new file input field group
                                 function addFileInputField() {
                                     indexNewFileUpload++;
-                                    if(indexNewFileUpload<=5){
+                                    if(indexNewFileUpload<=9){
                                         const newFileInputHtml = `
                                             <div class="file-upload-item">
                                                 <div class="input-group mb-2">
-                                                    <input type="file" name="project_files[]" class="form-control" accept=".png,.jpg,.pdf,.doc,.docx">
+                                                    <input type="file" name="project_files[]" class="form-control" accept=".pdf,.doc,.docx">
                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
                                                 </div>
                                                 <input type="text" name="project_file_descriptions[]" class="form-control mt-1" placeholder="please enter file description">
@@ -301,121 +306,34 @@
                                 });
                             });
                         </script>
-                    </div>
-                </div>
-        </div>
-        <div class="col-md-6">
-    <label class="form-label">Sent To</label>
+                        <div class="col-md-6 mb-3">
 
-    {{-- Global Select All Checkbox --}}
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" id="selectAllUsers">
-        <label class="form-check-label fw-bold" for="selectAllUsers">
-            Select All Users
-        </label>
-    </div>
-
-    <div class="user-selection-container mb-3" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
-        @foreach ($users as $deptName => $departmentUsers)
-            <div class="mb-3">
-                <h6 class="border-bottom pb-1 mb-2">{{ $deptName }}</h6>
-                {{-- Department-level Select All Checkbox --}}
-                <div class="form-check mb-2">
-                    <input class="form-check-input select-all-department" type="checkbox" id="selectAllDept_{{ Str::slug($deptName) }}" data-department="{{ Str::slug($deptName) }}">
-                    <label class="form-check-label fw-semibold" for="selectAllDept_{{ Str::slug($deptName) }}">
-                        Select All {{ $deptName }}
-                    </label>
-                </div>
-                <div class="ms-4"> {{-- Indent department users --}}
-                    @foreach ($departmentUsers as $user)
-                        <div class="form-check mb-1">
-                            <input class="form-check-input user-checkbox" type="checkbox"
-                                   name="prsonnel_ids[]"
-                                   value="{{ $user->id }}"
-                                   id="user_{{ $user->id }}"
-                                   data-department="{{ Str::slug($deptName) }}">
-                            <label class="form-check-label" for="user_{{ $user->id }}">
-                                {{-- Optional: Display avatar/initials --}}
-                                @if($user->avatar_url)
-                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="rounded-circle me-1" width="20" height="20">
-                                @else
-                                    <span class="avatar-initials rounded-circle bg-secondary text-white me-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7em;">{{ Str::limit($user->name, 1, '') }}</span>
+                                @if(isset($job) && $job->files->isNotEmpty()) {{-- Assuming a 'files' relationship on Project model --}}
+                                    <h6 class="mt-3">Existing Files:</h6>
+                                    <ul class="list-group">
+                                        @php
+                                            // Filter the collection to only include files where project_stage_task_id is null
+                                            $projectLevelFiles = $job->files;
+                                        @endphp
+                                        @foreach($projectLevelFiles as $file)
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>
+                                                    <i class="fas fa-file me-2"></i> {{ $file->description }}
+                                                    <small class="text-muted">({{ number_format($file->file_size / 1024, 2) }} KB)</small>
+                                                </span>
+                                                <div>
+                                                    
+                                                    {{-- Add a delete button (requires JavaScript and a backend route to handle deletion) --}}
+                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-file-btn" data-file-id="{{ $file->id }}" data-file-name="{{ $file->original_name }}">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
                                 @endif
-                                {{ $user->name }}
-                            </label>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endforeach
-    </div>
-<script>
-    $(document).ready(function() {
-        const selectAllUsersCheckbox = $('#selectAllUsers');
-        const departmentSelectAllCheckboxes = $('.select-all-department');
-        const userCheckboxes = $('.user-checkbox');
-
-        // 1. Global "Select All Users" functionality
-        selectAllUsersCheckbox.on('change', function() {
-            const isChecked = $(this).is(':checked');
-            userCheckboxes.prop('checked', isChecked);
-            departmentSelectAllCheckboxes.prop('checked', isChecked); // Also check/uncheck department checkboxes
-        });
-
-        // 2. Department-level "Select All" functionality
-        departmentSelectAllCheckboxes.on('change', function() {
-            const isChecked = $(this).is(':checked');
-            const departmentSlug = $(this).data('department');
-            // Select/deselect only users belonging to this department
-            userCheckboxes.filter(`[data-department="${departmentSlug}"]`).prop('checked', isChecked);
-
-            // Update global "Select All Users" checkbox based on department selections
-            updateSelectAllUsersCheckbox();
-        });
-
-        // 3. Individual User Checkbox change listener
-        userCheckboxes.on('change', function() {
-            const departmentSlug = $(this).data('department');
-            const departmentUsers = userCheckboxes.filter(`[data-department="${departmentSlug}"]`);
-            const checkedDepartmentUsers = departmentUsers.filter(':checked');
-
-            // Update department "Select All" checkbox
-            if (checkedDepartmentUsers.length === departmentUsers.length) {
-                $(`#selectAllDept_${departmentSlug}`).prop('checked', true);
-            } else {
-                $(`#selectAllDept_${departmentSlug}`).prop('checked', false);
-            }
-
-            // Update global "Select All Users" checkbox
-            updateSelectAllUsersCheckbox();
-        });
-
-        // Helper function to update the global "Select All Users" checkbox
-        function updateSelectAllUsersCheckbox() {
-            if (userCheckboxes.length === userCheckboxes.filter(':checked').length) {
-                selectAllUsersCheckbox.prop('checked', true);
-            } else {
-                selectAllUsersCheckbox.prop('checked', false);
-            }
-        }
-
-        // Initial check on page load (e.g., if some users are pre-selected)
-        updateSelectAllUsersCheckbox();
-        departmentSelectAllCheckboxes.each(function() {
-            const departmentSlug = $(this).data('department');
-            const departmentUsers = userCheckboxes.filter(`[data-department="${departmentSlug}"]`);
-            const checkedDepartmentUsers = departmentUsers.filter(':checked');
-            if (checkedDepartmentUsers.length === departmentUsers.length && departmentUsers.length > 0) {
-                $(this).prop('checked', true);
-            }
-        });
-    });
-</script>
-
-        </div>
-    </div>
-                    
-                    
+                            </div>
+                    </div>
 
                     <!-- Buttons -->
                     <div class="col-12">
