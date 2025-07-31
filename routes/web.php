@@ -35,6 +35,12 @@ use App\Http\Controllers\V2\ClientController as ClientControllerV2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/initiate', [JobAssignmentController::class, 'initiate'])->name('initiate');
+Route::post('/bulk-email/send', [JobAssignmentController::class, 'initiateBulkSend'])->name('bulk_email.send');
+
+// Route to get the progress of a specific batch (GET request for polling)
+Route::get('/bulk-email/progress/{batchId}', [JobAssignmentController::class, 'getBatchProgress'])->name('bulk_email.progress');
+
 Route::get('/', [LoginController::class, 'showLoginForm']);
 
 // Route to show the form where the user enters their email to request a reset link

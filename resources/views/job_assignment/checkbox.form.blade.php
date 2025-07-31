@@ -316,16 +316,24 @@
     </div>
 
     <div class="user-selection-container mb-3" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
-         @foreach (\App\Models\User::where('user_status',1)->get() as $user)
+        @foreach ($users as $deptName => $departmentUsers)
             <div class="mb-3">
-                
+                <h6 class="border-bottom pb-1 mb-2">{{ $deptName }}</h6>
+                {{-- Department-level Select All Checkbox --}}
+                <div class="form-check mb-2">
+                    <input class="form-check-input select-all-department" type="checkbox" id="selectAllDept_{{ Str::slug($deptName) }}" data-department="{{ Str::slug($deptName) }}">
+                    <label class="form-check-label fw-semibold" for="selectAllDept_{{ Str::slug($deptName) }}">
+                        Select All {{ $deptName }}
+                    </label>
+                </div>
                 <div class="ms-4"> {{-- Indent department users --}}
-                   
+                    @foreach ($departmentUsers as $user)
                         <div class="form-check mb-1">
                             <input class="form-check-input user-checkbox" type="checkbox"
                                    name="prsonnel_ids[]"
                                    value="{{ $user->id }}"
-                                   id="user_{{ $user->id }}">
+                                   id="user_{{ $user->id }}"
+                                   data-department="{{ Str::slug($deptName) }}">
                             <label class="form-check-label" for="user_{{ $user->id }}">
                                 {{-- Optional: Display avatar/initials --}}
                                 @if($user->avatar_url)
@@ -336,6 +344,7 @@
                                 {{ $user->name }}
                             </label>
                         </div>
+                    @endforeach
                 </div>
             </div>
         @endforeach

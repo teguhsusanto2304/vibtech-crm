@@ -10,12 +10,12 @@ use App\Models\JobAssignmentPersonnel;
 use App\Models\JobType;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\EmailBatch;
 use App\Notifications\UserNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendBulkEmailJob;
@@ -1062,5 +1062,87 @@ class JobAssignmentController extends Controller
             })
             ->escapeColumns([])
             ->make(true);
+    }
+
+    public function initiate()
+    {
+        return view('job_assignment.initiate')
+            ->with('title', 'View Job Requisition')
+            ->with('breadcrumb', ['Home', 'Staff Task', 'Job Requisition', 'View Job Requisition']);
+    }
+
+    public function initiateBulkSend(Request $request)
+    {
+        $request->validate([
+            'recipient_emails' => 'required|array',
+            'recipient_emails.*' => 'email',
+            'email_subject' => 'required|string|max:255',
+            'email_body' => 'required|string',
+            // Add any other validation for your email data
+        ]);
+
+        $recipientEmails = $request->input('recipient_emails');
+        $totalRecipients = count($recipientEmails);
+
+        if ($totalRecipients === 0) {
+            return response()->json(['success' => false, 'message' => 'No recipients provided.'], 400);
+        }
+
+        // 1. Create a new EmailBatch record
+        $emailBatch = EmailBatch::create([
+            'name' => $request->input('email_subject') . ' - ' . now()->format('Y-m-d H:i:s'),
+            'total_recipients' => $totalRecipients,
+            'status' => 'in_progress',
+            'user_id' => Auth::id(),
+        ]);
+
+        // 2. Dispatch a job for each recipient
+        foreach ($recipientEmails as $email) {
+            $emailData = [
+                'subject' => $request->input('email_subject'),
+                'body' => $request->input('email_body'),
+                // Add any other data your Mailable needs
+            ];
+
+            // Dispatch the job, passing the batch ID
+            SendBulkEmailJob::dispatch($email, $emailData, $emailBatch->id);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bulk email sending initiated.',
+            'batch_id' => $emailBatch->id,
+            'total_recipients' => $totalRecipients,
+        ]);
+    }
+
+    /**
+     * API endpoint to get the progress of an email batch.
+     *
+     * @param int $batchId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getBatchProgress(int $batchId)
+    {
+        $batch = EmailBatch::find($batchId);
+
+        if (!$batch) {
+            return response()->json(['success' => false, 'message' => 'Batch not found.'], 404);
+        }
+
+        $progressPercentage = 0;
+        if ($batch->total_recipients > 0) {
+            $progressPercentage = round((($batch->sent_count + $batch->failed_count) / $batch->total_recipients) * 100);
+        }
+
+        return response()->json([
+            'success' => true,
+            'batch_id' => $batch->id,
+            'total_recipients' => $batch->total_recipients,
+            'sent_count' => $batch->sent_count,
+            'failed_count' => $batch->failed_count,
+            'status' => $batch->status,
+            'progress_percentage' => min(100, $progressPercentage), // Cap at 100%
+        ]);
     }
 }

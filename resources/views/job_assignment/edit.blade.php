@@ -339,27 +339,14 @@
 
     {{-- Container for scrollable user list --}}
     <div class="user-selection-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
-        @foreach ($users as $deptName => $departmentUsers)
+        @foreach (\App\Models\User::where('user_status',1)->get() as $user)
             <div class="mb-3">
-                <h6 class="border-bottom pb-1 mb-2">{{ $deptName }}</h6>
-                {{-- Department-level Select All Checkbox --}}
-                <div class="form-check mb-2">
-                    {{-- Use a unique ID for each department's select all --}}
-                    <input class="form-check-input select-all-department" type="checkbox"
-                           id="selectAllDept_{{ Str::slug($deptName) }}"
-                           data-department="{{ Str::slug($deptName) }}">
-                    <label class="form-check-label fw-semibold" for="selectAllDept_{{ Str::slug($deptName) }}">
-                        Select All {{ $deptName }}
-                    </label>
-                </div>
                 <div class="ms-4"> {{-- Indent individual users for visual hierarchy --}}
-                    @foreach ($departmentUsers as $user)
                         <div class="form-check mb-1">
                             <input class="form-check-input user-checkbox" type="checkbox"
                                    name="prsonnel_ids[]" {{-- Important: Use array notation for multiple values --}}
                                    value="{{ $user->id }}"
                                    id="user_{{ $user->id }}" {{-- Unique ID for each user checkbox --}}
-                                   data-department="{{ Str::slug($deptName) }}" {{-- Link to department for JS --}}
                                    {{ in_array($user->id, $selectedUsers) ? 'checked' : '' }} {{-- Pre-selection logic --}}
                                    >
                             <label class="form-check-label" for="user_{{ $user->id }}">
@@ -376,7 +363,6 @@
                                 {{ $user->name }}
                             </label>
                         </div>
-                    @endforeach
                 </div>
             </div>
         @endforeach
