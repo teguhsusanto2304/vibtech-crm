@@ -183,5 +183,10 @@ class ProjectStageTask extends Model
         return $this->hasMany(ProjectTaskLog::class, 'task_id');
     }
 
+    public function kanbanStatus()
+    {
+        return $this->belongsTo(Kanban::class, 'data_status');
+    }
+
     
 }

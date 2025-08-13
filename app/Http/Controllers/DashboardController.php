@@ -381,6 +381,7 @@ class DashboardController extends Controller
 
             $formattedEvents[] = [
                 'id' => 'job_' . $job->id, // Prefix ID to distinguish from bookings
+                'real_id'=>$job->id,
                 'title' => "<div class='callout-event'><label class='text-success'>".$job->job_type.'</label><br>'.$personsHtml.'</div>',
                 'description' => $job->description ?? 'No description.', // Assuming description exists
                 'time' => $jobTimeRange,

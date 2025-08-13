@@ -176,4 +176,14 @@ class Project extends Model
     {
         return $this->hasMany(ProjectPhase::class);
     }
+
+    public function projectKanban()
+    {
+        return $this->hasMany(ProjectKanban::class);
+    }
+
+    public function projectTask(): HasMany
+    {
+        return $this->hasMany(ProjectTask::class);
+    }
 }

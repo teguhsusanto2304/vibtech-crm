@@ -40,6 +40,11 @@ class ProjectController extends Controller
         return view('projects.list')->with('title', 'List of Projects')->with('breadcrumb', ['Home', 'Project Management','List of Projects']);
     }
 
+    public function projectList()
+    {
+        return view('projects.project.list')->with('title', 'List of Projects')->with('breadcrumb', ['Home', 'Project Management','List of Projects']);
+    }
+
     public function all()
     {
         return view('projects.management.list')->with('title', 'Vibtech Projects')->with('breadcrumb', ['Home', 'Project Management','Vibtech Projects']);
@@ -52,9 +57,21 @@ class ProjectController extends Controller
         return view('projects.form',compact('users'))->with('title', 'Create A New Project')->with('breadcrumb', ['Home', 'Project Management','Create A New Project']);
     }
 
+    public function createProject()
+    {
+        $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
+        return view('projects.project.form',compact('users'))->with('title', 'Create A New Project')->with('breadcrumb', ['Home', 'Project Management','Create A New Project']);
+    }
+
     public function store(Request $request)
     {
         return $this->projectService->store($request);
+    }
+
+    public function storeProject(Request $request)
+    {
+        return $this->projectService->storeProject($request);
     }
 
     public function edit($id)
@@ -106,6 +123,38 @@ class ProjectController extends Controller
         return view('projects.detail',compact('project','kanbanStages','users','creators','selectedPhaseId'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
     }
 
+    public function detailProject($id)
+    {
+        $project = $this->projectService->getProject($id);
+        if (!$project) {
+                return redirect()->route('v1.project-management.list')->with('errors', 'Data not finded');
+        }
+
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        $phases = $project->phases()->get();
+        if (is_null($selectedPhaseId) && $phases->isNotEmpty()) {
+            
+            $firstPhase = $phases->first(); // Ambil phase pertama
+            $selectedPhaseId = $firstPhase->id; // Gunakan ID phase pertama sebagai default
+
+            Session::put('selected_project_phase_id_' . $project->id, $selectedPhaseId);
+            $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        }
+
+        if (Session::get('selected_project_phase_id_' . $project->id) != $selectedPhaseId) {
+            Session::forget('selected_project_phase_id_' . $project->id);
+            Session::put('selected_project_phase_id_' . $project->id, $selectedPhaseId);
+            $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        }
+        
+        $users = $this->commonService->getUsers();
+        $users = $users->where('id', '!=', auth()->user()->id);
+        $kanbanStages = $this->commonService->getKanbanStages();
+        $creators = $this->projectService->getFileCreator($id);
+        $ganttData = $this->projectService->ganttData($project->id,'month',$selectedPhaseId);
+        return view('projects.project.detail',compact('ganttData','project','kanbanStages','users','creators','selectedPhaseId'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+    }
+
     public function phase($project_id,$id)
     {
         $project = $this->projectService->getProject($project_id);
@@ -118,6 +167,22 @@ class ProjectController extends Controller
         }
 
         return redirect()->route('v1.project-management.detail', ['project' => $project_id])
+                         ->with('success', 'You has choosen phases filter.');
+
+    }
+
+    public function phaseProject($project_id,$id)
+    {
+        $project = $this->projectService->getProject($project_id);
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+
+        if ($selectedPhaseId != $id) {
+            Session::forget('selected_project_phase_id_' . $project->id);
+            Session::put('selected_project_phase_id_' . $project->id, $id);
+            Session::get('selected_project_phase_id_' . $project->id);
+        }
+
+        return redirect()->route('v1.projects.detail', ['project' => $project_id])
                          ->with('success', 'You has choosen phases filter.');
 
     }
@@ -208,5 +273,35 @@ class ProjectController extends Controller
     public function updateProjectPhase(Request $request, $projectId, $phaseId)
     {
         return $this->projectService->updateProjectPhase($request, $projectId, $phaseId);
+    }
+
+    public function showKanban($projectId) 
+    {
+        return $this->projectService->showKanban($projectId);
+    }
+
+    public function showGantt($projectId)
+    {
+        return $this->projectService->showGantt($projectId);
+    }
+
+    public function ganttViewBootstrap($projectId)
+    {
+        return $this->projectService->ganttViewBootstrap($projectId);
+    }
+
+    public function showGanttDaily($projectId)
+    {
+        return $this->projectService->showGantt($projectId,'daily');
+    }
+
+    public function storeProjectTask(Request $request)
+    {
+        return $this->projectService->storeProjectTask($request);
+    }
+
+    public function moveProjectTask(Request $request, $taskId)
+    {
+        return $this->projectService->moveProjectTask($request, $taskId);
     }
 }

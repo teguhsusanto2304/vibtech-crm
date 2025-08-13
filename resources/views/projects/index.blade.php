@@ -60,6 +60,26 @@
                         </div>
                     </div>
                    @endcan
+                   @can('create-project-management')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">New Project <small><span class="badge bg-danger pill-rounded">New Version</span></small></h5>
+                                <a href="{{ route('v1.projects.create')}}" class="btn btn_primary mt-auto">View</a>
+                            </div>
+                        </div>
+                    </div>
+                   @endcan
+                   @can('view-project-management')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Your Projects <small><span class="badge bg-danger pill-rounded">New Version</span></small></h5>
+                                <a href="{{ route('v1.projects.list')}}" class="btn btn_primary mt-auto">View</a>
+                            </div>
+                        </div>
+                    </div>
+                   @endcan
                 </div>
             </div>
         </div>

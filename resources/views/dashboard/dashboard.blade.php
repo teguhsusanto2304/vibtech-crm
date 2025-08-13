@@ -710,7 +710,7 @@
                                         $eventsDisplayArea.append(`
                                             <div class="card mb-2">
                                                 <div class="card-body">
-                                                    <h5 class="card-title">${event.title}</h5>
+                                                    <h5 class="card-title"><a href="/v1/job-assignment-form/view/${event.real_id}/yes">${event.title}</a></h5>
                                                     <p class="card-text">
                                                         <strong>Time:</strong> ${event.time || 'N/A'}<br>
                                                         

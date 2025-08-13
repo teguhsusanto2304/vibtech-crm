@@ -9,8 +9,10 @@ use App\Models\ProjectMember;
 use App\Models\ProjectPhase;
 use Auth;
 use App\Helpers\IdObfuscator;
+use App\Models\ProjectKanban;
 use App\Models\ProjectStageLog;
 use App\Models\ProjectStageTask;
+use App\Models\ProjectTask;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
@@ -90,7 +92,7 @@ class ProjectService {
             }
 
             // 4. Handle File Uploads
-            if ($request->hasFile('project_files')) {
+            if ($request->hasFile('path_image')) {
                 foreach ($request->file('project_files') as $index => $file) {
                     $originalFileName = $file->getClientOriginalName();
                     $fileMimeType = $file->getClientMimeType();
@@ -148,6 +150,146 @@ class ProjectService {
                 'message' => 'Failed to create project. Please try again later.'.$e->getMessage()
             ], 500); // 500 Internal Server Error
         }
+    }
+
+    public function storeProject(Request $request)
+    {
+        // 1. Validate the incoming request data
+        // Adjust validation rules as per your form's requirements
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string', // Description can be optional
+            'start_at' => 'required|date',
+            'end_at' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) use ($request) {
+                    $startDate = \Carbon\Carbon::parse($request->start_at);
+                    $endDate = \Carbon\Carbon::parse($value);
+
+                    if ($startDate->copy()->addDays(2)->gt($endDate)) {
+                        $fail('The end date must be at least 2 days after the start date.');
+                    }
+                }
+            ], // End date must be on or after start date
+            'addProjectMembers' => 'required|array', // Expecting an array of user IDs
+            'addProjectMembers.*' => 'integer|exists:users,id', // Each member ID must be an integer and exist in users table
+            'project_files' => 'nullable|array|max:5', // Max 5 new files
+            'project_files.*' => 'file|mimes:pdf,doc,docx|max:10240',
+            'phases' => 'required|numeric|min:1|max:30',
+        ]);
+
+        try {
+            // 2. Create the new Project record
+            $project = Project::create([
+                'name' => $validatedData['name'],
+                'description' => $validatedData['description'],
+                'start_at' => $validatedData['start_at'],
+                'end_at' => $validatedData['end_at'],
+                'phase' => $validatedData['phases'],
+                'project_manager_id' => Auth::id(), // Set the authenticated user as the project manager
+            ]);
+
+            // 3. Attach Project Members (many-to-many relationship)
+            if (!empty($validatedData['addProjectMembers'])) {
+                // The sync method will attach any number of models to the
+                // given model. It accepts an array of IDs to place on the
+                // intermediate table. Any IDs not in the given array will
+                // be removed from the intermediate table.
+                $project->projectMembers()->sync($validatedData['addProjectMembers']);
+            } else {
+                // If no members are selected, ensure no previous members are attached
+                $project->projectMembers()->detach(); // Or sync([])
+            }
+
+            // 4. Handle File Uploads
+            if ($request->hasFile('path_image')) {
+                foreach ($request->file('project_files') as $index => $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $project->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $project->files()->create([
+                        'file_name' => $originalFileName,
+                        'file_path' => $path, // The path returned by store()
+                        'mime_type' => $fileMimeType,
+                        'file_size' => $fileSize,
+                        'description' => $request->input('project_file_descriptions')[$index] ?? null,
+                        'uploaded_by_user_id' => Auth::id(),
+                    ]);
+                }
+            }
+            for($iphases = 0; $iphases < $request->phases; $iphases++){
+                $project->phases()->create([
+                    'phase' => $iphases+1,
+                    'name' => 'Phase #'.($iphases+1).' of '.$validatedData['name'],
+                    'description' => 'Phase #'.($iphases+1).' of '.$validatedData['name'].' description',
+                    'start_date' => date('Y-m-d'),
+                    'end_date' => date('Y-m-d'),
+                    'data_status'=>1
+                ]);
+            }
+
+            $defaultKanban = ['To Do','On Doing','Done'];
+            foreach ($defaultKanban as $index => $kanban) {
+                ProjectKanban::create([
+                    'project_id' => $project->id,
+                    'name'       => $kanban,
+                    'data_status'=> $index+1
+                ]);
+            }
+
+            // 4. Return a success response
+            return redirect()->route('v1.projects.detail', ['project' => $project->obfuscated_id])->with('success', 'Project has been stored successfully.');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // This block is actually rarely hit because $request->validate()
+            // automatically handles validation exceptions by returning a 422 JSON response.
+            // However, it's good practice for other custom validation or if you want to capture it.
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            // Catch any other unexpected errors
+            \Log::error('Error creating project: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request_data' => $request->all(),
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create project. Please try again later.'.$e->getMessage()
+            ], 500); // 500 Internal Server Error
+        }
+    }
+
+    public function storeProjectTask(Request $request)
+    {
+        $validated = $request->validate([
+            'project_id'         => 'required|exists:projects,id',
+            'project_phase_id'   => 'required|exists:project_phases,id',
+            'project_stage_id'   => 'required|exists:kanban_stages,id',
+            'project_kanban_id'  => 'required|exists:project_kanbans,id',
+            'assigned_to_user_id'=> 'nullable|exists:users,id',
+            'name'               => 'required|string|max:255',
+            'description'        => 'nullable|string',
+            'start_at'           => 'nullable|date',
+            'end_at'             => 'nullable|date|after_or_equal:start_at',
+        ]);
+
+        $validated['created_by'] = Auth::id();
+
+        ProjectTask::create($validated);
+
+        return redirect()->back()->with('success', 'Task created successfully.');
     }
 
     /**
@@ -237,7 +379,13 @@ class ProjectService {
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
 
                 // View button
-                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.detail', ['project' => $row->obfuscated_id]) . '">View</a>';
+                if(\Route::currentRouteName()=='v1.projects.data')
+                {
+                    $urlDetail ='v1.projects.detail';
+                } else {
+                    $urlDetail='v1.project-management.detail';
+                }
+                $btn .= '<a class="btn btn-info btn-sm" href="' . route($urlDetail, ['project' => $row->obfuscated_id]) . '">View</a>';
 
                 // Conditional Edit and Delete buttons (only for project manager)
                 if ($row->project_manager_id == auth()->user()->id && $row->data_status==1) {
@@ -1185,6 +1333,120 @@ class ProjectService {
             \Log::error("Error updating project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
             return response()->json(['success' => false, 'message' => 'An unexpected error occurred during update.'], 500);
         }
+    }
+
+    public function showKanban($projectId)
+    {
+        $decodedId = IdObfuscator::decode($projectId);
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $decodedId);
+        $project = Project::with([
+            'projectKanban.tasks' => function($query) use ($selectedPhaseId) {
+                $query->where('project_phase_id', $selectedPhaseId);
+            }
+        ])->findOrFail($decodedId);
+
+        return view('projects.kanban.kanban', compact('project','selectedPhaseId'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+    }
+
+    public function showGantt($projectId,$type="month")
+    {
+        $decodedId = IdObfuscator::decode($projectId);
+        $project = Project::with(['projectKanban.tasks'])->findOrFail($decodedId);
+
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        $tasks = $project->projectTask()
+        ->where('project_phase_id',$selectedPhaseId)
+        ->get();
+        $prevId = null;
+
+        $ganttData = [
+            "data" => $tasks->map(function ($task) {
+            
+                return [
+                    "id" => $task->id,
+                    "text" => $task->name,
+                    "start_date" => Carbon::parse($task->start_at)->format('d-m-Y'),
+                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at)) ?: 1,
+                    "progress" => ($task->progress_percentage ?? 0) / 100,
+                    "parent" => 0,// or task->project_kanban_id if you use nesting,
+                    "assigned_to_user_id"=> $task->assigned_to_user_id,
+                    "assigned_to_user_name"=>$task->assignedTo->name,
+                    "color"=> ($task->projectKanban->name=="Done") ? "#53ec31ff":(($task->projectKanban->name=="On Doing")?"#622cebff":"#f70b2aff")
+                ];
+                $prevId = $task->id;
+            })
+        ];
+        if($type=="month"){
+            return view('projects.kanban.gantt', [
+                        'project' => $project,
+                        'ganttData' => $ganttData,
+                    ])->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        } else {
+            return view('projects.kanban.gantt-daily', [
+                        'project' => $project,
+                        'ganttData' => $ganttData,
+                    ])->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        }
+        
+    }
+
+    public function ganttViewBootstrap($projectId)
+    {
+        $decodedId = IdObfuscator::decode($projectId);
+        $project = Project::with(['projectKanban.tasks'])->findOrFail($decodedId);
+        $tasks = $project->projectTask()->get();
+
+        // Timeline start and end range
+        $minDate = $tasks->min('start_at') ?? now();
+        $maxDate = $tasks->max('end_at') ?? now()->addDays(1);
+
+        $totalDays = $minDate->diffInDays($maxDate) + 1;
+
+        return view('projects.kanban.gantt-bootstrap', compact('project', 'tasks', 'minDate', 'maxDate', 'totalDays'));
+    }
+
+    public function ganttData($projectId,$type="month",$projectPhaseId=null)
+    {
+        $project = Project::with(['projectKanban.tasks'])->findOrFail($projectId);
+
+        $tasks = $project->projectTask()
+        ->where('project_phase_id', $projectPhaseId)
+        ->get();
+        $prevId = null;
+
+        $ganttData = [
+            "data" => $tasks->map(function ($task) {
+                return [
+                    "id" => $task->id,
+                    "text" => $task->name,
+                    "start_date" => Carbon::parse($task->start_at)->format('d-m-Y'),
+                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at)) ?: 1,
+                    "progress" => ($task->progress_percentage ?? 0) / 100,
+                    "parent" => 0,// or task->project_kanban_id if you use nesting
+                    "color"=> ($task->projectKanban->name=="Done") ? "#53ec31ff":(($task->projectKanban->name=="On Doing")?"#622cebff":"#f70b2aff")
+                ];
+                $prevId = $task->id;
+            })
+        ];
+        return $ganttData;
+    }
+
+    public function moveProjectTask(Request $request, $taskId)
+    {
+        $task = ProjectTask::find($taskId);
+        $validated = $request->validate([
+            'data_status' => 'required|string|max:255',
+        ]);
+
+        // Update task's kanban/status
+        $task->project_kanban_id = $validated['data_status'];
+        $task->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task moved successfully',
+            'task' => $task
+        ]);
     }
     
 }

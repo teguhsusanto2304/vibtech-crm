@@ -45,6 +45,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/project-files/data','getProjectFileData')->name('v1.project-management.project-files.data');
             Route::get('/{projectId}/phases/{phaseId}/get-details','getPhaseDetailsForModal')->name('v1.project-management.phases.get-details');
             Route::put('/{projectId}/phases/{phaseId}','updateProjectPhase')->name('v1.project-management.phases');
+            Route::get('/{projectId}/kanban','showKanban')->name('v1.project-management.kanban');
+            Route::get('/{projectId}/gantt','showGantt')->name('v1.project-management.gantt');
+            Route::get('/{projectId}/gantt-daily','showGanttDaily')->name('v1.project-management.gantt-daily');
         });
 
         Route::prefix('project-management')->controller(ProjectStageTaskController::class)->group(function () {
@@ -56,6 +59,20 @@ Route::prefix('v1')->group(function () {
             Route::post('/stages/{task_id}/tasks-add-log', 'addLog')->name('v1.project-management.stage.tasks-add-log');
             Route::get('/stage/{task_id}/tasks', 'show')->name('v1.project-management.stage.tasks');
             
+        });
+
+        Route::prefix('projects')->controller(ProjectController::class)->group(function () {
+            Route::get('/list', 'projectList')->name('v1.projects.list');
+            Route::get('/all', 'all')->name('v1.projects.all');
+            Route::get('/create', 'createProject')->name('v1.projects.create');
+            Route::post('/store','storeProject')->name('v1.projects.store');
+            Route::post('/tasks/store','storeProjectTask')->name('v1.projects.tasks.store');
+            Route::get('/{project}/detail', 'detailProject')->name('v1.projects.detail');
+            Route::get('/{projectId}/gantt-daily','showGanttDaily')->name('v1.projects.gantt-daily');
+            Route::get('/{project_id}/{id}/phase', 'phaseProject')->name('v1.projects.phase');
+            Route::get('/{projectId}/board','showKanban')->name('v1.projects.board');
+            Route::post('/{taskId}/tasks/move','moveProjectTask')->name('v1.projects.tasks.move');
+            Route::get('/data', 'getProjectsData')->name('v1.projects.data');
         });
         
     });
