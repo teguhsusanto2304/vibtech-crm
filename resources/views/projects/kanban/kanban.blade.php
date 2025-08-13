@@ -179,7 +179,7 @@
 
             // Send update to server
             setTimeout(async () => {
-                if (assignedId === currentUserId  || projectManagerId===currentUserId) {
+                //if (assignedId === currentUserId  || projectManagerId===currentUserId) {
                     // User allowed: update DB
                     const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
                         method: 'POST',
@@ -195,12 +195,12 @@
                         KanbanBoard.addElement(prevBoardId, el.outerHTML);
                         el.remove();
                     }
-                } else {
-                    alert('You can\'t move this card — it is not your task.');
+                //} else {
+                    //alert('You can\'t move this card — it is not your task.');
                     // Move card back to old column
-                    KanbanBoard.addElement(prevBoardId, el.outerHTML);
-                    el.remove();
-                }
+                    //KanbanBoard.addElement(prevBoardId, el.outerHTML);
+                    //el.remove();
+                //}
             }, 0);
             
 
