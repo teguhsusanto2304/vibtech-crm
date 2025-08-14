@@ -11,7 +11,8 @@ class ProjectKanban extends Model
     protected $fillable = [
         'project_id',
         'name',
-        'data_status'
+        'data_status',
+        'color_background'
     ];
     public function tasks()
     {
