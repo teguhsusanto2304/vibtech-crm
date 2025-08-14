@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="https://unpkg.com/jkanban@1.3.1/dist/jkanban.min.css">
 <script src="https://unpkg.com/jkanban@1.3.1/dist/jkanban.min.js"></script>
 
+
 <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
         <!-- custom-icon Breadcrumb-->
@@ -25,7 +26,7 @@
         </nav>
     </div>
     <div class="p-6">
-        <div class="col-md-7 mb-4">
+        <div class="col-md-12 mb-4">
                             <div class="table-responsive"> {{-- Optional: Makes table scrollable on small screens --}}
                                 <table class="table table-borderless table-sm"> {{-- table-borderless for no borders, table-sm for compact --}}
                                     <tbody>
@@ -79,8 +80,92 @@
                             </div>
                         </div>
     <a href="{{ route('v1.projects.detail',['project'=>$project->obfuscated_id]) }}" class="btn btn-sm bg-secondary text-white mb-3" style="margin-left: 15px;">Back to Project Detail</a>
-    <div id="kanban-board" class="overflow-x-auto">
+<style>
+    /*
+     * The main container. We set this to display flex and allow
+     * horizontal scrolling.
+     */
+    #kanban-board {
+        overflow-x: auto;
+        overflow-y: hidden; /* Hide vertical overflow */
+        padding: 1rem 0;
+        gap: 1rem;
+        /* The jkanban library itself sets a flex display,
+           but it's good practice to ensure it here if needed.
+           However, the key is the overflow property.
+         */
+    }
+
+    /*
+     * This targets the individual kanban board columns.
+     * We ensure they do not shrink and maintain a fixed width.
+     * The library sets a class `kanban-container` which is the direct parent of all boards.
+     * Let's target the boards directly.
+     */
+    .kanban-board {
+        /* Prevents the boards from shrinking below their width */
+        flex-shrink: 0;
+        width: 280px; /* Or a width of your choice */
+    }
+
+    /*
+     * Optional: Better scrollbar styling for a cleaner look.
+     */
+    #kanban-board::-webkit-scrollbar {
+        height: 8px;
+    }
+    #kanban-board::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+    #kanban-board::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+</style>
+{!! $styleKanbanCard !!}
+
+        <div class="col-md-12 mb-4">
+            <div id="kanban-board"></div>
+        </div>
         
+    </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal fade" id="task-modal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-task-title">Judul Tugas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <p id="modal-task-description" class="text-muted"></p>
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-person-circle me-2 text-muted"></i>
+                    <p id="modal-task-assigned" class="mb-0 fw-semibold"></p>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-calendar-event me-2 text-muted"></i>
+                    <p id="modal-task-dates" class="mb-0 fw-semibold"></p>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-tag me-2 text-muted"></i>
+                    <p id="modal-task-stage" class="mb-0 fw-semibold"></p>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" id="delete-task-button" class="btn btn-danger">
+                    <i class="bi bi-trash-fill me-1"></i> Hapus Task
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -88,130 +173,161 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jkanban/1.2.0/jkanban.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jkanban/1.2.0/jkanban.min.js"></script>
 
+
 <script>
     const kanbanBoards = [];
     const currentUserId = {{ auth()->id() ?? 'null' }};
     const projectManagerId = {{ $project->project_manager_id }};
+    const lastProjectKanbanId = {{ $project->projectKanban->last()->id ?? 'null' }};
 
-    @foreach ($project->projectKanban as $kanban)
-    @php
-        // Example: Set color class based on task status
-        $cardColor = match($kanban->data_status) {
-            1 => 'bg-warning', // On Going
-            2 => 'bg-info',    // Pending Review
-            3 => 'bg-success',      // Overdue
-            default => 'bg-danger',
-        };
-    @endphp
+    @foreach ($project->projectKanban as $idx => $kanban)
+    
         kanbanBoards.push({
             id: 'kanban-{{ $kanban->id }}',
-            title: '<label class="text-white">{{ $kanban->name }}</label>',
-            class: '{{ $cardColor }}',
+            title: '<label class="text-white">{{ $kanban->name }} </label>',
+            class: 'kanban{{ $idx+1 }}',
             item: [
                 @foreach ($kanban->tasks as $task)
                     {
-                        id: 'task-{{ $task->id }},{{ $task->assignedTo->id }}',
+                        // Pastikan data yang dibutuhkan ada di id atau data-* atribut
+                        id: 'task-{{ $task->id }},{{ $task->assigned_to_user_id }}',
                         title: `<div class="p-2" 
-                            data-eid="task-{{ $task->id }}" 
-                            data-euser-id="user-{{ $task->assignedTo->id }}">
-                                    <strong>{{ $task->name }}</strong>
-                                    <p class="text-sm text-gray-500">{{ Str::limit($task->description, 50) }}</p>
+                            data-eid="task-{{ $task->id }},{{ $task->assigned_to_user_id }}" 
+                            data-assigned-id="{{ $task->assignedTo->id ?? 'null' }}"
+                            data-etask-name="{{ $task->name }}"
+                                    data-task-description="{{ $task->description }}"
+                                    data-task-assigned-name="{{ $task->assignedTo->name ?? 'Unassigned' }}"
+                                    data-task-start="{{ $task->start_at ? \Carbon\Carbon::parse($task->start_at)->format('d M Y') : 'No start' }}"
+                                    data-task-end="{{ $task->end_at ? \Carbon\Carbon::parse($task->end_at)->format('d M Y') : 'No end' }}"
+                                    data-task-stage="{{ $task->projectStage->name ?? '-' }}">
+                                <strong>{{ $task->name }}</strong>
+                                <p class="text-sm text-gray-500">{{ Str::limit($task->description, 50) }}</p>
 
-                                    <div class="d-flex align-items-center mt-2">
-                                        @if($task->assignedTo)
-                                            <img src="{{ $task->assignedTo->avatar_url ?? asset('images/default-avatar.png') }}" 
-                                                alt="{{ $task->assignedTo->name }}"
-                                                class="rounded-circle me-2"
-                                                width="24" height="24">
-                                            <span class="text-xs text-gray-600">{{ $task->assignedTo->name }}</span>
-                                        @else
-                                            <span class="badge bg-secondary text-xs">Unassigned</span>
-                                        @endif
-                                    </div>
+                                <div class="d-flex align-items-center mt-2">
+                                    @if($task->assignedTo)
+                                        <img src="{{ $task->assignedTo->avatar_url ?? asset('images/default-avatar.png') }}" 
+                                            alt="{{ $task->assignedTo->name }}"
+                                            class="rounded-circle me-2"
+                                            width="24" height="24">
+                                        <span class="text-xs text-gray-600">{{ $task->assignedTo->name }}</span>
+                                    @else
+                                        <span class="badge bg-secondary text-xs">Unassigned</span>
+                                    @endif
+                                </div>
 
-                                    <p class="text-xs text-gray-600 mt-1">
-                                        <small><span class="badge bg-info">{{ $task->projectStage->name ?? '-' }}</span></small>
-                                    </p>
+                                <p class="text-xs text-gray-600 mt-1">
+                                    <small><span class="badge bg-info">{{ $task->projectStage->name ?? '-' }}</span></small>
+                                </p>
 
-                                    <p class="text-xs text-gray-600 mt-1 mb-0">
-                                        <i class="bi bi-calendar-event me-1"></i>
-                                        <small><label class="text-success">{{ $task->start_at ? \Carbon\Carbon::parse($task->start_at)->format('d M Y') : 'No start' }}
-                                        </label></small>
-                                        - 
-                                        <small><label class="text-danger">{{ $task->end_at ? \Carbon\Carbon::parse($task->end_at)->format('d M Y') : 'No end' }}
-                                        </label></small>
-                                    </p>
-                                </div>`,
+                                <p class="text-xs text-gray-600 mt-1 mb-0">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    <small><label class="text-success">{{ $task->start_at ? \Carbon\Carbon::parse($task->start_at)->format('d M Y') : 'No start' }}
+                                    </label></small>
+                                    - 
+                                    <small><label class="text-danger">{{ $task->end_at ? \Carbon\Carbon::parse($task->end_at)->format('d M Y') : 'No end' }}
+                                    </label></small>
+                                </p>
+                            </div>`,
                     },
-                    
                 @endforeach
             ]
         });
     @endforeach
 
     const kanban = new jKanban({
-    element: '#kanban-board',
-    boards: kanbanBoards,
-    gutter: '15px',
-    widthBoard: '280px',
-    dragBoards: false,
-    dragItems: true,
-    click: function (el) {
-        alert("Task Clicked: " + el.innerText);
-    },
-    dropEl: async function (el, target, source, sibling) {
-        try {
-            const taskIdOri = el.getAttribute('data-eid').replace('task-', '');
-            const taskIdSplit = taskIdOri.split(',');
-            const taskId = taskIdSplit[0];
-            const assignedId = taskIdSplit[1];
-            const newStatusId = target.parentElement.getAttribute('data-id').replace('kanban-', '');
-            const newBoardId = target.parentElement.getAttribute('data-id');
+        element: '#kanban-board',
+        boards: kanbanBoards,
+        gutter: '15px',
+        widthBoard: '280px',
+        dragBoards: false,
+        dragItems: true,
+        click: function (el) {
+            const taskElement = el.querySelector('[data-eid]');
+            const taskId = el.getAttribute('data-eid').replace('task-', '');
+            const taskName = taskElement.getAttribute('data-task-name');
+            alert(el.innerText);
 
+            const taskDescription = el.getAttribute('data-task-description');
+            const taskAssigned = el.getAttribute('data-task-assigned-name');
+            const taskDates = `${el.getAttribute('data-task-start')} - ${el.getAttribute('data-task-end')}`;
+            const taskStage = el.getAttribute('data-task-stage');
 
-            // Get correct board ID (column)
-            const boardElement = target.closest('.kanban-board');
-            if (!boardElement) {
-                console.error('Board element not found');
-                return;
-            }
-            //const newStatusId = boardElement.getAttribute('data-id').replace('kanban-', '');
+            // Isi modal dengan data task
+            document.getElementById('modal-task-title').innerText = taskName;
+            document.getElementById('modal-task-description').innerText = taskDescription;
+            document.getElementById('modal-task-assigned').innerText = taskAssigned;
+            document.getElementById('modal-task-dates').innerText = taskDates;
+            document.getElementById('modal-task-stage').innerText = taskStage;
 
-            // Send update to server
-            setTimeout(async () => {
-                //if (assignedId === currentUserId  || projectManagerId===currentUserId) {
-                    // User allowed: update DB
+            // Set data-task-id pada tombol delete untuk digunakan nanti
+            document.getElementById('delete-task-button').setAttribute('data-task-id', taskId);
+
+            // Tampilkan modal
+            const taskModal = new bootstrap.Modal(document.getElementById('task-modal'));
+            //taskModal.show();
+        },
+        dropEl: async function (el, target, source, sibling) {
+            try {
+                const taskIdOri = el.getAttribute('data-eid').replace('task-', '');
+                const taskIdSplite = taskIdOri.split(',');
+                const taskId = taskIdSplite[0];
+                const assignedId = taskIdSplite[1];
+                const prevBoardId = source.getAttribute('data-id');
+                
+                const boardElement = target.closest('.kanban-board');
+                if (!boardElement) {
+                    console.error('Board element not found');
+                    return;
+                }
+                const newStatusId = boardElement.getAttribute('data-id').replace('kanban-', '');
+                // --- Kunci Logika Role-Based Access ---
+                if (projectManagerId == currentUserId) {
                     const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ data_status: newStatusId })
-                    });
-
-                    if (!response.ok) {
-                        alert('Failed to update task');
-                        KanbanBoard.addElement(prevBoardId, el.outerHTML);
-                        el.remove();
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ data_status: newStatusId })
+                        });
+                        
+                        if (!response.ok) {
+                            alert('Failed to update task. The card will be moved back.');
+                            kanban.addElement(prevBoardId, el.outerHTML);
+                            el.remove();
+                        }
+                } else if (assignedId == currentUserId && newStatusId!=lastProjectKanbanId) {
+                        const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ data_status: newStatusId })
+                        });
+                        
+                        if (!response.ok) {
+                            alert('Failed to update task. The card will be moved back.');
+                            kanban.addElement(prevBoardId, el.outerHTML);
+                            el.remove();
+                        }
+                    
+                }  else {
+                    if (newStatusId!=lastProjectKanbanId){
+                        alert('You can\'t move this card — it is not your task');
+                    } else {
+                        alert('You can\'t move this card — only project manager allowed complete your card');
                     }
-                //} else {
-                    //alert('You can\'t move this card — it is not your task.');
-                    // Move card back to old column
-                    //KanbanBoard.addElement(prevBoardId, el.outerHTML);
-                    //el.remove();
-                //}
-            }, 0);
-            
-
-        } catch (error) {
-            console.error('Error moving task:', error);
-
-            // Optional: revert move on failure
-            location.reload();
+                    
+                    kanban.addElement(prevBoardId, el.outerHTML);
+                    el.remove();
+                }
+            } catch (error) {
+                console.error('Error moving task:', error);
+                location.reload();
+            }
         }
-    }
-});
+    });
 
 </script>
 @endsection

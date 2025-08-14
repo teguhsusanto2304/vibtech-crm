@@ -140,6 +140,23 @@
 					</ul>
 				</div>
 			</div>
+			<div class="card mt-2" >
+				<div class="card-header">
+					<label>Legend</label>
+				</div>
+				<div class="card-body">
+					<ul class="list-group list-group-flush">
+						@foreach ($project->projectKanban as $kanban)
+                <li class="list-group-item d-flex align-items-center">
+                    <!-- Kotak warna kecil -->
+                    <span style="display: inline-block; width: 20px; height: 20px; background-color: {{ $kanban->color_background }}; border-radius: 4px; margin-right: 10px;"></span>
+                    <!-- Nama kanban -->
+                    {{ $kanban->name }}
+                </li>
+            @endforeach
+					</ul>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

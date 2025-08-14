@@ -17,6 +17,7 @@ return new class extends Migration
                   ->constrained('projects') // Assumes your projects table is named 'projects'
                   ->onDelete('cascade');
             $table->string('name',100);
+            $table->string('color_background',10);
             $table->boolean('data_status')->default(true);
             $table->timestamps();
         });

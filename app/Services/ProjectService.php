@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
+use function PHPUnit\Framework\isEmpty;
+use function PHPUnit\Framework\isNull;
+
 class ProjectService {
 
     public function getProject($id)
@@ -234,12 +237,14 @@ class ProjectService {
                 ]);
             }
 
-            $defaultKanban = ['To Do','On Doing','Done'];
+            $defaultKanban = ['To Do','In Progress','In Review','Completed'];
+            $defaultKanbanColor = ['#f69a38ff','#612bf5ff','#c1f30fff','#0af769ff'];
             foreach ($defaultKanban as $index => $kanban) {
                 ProjectKanban::create([
                     'project_id' => $project->id,
                     'name'       => $kanban,
-                    'data_status'=> $index+1
+                    'data_status'=> $index+1,
+                    'color_background'=>$defaultKanbanColor[$index]
                 ]);
             }
 
@@ -1294,7 +1299,7 @@ class ProjectService {
         $decodedId = IdObfuscator::decode($projectId);
         $project = Project::find($decodedId);
 
-        if ($phase->project_id !== $project->id) {
+        if (!is_null($phase) && $phase->project_id !== $project->id) {
             return response()->json(['success' => false, 'message' => 'Phase not found for this project.'], 404);
         }
 
@@ -1315,14 +1320,26 @@ class ProjectService {
 
         try {
             DB::beginTransaction();
+            if (is_null($phase)){
+                $project->phases()->create([
+                        'name' => $request->name,
+                        'description' => $request->description,
+                        'start_date' => $request->start_date,
+                        'end_date' => $request->end_date,
+                        'data_status' => 1,
+                        'phase'=>$project->phases->count()+1
+                    ]);
+            } else {
+                $phase->update($request->only([
+                                'name',
+                                'description',
+                                'start_date',
+                                'end_date',
+                                'data_status' // Allow updating status via edit form
+                            ]));
+            }
 
-            $phase->update($request->only([
-                'name',
-                'description',
-                'start_date',
-                'end_date',
-                'data_status' // Allow updating status via edit form
-            ]));
+            
 
             DB::commit();
 
@@ -1330,7 +1347,7 @@ class ProjectService {
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Error updating project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
+            //\Log::error("Error updating project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
             return response()->json(['success' => false, 'message' => 'An unexpected error occurred during update.'], 500);
         }
     }
@@ -1344,8 +1361,17 @@ class ProjectService {
                 $query->where('project_phase_id', $selectedPhaseId);
             }
         ])->findOrFail($decodedId);
+        $styleKanbanCard ='<style>';
+        foreach ($project->projectKanban as $idx => $kanban)
+        {
+            $styleKanbanCard .= '.kanban'.($idx+1).' {
+                background-color: '.$kanban->color_background.';
+            }';
+        }
 
-        return view('projects.kanban.kanban', compact('project','selectedPhaseId'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
+        $styleKanbanCard .='</style>';
+
+        return view('projects.kanban.kanban', compact('project','selectedPhaseId','styleKanbanCard'))->with('title', 'Project Detail')->with('breadcrumb', ['Home', 'Project Management','Project Detail']);
     }
 
     public function showGantt($projectId,$type="month")
@@ -1366,12 +1392,12 @@ class ProjectService {
                     "id" => $task->id,
                     "text" => $task->name,
                     "start_date" => Carbon::parse($task->start_at)->format('d-m-Y'),
-                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at)) ?: 1,
+                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at))+1 ?: 1,
                     "progress" => ($task->progress_percentage ?? 0) / 100,
                     "parent" => 0,// or task->project_kanban_id if you use nesting,
                     "assigned_to_user_id"=> $task->assigned_to_user_id,
                     "assigned_to_user_name"=>$task->assignedTo->name,
-                    "color"=> ($task->projectKanban->name=="Done") ? "#53ec31ff":(($task->projectKanban->name=="On Doing")?"#622cebff":"#f70b2aff")
+                    'color'=>$task->projectKanban->color_background
                 ];
                 $prevId = $task->id;
             })
@@ -1420,10 +1446,10 @@ class ProjectService {
                     "id" => $task->id,
                     "text" => $task->name,
                     "start_date" => Carbon::parse($task->start_at)->format('d-m-Y'),
-                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at)) ?: 1,
+                    "duration" => Carbon::parse($task->start_at)->diffInDays(Carbon::parse($task->end_at))+1 ?: 1,
                     "progress" => ($task->progress_percentage ?? 0) / 100,
                     "parent" => 0,// or task->project_kanban_id if you use nesting
-                    "color"=> ($task->projectKanban->name=="Done") ? "#53ec31ff":(($task->projectKanban->name=="On Doing")?"#622cebff":"#f70b2aff")
+                    'color'=>$task->projectKanban->color_background
                 ];
                 $prevId = $task->id;
             })

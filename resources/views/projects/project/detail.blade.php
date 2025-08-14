@@ -541,7 +541,13 @@
                 <div class="tab-pane fade" id="phases-files" role="tabpanel" aria-labelledby="phases-tab" style="max-height: 400px; overflow-y: auto;">
                     <div class="row">
                         <div class="col-12">
-                            <h4 class="mb-3">Project Phases</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">Project Phases</h4>
+                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#phaseCreateModal">
+                                    <i class="fas fa-plus"></i> Add Phase
+                                </button>
+                                
+                            </div>
                             <div class="list-group"> {{-- Using Bootstrap's list-group for a clean, structured list of items --}}
                                 @forelse($project->phases as $index => $phase)
                                     <div class="list-group-item list-group-item-action py-3"> {{-- Each phase as a list item --}}
@@ -631,9 +637,50 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="modal fade" id="phaseCreateModal" tabindex="-1" aria-labelledby="phaseCreateModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="phaseCreateModalLabel">Create New Phase</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form id="addPhaseForm" data-project-id="{{ $project->obfuscated_id ?? $project->id }}" data-phase-id="{{ $phase->obfuscated_id ?? $phase->id }}">
+                                                    @csrf
+                                                    <div class="mb-3">
+                                                        <label for="phaseName" class="form-label">Phase Name</label>
+                                                        <input type="text" class="form-control" id="phaseName" name="name" required>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="phaseDescription" class="form-label">Description</label>
+                                                        <textarea class="form-control" id="phaseDescription" name="description" rows="3"></textarea>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label for="startDate" class="form-label">Start Date</label>
+                                                            <input type="date" class="form-control" id="startDate" name="start_date">
+                                                        </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <label for="endDate" class="form-label">End Date</label>
+                                                            <input type="date" class="form-control" id="endDate" name="end_date">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary" form="addPhaseForm">Save Phase</button>
+                                                </div>
+                                                </form>
+                                        </div>
+                                    </div>
+                                </div>
                 <script>
                     $(document).ready(function() {
                         const phaseDetailEditModal = new bootstrap.Modal(document.getElementById('phaseDetailEditModal'));
+                        const phaseDetailAddModal = new bootstrap.Modal(document.getElementById('phaseCreateModal'));
                         const modalTitle = $('#phaseDetailEditModalLabel');
                         const modalBody = $('#modal-content-placeholder');
                         const saveChangesBtn = $('#savePhaseChangesBtn');
@@ -713,6 +760,45 @@
                                     if (response.success) {
                                         alert(response.message);
                                         phaseDetailEditModal.hide(); // Hide the modal
+                                        location.reload(); // Reload page to reflect changes
+                                    } else {
+                                        alert(response.message || 'Failed to update phase.');
+                                        saveChangesBtn.prop('disabled', false).html('Save Changes');
+                                    }
+                                },
+                                error: function(xhr) {
+                                    let errorMessage = 'An error occurred. Please try again.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                        // Display validation errors if any
+                                        errorMessage = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                                    }
+                                    alert(errorMessage);
+                                    saveChangesBtn.prop('disabled', false).html('Save Changes');
+                                    console.error('AJAX Error:', xhr.responseText);
+                                }
+                            });
+                        });
+
+                        $(document).on('submit', '#addPhaseForm', function(e) {
+                            e.preventDefault(); // Prevent default form submission
+
+                            const form = $(this);
+                            const projectId = form.data('project-id'); // Get from form's data attribute
+                            const phaseId = 'none';     // Get from form's data attribute
+
+                            // Disable button and show spinner
+                            saveChangesBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+
+                            $.ajax({
+                                url: `/v1/project-management/${projectId}/phases/${phaseId}`, // Your update route
+                                type: 'POST', // Or 'PUT'/'PATCH' with method spoofing
+                                data: form.serialize() + '&_method=PUT', // Include CSRF token and method spoofing
+                                success: function(response) {
+                                    if (response.success) {
+                                        alert(response.message);
+                                        phaseDetailAddModal.hide(); // Hide the modal
                                         location.reload(); // Reload page to reflect changes
                                     } else {
                                         alert(response.message || 'Failed to update phase.');
