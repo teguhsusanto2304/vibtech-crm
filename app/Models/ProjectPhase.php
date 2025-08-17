@@ -41,6 +41,11 @@ class ProjectPhase extends Model
         return $this->hasMany(ProjectStage::class);
     }
 
+    public function projectStageTasks() // <--- ADD THIS RELATIONSHIP
+    {
+        return $this->hasMany(ProjectTask::class,'project_phase_id');
+    }
+
     public function getPhaseStatusAttribute(): string
     {
         $result = '';
@@ -87,6 +92,22 @@ class ProjectPhase extends Model
 
         // If not loaded, query the database directly
         return $this->projectStages()->where('data_status', ProjectStage::STATUS_COMPLETED)->count();
+    }
+
+    public function getCompletedStageTasksAttribute(): int
+    {
+        // Check if the projectStages relationship has been loaded to avoid N+1 queries
+        $countAll = $this->projectStageTasks->count();
+        if ($this->relationLoaded('projectStageTasks')) {
+            $count = $this->projectStageTasks->where('data_status', ProjectTask::STATUS_COMPLETED)->count();
+        } else {
+            $count = $this->projectStageTasks->where('data_status', ProjectTask::STATUS_COMPLETED)->count(); 
+        }
+        if($count == $countAll && $countAll > 0){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

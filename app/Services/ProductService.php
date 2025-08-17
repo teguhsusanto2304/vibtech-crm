@@ -19,6 +19,16 @@ class ProductService {
 
         return DataTables::of($products)
             ->addIndexColumn()
+            ->addColumn('product_image', function ($product) {
+                // Cek apakah produk memiliki gambar
+                if ($product->image) {
+                    // Gunakan asset() untuk mendapatkan URL publik gambar
+                    // Sesuaikan 'storage/' jika Anda menyimpan di path lain
+                    return '<img src="' . asset('storage/' . $product->image) . '" alt="Product Image" style="width: 50px; height: 50px; border-radius: 8px;">';
+                }
+                // Jika tidak ada gambar, tampilkan placeholder atau teks
+                return 'No Image';
+            })
             ->addColumn('category_name', function (Product $product) {
                 return $product->productCategory->name;
             })
@@ -37,7 +47,7 @@ class ProductService {
                 $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">View</a>';
                 $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">Edit</a>';
                 $btn .= '</div>';
-                $btn .= '<a class="btn btn-warning btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">Stock Adjustment</a>';
+                $btn .= '<a class="btn btn-warning btn-sm text-white" data-product-id ="'.$row->id.'" data-bs-toggle="modal" data-bs-target="#adjustStockModal">Stock Adjustment</a>';
 
                 $btn .= '</div>';
 
@@ -52,12 +62,19 @@ class ProductService {
         $request->validate([
             'name' => 'required|string|max:255',
             'sku_no' => 'required|string|unique:products,sku_no',
-            'product_category_id' => 'required|exists:categories,id',
+            'product_category_id' => 'required|exists:product_categories,id',
             'quantity' => 'required|integer|min:0',
-            'created_by' => 'required|string|max:255',
+            'path_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+        if ($request->hasFile('path_image')) {
+        // Simpan gambar ke storage dan dapatkan path-nya
+        $imagePath = $request->file('path_image')->store('inventories', 'public');
+        // Tambahkan path gambar ke data yang divalidasi
+        $request['image'] = $imagePath;
+    }
+        $request['created_by'] = auth()->user()->id;
         Product::create($request->all());
-        return redirect()->route('inventory.index')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
     }
     
     public function edit(Product $product)
@@ -83,7 +100,7 @@ class ProductService {
     {
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],
-            'adjust_type' => ['required', Rule::in(['increase', 'decrease'])],
+            'adjust_type' => ['required'],
             'quantity' => ['required', 'integer', 'min:1'],
             'adjust_number' => ['nullable', 'string', 'max:255'],
             'for_or_from' => ['nullable', 'string', 'max:255'],
@@ -93,10 +110,10 @@ class ProductService {
         DB::transaction(function () use ($validated) {
             $product = Product::findOrFail($validated['product_id']);
 
-            if ($validated['adjust_type'] === 'increase') {
-                $product->stock += $validated['quantity'];
+            if ((int) $validated['adjust_type'] === 1) {
+                $product->quantity += (int) $validated['quantity'];
             } else {
-                $product->stock = max(0, $product->stock - $validated['quantity']);
+                $product->quantity = max(0, $product->quantity - (int) $validated['quantity']);
             }
             $product->save();
 
@@ -111,7 +128,9 @@ class ProductService {
             ]);
         });
 
-        return back()->with('success', 'Stock adjustment saved successfully.');
+        return response()->json([
+            'message' => 'Stock adjustment saved successfully.'
+        ], 200);
     }
 
 }

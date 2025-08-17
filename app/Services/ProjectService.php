@@ -897,6 +897,58 @@ class ProjectService {
             return response()->json(['success' => false, 'message' => 'Phase not found for this project.'], 404);
         }
 
+        // 4. Prevent re-completion
+        if ($phase->data_status === ProjectPhase::STATUS_COMPLETED) {
+            return response()->json(['success' => false, 'message' => 'This phase is already marked as completed.'], 409); // 409 Conflict
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update the phase status
+            $phase->data_status = ProjectPhase::STATUS_COMPLETED; // Assuming 'data_status' is the column for phase status
+            $phase->save();
+
+            // Optional: Log the action
+            // \Log::info("Project Phase Completed", [
+            //     'project_id' => $project->id,
+            //     'phase_id' => $phase->id,
+            //     'completed_by' => Auth::id()
+            // ]);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Project phase marked as completed successfully!']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error completing project phase: {$e->getMessage()}", ['exception' => $e, 'project_id' => $project->id, 'phase_id' => $phase->id]);
+            return response()->json(['success' => false, 'message' => 'An unexpected error occurred while completing the phase.'], 500);
+        }
+    }
+
+    /**
+     * Mark a specific project phase as 'completed'.
+     *
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function completePhaseOld(Request $request, $project_id, $phase_id)
+    {
+        // 1. Basic Authorization Check (Optional but Recommended)
+        // Ensure the current user has permission to complete phases
+        // if (!Auth::user()->can('complete-project-phase', $phase)) {
+        //     return response()->json(['success' => false, 'message' => 'Unauthorized to complete this phase.'], 403);
+        // }
+        $decodedId = IdObfuscator::decode($project_id);
+        $phase = ProjectPhase::find($phase_id);
+
+        // 2. Verify Phase Belongs to Project
+        if ($phase->project_id !== $decodedId) {
+            return response()->json(['success' => false, 'message' => 'Phase not found for this project.'], 404);
+        }
+
         // 3. Validation: Check if all required stages are completed
         // Assuming '8' is the total number of stages that *must* be completed
         // This '8' should ideally come from a configuration or another attribute on ProjectPhase/Project
@@ -1463,10 +1515,20 @@ class ProjectService {
         $validated = $request->validate([
             'data_status' => 'required|string|max:255',
         ]);
+        //dd( $task->projectKanban->last()->id);
+        $lastProjectKanbanId = ProjectKanban::where('project_id',$task->project_id)->get();
 
         // Update task's kanban/status
-        $task->project_kanban_id = $validated['data_status'];
-        $task->save();
+        if($lastProjectKanbanId->last()->id===(int) $validated['data_status']){
+            $task->data_status=ProjectTask::STATUS_COMPLETED;
+            $task->project_kanban_id = $validated['data_status'];
+            $task->save();
+        } else {
+            $task->data_status=ProjectTask::STATUS_ON_GOING;
+            $task->project_kanban_id = $validated['data_status'];
+            $task->save();
+        }
+        
 
         return response()->json([
             'success' => true,

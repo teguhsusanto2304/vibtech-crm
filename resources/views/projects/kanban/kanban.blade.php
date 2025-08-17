@@ -145,25 +145,26 @@
             <div class="modal-body">
                 <p id="modal-task-description" class="text-muted"></p>
                 <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-person-circle me-2 text-muted"></i>
+                     <label class="col-md-3">Assigned To :</label>
                     <p id="modal-task-assigned" class="mb-0 fw-semibold"></p>
                 </div>
                 <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-calendar-event me-2 text-muted"></i>
+                     <label class="col-md-3">Stage On :</label>
                     <p id="modal-task-dates" class="mb-0 fw-semibold"></p>
                 </div>
                 <div class="d-flex align-items-center mb-2">
-                    <i class="bi bi-tag me-2 text-muted"></i>
+                    <label class="col-md-3">Start - End Date :</label>
                     <p id="modal-task-stage" class="mb-0 fw-semibold"></p>
                 </div>
             </div>
             
             <!-- Modal Footer -->
             <div class="modal-footer">
+
                 <button type="button" id="delete-task-button" class="btn btn-danger">
-                    <i class="bi bi-trash-fill me-1"></i> Hapus Task
+                    <i class="bi bi-trash-fill me-1"></i> Remove
                 </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -177,7 +178,17 @@
 <script>
     const kanbanBoards = [];
     const currentUserId = {{ auth()->id() ?? 'null' }};
+    const currentUserName = '{{ auth()->user()->name ?? 'null' }}';
     const projectManagerId = {{ $project->project_manager_id }};
+    const projectKanbans = {{ Js::from($project->projectKanban) }};
+    let secondLastProjectKanbanId = 'null';
+
+    // Logika untuk mendapatkan item kedua dari bawah
+    if (projectKanbans.length >= 2) {
+        // Menggunakan slice(-2, -1) untuk mendapatkan array dengan satu elemen (item kedua terakhir)
+        const secondLastKanban = projectKanbans.slice(-2, -1)[0];
+        secondLastProjectKanbanId = secondLastKanban.id;
+    }
     const lastProjectKanbanId = {{ $project->projectKanban->last()->id ?? 'null' }};
 
     @foreach ($project->projectKanban as $idx => $kanban)
@@ -242,29 +253,32 @@
         dragBoards: false,
         dragItems: true,
         click: function (el) {
-            const taskElement = el.querySelector('[data-eid]');
-            const taskId = el.getAttribute('data-eid').replace('task-', '');
-            const taskName = taskElement.getAttribute('data-task-name');
-            alert(el.innerText);
-
-            const taskDescription = el.getAttribute('data-task-description');
-            const taskAssigned = el.getAttribute('data-task-assigned-name');
-            const taskDates = `${el.getAttribute('data-task-start')} - ${el.getAttribute('data-task-end')}`;
-            const taskStage = el.getAttribute('data-task-stage');
-
+            const taskIdOri = el.getAttribute('data-eid').replace('task-', '');
+            const taskIdSplite = taskIdOri.split(',');
+            const taskId = taskIdSplite[0];
+            const fullText = el.innerText;
+            const lines = fullText.split('\n'); // Memecah berdasarkan baris baru
+            const titleLine = lines[0]; // Baris pertama
+            const descriptionLine = lines[1]; // Baris kedua
+            const taskAssignedLine = lines[4];
             // Isi modal dengan data task
-            document.getElementById('modal-task-title').innerText = taskName;
-            document.getElementById('modal-task-description').innerText = taskDescription;
-            document.getElementById('modal-task-assigned').innerText = taskAssigned;
-            document.getElementById('modal-task-dates').innerText = taskDates;
-            document.getElementById('modal-task-stage').innerText = taskStage;
+            document.getElementById('modal-task-title').innerText = titleLine;
+            document.getElementById('modal-task-description').innerText = descriptionLine;
+            document.getElementById('modal-task-assigned').innerText = taskAssignedLine;
+            document.getElementById('modal-task-dates').innerText = lines[6];
+            document.getElementById('modal-task-stage').innerText = lines[8];
 
             // Set data-task-id pada tombol delete untuk digunakan nanti
+            document.getElementById('delete-task-button').disabled = true;
             document.getElementById('delete-task-button').setAttribute('data-task-id', taskId);
+            if (currentUserName==taskAssignedLine)
+            {
+                document.getElementById('delete-task-button').disabled = false;
+            }
 
             // Tampilkan modal
             const taskModal = new bootstrap.Modal(document.getElementById('task-modal'));
-            //taskModal.show();
+            taskModal.show();
         },
         dropEl: async function (el, target, source, sibling) {
             try {
@@ -272,7 +286,7 @@
                 const taskIdSplite = taskIdOri.split(',');
                 const taskId = taskIdSplite[0];
                 const assignedId = taskIdSplite[1];
-                const prevBoardId = source.getAttribute('data-id');
+                const prevBoardId = source.getAttribute('data-eid');
                 
                 const boardElement = target.closest('.kanban-board');
                 if (!boardElement) {
@@ -282,7 +296,8 @@
                 const newStatusId = boardElement.getAttribute('data-id').replace('kanban-', '');
                 // --- Kunci Logika Role-Based Access ---
                 if (projectManagerId == currentUserId) {
-                    const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
+                    if(newStatusId==lastProjectKanbanId || newStatusId==secondLastProjectKanbanId){
+                        const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -292,10 +307,15 @@
                         });
                         
                         if (!response.ok) {
-                            alert('Failed to update task. The card will be moved back.');
-                            kanban.addElement(prevBoardId, el.outerHTML);
-                            el.remove();
+                            alert('Failed to update task. The card will be moved back. mgr');
+                            //kanban.addElement(prevBoardId, el.outerHTML);
+                            //el.remove();
                         }
+                    } else {
+                        alert('You can\'t move this card — only In review cards move to complete and from completed back to in review');
+                        location.reload();
+                    }
+                    
                 } else if (assignedId == currentUserId && newStatusId!=lastProjectKanbanId) {
                         const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
                             method: 'POST',

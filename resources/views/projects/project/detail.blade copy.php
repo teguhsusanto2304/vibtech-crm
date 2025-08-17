@@ -314,21 +314,42 @@
                                 {{-- END: Search Input for Project Members --}}
                                 <div class="mt-5"> {{-- Add margin-top for spacing --}}
                                     @php
-                                        $btnProjectPhaseComplete='';
-                                        $disabled = '';
                                         $currentPhase = \App\Models\ProjectPhase::find($selectedPhaseId);
                                         if($currentPhase){
                                             $phase = $currentPhase->phase;
-                                            if($currentPhase->data_status==3){
-                                                $btnProjectPhaseComplete='disabled';
-                                                $disabled = 'disabled';
-                                            } else  if($currentPhase->data_status==1){
-                                                if($currentPhase->completed_stage_tasks == false){
-                                                    $btnProjectPhaseComplete='disabled';
+                                            if($currentPhase->completed_stage_tasks == false){
+                                                if($currentPhase->data_status==1){
+                                                    $disabled = '';
+                                                } else {
+                                                    $disabled = 'disabled';
+                                                }
+                                                $btnProjectPhaseComplete = 'disabled';
+                                            } else {
+                                                if((int) $currentPhase->data_status==3){
+                                                    $disabled = 'disabled';
+                                                    $btnProjectPhaseComplete = 'disabled';
+                                                } else {
+                                                    $disabled = '';
+                                                    if($currentPhase->completed_stage_tasks == false){
+                                                        $btnProjectPhaseComplete = 'disabled';
+                                                    } else {
+                                                        if($currentPhase->data_status==1){
+                                                            if($currentPhase->completed_stage_tasks == false){
+                                                                $btnProjectPhaseComplete = 'disabled';
+                                                            } else {
+                                                                $btnProjectPhaseComplete = '';
+                                                            }
+                                                        } else {
+                                                            $btnProjectPhaseComplete = '';
+                                                        }
+                                                        
+                                                    }
                                                 } 
-                                                $disabled = '';
-                                            }
-                                            
+                                            }   
+
+                                        } else {
+                                            $disabled = '';
+                                            $phase = 0;  
                                         }
                                                                                                                               
                                     @endphp
@@ -349,7 +370,7 @@
                                             data-phase-phase-id="{{ $currentPhase->obfuscated_id ?? $currentPhase->id }}" {{-- Pass phase ID --}}
                                             {{ $btnProjectPhaseComplete }} {{-- Apply disabled attribute --}}
                                             title="{{ $disabled ? 'Complete all stages (8) to enable' : 'Mark this phase as complete' }}">
-                                        <i class="fas fa-check me-1"></i> Complete
+                                        <i class="fas fa-check me-1"></i> Complete 
                                     </button>
                                         @endif
                                 </label> </p>  

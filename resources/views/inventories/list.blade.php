@@ -100,7 +100,7 @@
 <div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('stock.adjust') }}" method="POST">
+            <form id="adjustStockForm" method="POST">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="adjustStockModalLabel">Adjust Stock for <span id="productName"></span></h5>
@@ -113,8 +113,8 @@
                     <div class="mb-3">
                         <label for="adjust_type" class="form-label">Adjustment Type</label>
                         <select class="form-select" id="adjust_type" name="adjust_type" required>
-                            <option value="increase">Increase Stock</option>
-                            <option value="decrease">Decrease Stock</option>
+                            <option value="1">Increase Stock</option>
+                            <option value="2">Decrease Stock</option>
                         </select>
                     </div>
 
@@ -139,23 +139,33 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <input type="hidden" name="product_id" id="product_id">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Adjustment</button>
+                    <button type="submit" class="btn btn-primary" id="saveAdjustmentBtn">Save Adjustment</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
 <script>
+    // Asumsi Anda telah menginisialisasi Datatables dengan ID 'productTable'
+    // const productTable = $('#productTable').DataTable();
+    
     const adjustStockModal = document.getElementById('adjustStockModal');
+    const adjustStockForm = document.getElementById('adjustStockForm');
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+    const adjustProductId = document.getElementById('product_id');
+
     adjustStockModal.addEventListener('show.bs.modal', event => {
+        adjustStockForm.reset();
         const button = event.relatedTarget;
         const productId = button.getAttribute('data-product-id');
         const productName = button.getAttribute('data-product-name');
         const currentStock = button.getAttribute('data-current-stock');
+        adjustProductId.value = productId;
 
-        // Update the modal's content
-        const modalTitle = adjustStockModal.querySelector('.modal-title #productName');
+        const modalTitle = adjustStockModal.querySelector('#productName');
         const productIdInput = adjustStockModal.querySelector('#productIdInput');
         const currentStockDisplay = adjustStockModal.querySelector('#currentStockDisplay');
         
@@ -163,8 +173,65 @@
         productIdInput.value = productId;
         currentStockDisplay.textContent = currentStock;
     });
-</script>
-            <script type="text/javascript">
+
+    // Menambahkan event listener untuk submit form
+    adjustStockForm.addEventListener('submit', async (event) => {
+        // Mencegah form untuk submit secara default
+        event.preventDefault();
+
+        // Dapatkan data form
+        const formData = new FormData(adjustStockForm);
+        const productId = formData.get('product_id');
+        const saveButton = document.getElementById('saveAdjustmentBtn');
+
+        // Nonaktifkan tombol untuk mencegah klik ganda
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+
+        try {
+            const response = await fetch(`/v1/inventory-management/stock-adjustment`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Stock adjustment saved successfully!');
+                
+                // Tutup modal
+                const modalInstance = bootstrap.Modal.getInstance(adjustStockModal);
+                modalInstance.hide();
+                $('#products-table').DataTable().ajax.reload(null, false);
+                
+                // Auto-refresh Datatables
+                // PENTING: Sesuaikan dengan ID atau variabel Datatables Anda
+                // Contoh:
+                // productTable.ajax.reload(null, false); // Reload data tanpa mereset pagination
+                
+            } else {
+                // Tampilkan pesan error dari server
+                let errorMessage = 'Failed to save stock adjustment.';
+                if (result.errors) {
+                    errorMessage += '\n' + Object.values(result.errors).flat().join('\n');
+                }
+                alert(errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        } finally {
+            // Aktifkan kembali tombol setelah permintaan selesai
+            saveButton.disabled = false;
+            saveButton.innerHTML = 'Save Adjustment';
+        }
+    });
+
+    
      $(document).ready(function () {
       var table =  $('#products-table').DataTable({
            processing: true,
@@ -172,7 +239,7 @@
            scrollX: true,
            ajax: "{{ route('v1.inventory-management.list.data') }}",
            columns: [
-                    { data: 'image', name: 'image', orderable: false, searchable: false },
+                    { data: 'product_image', name: 'product_image', orderable: false, searchable: false },
                     { data: 'name', name: 'name' },
                     { data: 'sku_no', name: 'sku_no' },
                     // Gunakan 'category_name' dari controller

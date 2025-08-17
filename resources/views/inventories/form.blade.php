@@ -80,7 +80,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="path_image" class="form-label">Product  Image</label>
-                            <input type="file" class="form-control" name="path_image" accept="image/*">
+                            <input type="file" class="form-control" id="path_image" name="path_image">
                             @if(isset($user->path_image))
                                 <img src="{{ asset($user->path_image) }}" alt="Profile Image" class="img-thumbnail mt-2"
                                     width="100">
