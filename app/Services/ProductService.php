@@ -44,8 +44,8 @@ class ProductService {
                 $btn .= '<div class="btn-group btn-group-vertical" role="group" aria-label="Project Actions">';
 
                 // View button
-                $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">View</a>';
-                $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.project-management.management-detail', ['project' => $row->obfuscated_id]) . '">Edit</a>';
+                $btn .= '<a class="btn btn-info btn-sm view-product" href="#" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-id="' . $row->id . '">View</a>';
+                $btn .= '<a class="btn btn-primary btn-sm" href="">Edit</a>';
                 $btn .= '</div>';
                 $btn .= '<a class="btn btn-warning btn-sm text-white" data-product-id ="'.$row->id.'" data-bs-toggle="modal" data-bs-target="#adjustStockModal">Stock Adjustment</a>';
 
@@ -131,6 +131,15 @@ class ProductService {
         return response()->json([
             'message' => 'Stock adjustment saved successfully.'
         ], 200);
+    }
+
+    public function show($product)
+    {
+        // Muat relasi kategori
+        $product = Product::find($product);
+        $product->load('productCategory');
+        // Kembalikan produk sebagai respons JSON
+        return response()->json($product);
     }
 
 }

@@ -255,4 +255,84 @@
 
      });
    </script>
+   <!-- Modal Detail Produk -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productDetailModalLabel">Product Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <img id="productImage" src="" alt="Product Image" class="img-fluid rounded-lg shadow-sm" style="max-height: 200px;">
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Product Name:</span>
+                        <span id="productNameDetail"></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">SKU:</span>
+                        <span id="productSku"></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Quantity:</span>
+                        <span id="productQuantity"></span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Category:</span>
+                        <span id="productCategory"></span>
+                    </li>
+                   
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    // Tangkap modal ketika terbuka
+    const productDetailModal = document.getElementById('productDetailModal');
+    productDetailModal.addEventListener('show.bs.modal', function (event) {
+        // Dapatkan tombol yang memicu modal
+        const button = event.relatedTarget;
+        // Ambil ID produk dari atribut data-id
+        const productId = button.getAttribute('data-id');
+
+        // Lakukan panggilan AJAX untuk mengambil data produk
+        fetch(`/v1/inventory-management/${productId}/detail`) // Sesuaikan dengan endpoint API Anda
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Isi modal dengan data yang diterima
+                document.getElementById('productNameDetail').textContent = data.name;
+                document.getElementById('productSku').textContent = data.sku_no;
+                document.getElementById('productQuantity').textContent = data.quantity;
+                document.getElementById('productCategory').textContent = data.product_category.name;
+
+                // Tampilkan gambar jika ada
+                const productImage = document.getElementById('productImage');
+                if (data.image) {
+                    productImage.src = `/storage/${data.image}`; // Sesuaikan path jika perlu
+                    productImage.classList.remove('d-none'); // Tampilkan gambar
+                } else {
+                    productImage.classList.add('d-none'); // Sembunyikan jika tidak ada gambar
+                }
+            })
+            .catch(error => {
+                console.error('Ada masalah saat mengambil data produk:', error);
+                // Anda dapat menampilkan pesan kesalahan di sini
+                document.getElementById('productName').textContent = 'Data tidak ditemukan.';
+            });
+    });
+});
+</script>
 @endsection

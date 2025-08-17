@@ -50,4 +50,9 @@ class ProductController extends Controller
     {
         return $this->productService->adjustStock($request);
     }
+
+    public function show($product)
+    {
+        return $this->productService->show($product);
+    }
 }
