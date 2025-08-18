@@ -246,7 +246,7 @@
                     { data: 'category_name', name: 'category_name' },
                     { data: 'quantity', name: 'quantity' },
                     { data: 'createdAt', name: "createdAt" },
-                    { data: 'created_by', name: 'created_by' },
+                    { data: 'createdBy', name: 'createdBy' },
                     { data: 'updatedAt', name: 'updatedAt' },
                     // Gunakan 'aksi' dari controller
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'action-col' }
@@ -288,7 +288,7 @@
                 </ul>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

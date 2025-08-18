@@ -35,4 +35,9 @@ class Product extends Model
     {
         return $this->belongsTo(ProductCategory::class,'product_category_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class,'created_by','id');
+    }
 }

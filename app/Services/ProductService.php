@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 class ProductService {
     public function getProductsData(Request $request)
     {
-        $productsQuery = Product::with(['productCategory']); // Assuming projectMembers is the correct relationship name
+        $productsQuery = Product::with(['productCategory','createdBy']); // Assuming projectMembers is the correct relationship name
 
         
         $products = $productsQuery->orderBy('created_at', 'ASC')->get();
@@ -37,6 +37,9 @@ class ProductService {
             })
             ->addColumn('updatedAt', function (Product $product) {
                 return $product->updated_at->format('d-M-Y H:i');
+            })
+            ->addColumn('createdBy', function (Product $product) {
+                return $product->createdBy->name;
             })
             ->addColumn('action', function ($row) {
                 // Start with the vertical button group container
