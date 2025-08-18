@@ -36,6 +36,13 @@ class ProductController extends Controller
         return view('inventories.form',compact('productCategories'))->with('title', 'Create An New Inventory')->with('breadcrumb', ['Home', 'Inventory Management','Create An New Inventory']);
     }
 
+    public function edit($id)
+    {
+        $product = $this->productService->getProductData($id);
+        $productCategories = $this->commonService->getProductCategories();
+        return view('inventories.edit',compact('productCategories','product'))->with('title', 'Edit Inventory')->with('breadcrumb', ['Home', 'Inventory Management','Edit Inventory']);
+    }
+
     public function getProductsData(Request $request)
     {
         return $this->productService->getProductsData($request);
@@ -44,6 +51,11 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         return $this->productService->store($request);
+    }
+
+    public function update(Request $request,$id)
+    {
+        return $this->productService->update($request, $id);
     }
 
     public function adjustStock(Request $request)

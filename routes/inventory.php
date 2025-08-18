@@ -23,10 +23,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/all', 'all')->name('v1.submit-claim.all');
             Route::get('/{product}/detail', 'show')->name('v1.inventory-management.detail');
             Route::get('/create', 'create')->name('v1.inventory-management.create');
-            Route::get('/{id}/edit', 'edit')->name('v1.submit-claim.edit');
+            Route::get('/{id}/edit', 'edit')->name('v1.inventory-management.edit');
             Route::post('/store', 'store')->name('v1.inventory-management.store');
             Route::post('/stock-adjustment', 'adjustStock')->name('v1.inventory-management.stock-adjustment');
-            Route::put('/{id}/update', 'update')->name('v1.submit-claim.update');
+            Route::put('/{id}/update', 'update')->name('v1.inventory-management.update');
             Route::get('/list/data', 'getProductsData')->name('v1.inventory-management.list.data');
             Route::get('/{submit_claim_id}/item-list/data', 'getSubmitClaimItemsData')->name('v1.submit-claim.item-list.data');
             Route::get('/submit-claim-items/{id}/details', 'getSubmitClaimItemDetails')->name('v1.submit-claim.submit-claim-items.details');

@@ -45,7 +45,7 @@ class ProductService {
 
                 // View button
                 $btn .= '<a class="btn btn-info btn-sm view-product" href="#" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-id="' . $row->id . '">View</a>';
-                $btn .= '<a class="btn btn-primary btn-sm" href="">Edit</a>';
+                $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.inventory-management.edit', ['id'=>$row->id]) . '">Edit</a>';
                 $btn .= '</div>';
                 $btn .= '<a class="btn btn-warning btn-sm text-white" data-product-id ="'.$row->id.'" data-bs-toggle="modal" data-bs-target="#adjustStockModal">Stock Adjustment</a>';
 
@@ -67,33 +67,38 @@ class ProductService {
             'path_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($request->hasFile('path_image')) {
-        // Simpan gambar ke storage dan dapatkan path-nya
-        $imagePath = $request->file('path_image')->store('inventories', 'public');
-        // Tambahkan path gambar ke data yang divalidasi
-        $request['image'] = $imagePath;
-    }
+            // Simpan gambar ke storage dan dapatkan path-nya
+            $imagePath = $request->file('path_image')->store('inventories', 'public');
+            // Tambahkan path gambar ke data yang divalidasi
+            $request['image'] = $imagePath;
+        }
         $request['created_by'] = auth()->user()->id;
         Product::create($request->all());
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
     }
     
-    public function edit(Product $product)
+    public function getProductData($id)
     {
-        $categories = ProductCategory::all();
-        return view('inventory.edit', compact('product', 'categories'));
+        return Product::find($id);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(Request $request, $id)
     {
+        $product = Product::find($id);
         $request->validate([
             'name' => 'required|string|max:255',
             'sku_no' => 'required|string|unique:products,sku_no,' . $product->id,
-            'category_id' => 'required|exists:categories,id',
-            'quantity' => 'required|integer|min:0',
-            'created_by' => 'required|string|max:255',
+            'product_category_id' => 'required|exists:product_categories,id',
+            'path_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+         if ($request->hasFile('path_image')) {
+            // Simpan gambar ke storage dan dapatkan path-nya
+            $imagePath = $request->file('path_image')->store('inventories', 'public');
+            // Tambahkan path gambar ke data yang divalidasi
+            $request['image'] = $imagePath;
+        }
         $product->update($request->all());
-        return redirect()->route('inventory.index')->with('success', 'Produk berhasil diperbarui!');
+        return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been updated!');
     }
 
     public function adjustStock(Request $request)
