@@ -48,10 +48,11 @@ class ProductService {
 
                 // View button
                 $btn .= '<a class="btn btn-info btn-sm view-product" href="#" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-id="' . $row->id . '">View</a>';
-                $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.inventory-management.edit', ['id'=>$row->id]) . '">Edit</a>';
-                $btn .= '</div>';
-                $btn .= '<a class="btn btn-warning btn-sm text-white" data-product-id ="'.$row->id.'" data-bs-toggle="modal" data-bs-target="#adjustStockModal">Stock Adjustment</a>';
-
+                if (auth()->user()->can('edit-inventory-management')) {
+                    $btn .= '<a class="btn btn-primary btn-sm" href="' . route('v1.inventory-management.edit', ['id'=>$row->id]) . '">Edit</a>';
+                    $btn .= '</div>';
+                    $btn .= '<a class="btn btn-warning btn-sm text-white" data-product-id ="'.$row->id.'" data-bs-toggle="modal" data-bs-target="#adjustStockModal">Stock Adjustment</a>';
+                }
                 $btn .= '</div>';
 
                 return $btn;
