@@ -47,7 +47,7 @@ class CommonService
 
     public function getProductCategories()
     {
-        return ProductCategory::orderBy('name','ASC')->get();
+        return ProductCategory::where('data_status',1)->orderBy('name','ASC')->get();
     }
 
     public function getUsers()

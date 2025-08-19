@@ -70,6 +70,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/{project}/detail', 'detailProject')->name('v1.projects.detail');
             Route::get('/{projectId}/gantt-daily','showGanttDaily')->name('v1.projects.gantt-daily');
             Route::get('/{project_id}/{id}/phase', 'phaseProject')->name('v1.projects.phase');
+            Route::put('/{project_id}/{id}/phase/default', 'setDefaultPhase')->name('v1.projects.phase.default');
             Route::get('/{projectId}/board','showKanban')->name('v1.projects.board');
             Route::post('/{taskId}/tasks/move','moveProjectTask')->name('v1.projects.tasks.move');
             Route::get('/data', 'getProjectsData')->name('v1.projects.data');

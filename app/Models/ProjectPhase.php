@@ -50,9 +50,9 @@ class ProjectPhase extends Model
     {
         $result = '';
         if($this->data_status==1){
-            $result = 'Phase Ongoing';
+            $result = 'Phase Not Started';
         } elseif($this->data_status==2){
-            $result ='Phase Pending Review';
+            $result ='Phase On Going';
         } elseif($this->data_status==3){
             $result = 'Phase Completed';
         } else {

@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\ProductCategory;
 use App\Models\StockAdjustments;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -79,6 +80,47 @@ class ProductService {
         $request['created_by'] = auth()->user()->id;
         Product::create($request->all());
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
+    }
+
+    public function categoryStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        $category = ProductCategory::create($request->all());
+        return response()->json([
+            'message' => 'Product category saved successfully.',
+            'id'=>$category->id,
+            'name'=>$category->name
+        ], 200);
+    }
+
+    public function categoryUpdate(Request $request,$id)
+    {
+        $category = ProductCategory::find($id);
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+        $category->name = $request->name;
+        $category->save();
+        return response()->json([
+            'message' => 'Product category saved successfully.',
+            'id'=>$category->id,
+            'name'=>$category->name
+        ], 200);
+    }
+
+    public function categoryDelete($id)
+    {
+        $category = ProductCategory::find($id);
+        
+        $category->data_status = 0;
+        $category->save();
+        return response()->json([
+            'message' => 'Product category deleted successfully.',
+            'id'=>$category->id,
+            'name'=>$category->name
+        ], 200);
     }
     
     public function getProductData($id)

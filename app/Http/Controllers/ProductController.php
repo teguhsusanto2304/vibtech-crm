@@ -67,4 +67,19 @@ class ProductController extends Controller
     {
         return $this->productService->show($product);
     }
+
+    public function categoryStore(Request $request)
+    {
+         return $this->productService->categoryStore($request);
+    }
+
+    public function categoryUpdate(Request $request,$id)
+    {
+         return $this->productService->categoryUpdate($request,$id);
+    }
+
+    public function categoryDelete($id)
+    {
+         return $this->productService->categoryDelete($id);
+    }
 }

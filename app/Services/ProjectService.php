@@ -9,6 +9,7 @@ use App\Models\ProjectMember;
 use App\Models\ProjectPhase;
 use Auth;
 use App\Helpers\IdObfuscator;
+use App\Models\KanbanStage;
 use App\Models\ProjectKanban;
 use App\Models\ProjectStageLog;
 use App\Models\ProjectStageTask;
@@ -126,6 +127,12 @@ class ProjectService {
                 ]);
             }
 
+            foreach(KanbanStage::all() as $row){
+                $project->projectKanbanStage()->create([
+                    'name' => $row->name,
+                    'data_status'=>1
+                ]);
+            }
 
             // 4. Return a success response
             return redirect()->route('v1.project-management.detail', ['project' => $project->obfuscated_id])->with('success', 'Project has been stored successfully.');
@@ -1535,6 +1542,46 @@ class ProjectService {
             'message' => 'Task moved successfully',
             'task' => $task
         ]);
+    }
+
+    /**
+     * Menandai fasa proyek yang dipilih sebagai fasa default.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setDefaultPhase($project_id, $id)
+    {
+        // Pastikan fasa yang dipilih adalah bagian dari proyek ini
+        $decodedId = IdObfuscator::decode($project_id);
+        $project = Project::find($decodedId);
+        $phase = ProjectPhase::find($id);
+        
+        if ($phase->project_id !== $project->id) {
+            return response()->json(['message' => 'The phase can not finded'], 404);
+        }
+
+        $project->current_phase = $phase->id;
+        $project->save();
+
+        ProjectPhase::where('project_id', $decodedId)
+                    ->where('data_status', '!=', 3)
+                    ->update(['data_status' => 1]);
+
+        // Atur fasa yang dipilih menjadi status 2 (in progress)
+        $phase->data_status = 2;
+        $phase->save();
+
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $decodedId);
+
+        if ($selectedPhaseId != $id) {
+            Session::forget('selected_project_phase_id_' . $decodedId);
+            Session::put('selected_project_phase_id_' . $decodedId, $id);
+            Session::get('selected_project_phase_id_' . $decodedId);
+        }
+        return response()->json(['message' => 'The phase is successfully set as default.'], 200);
     }
     
 }

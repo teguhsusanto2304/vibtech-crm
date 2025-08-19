@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('product_categories', function (Blueprint $table) {
+        Schema::create('project_kanban_stages', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
+            $table->foreignId('project_id')
+                  ->constrained('projects') // Assumes your project_stages table
+                  ->onDelete('cascade'); 
+            $table->string('name',100);
+            $table->string('description')->nullable();
             $table->integer('data_status')->default(1);
             $table->timestamps();
         });
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('product_categories');
+        Schema::dropIfExists('project_kanban_stages');
     }
 };

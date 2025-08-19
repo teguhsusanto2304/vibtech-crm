@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductCategory extends Model
 {
     use HasFactory;
-    protected $fillable = ['name'];
+    protected $fillable = ['name','data_status'];
 
     /**
      * Dapatkan semua produk untuk kategori ini.

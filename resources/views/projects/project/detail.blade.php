@@ -211,6 +211,11 @@
                         Project Documentation ({{$project->files->count()}})
                     </a>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="stages-tab" data-bs-toggle="tab" href="#project-stages" type="button" role="tab" aria-controls="project-stages" aria-selected="false">
+                        Stage
+                    </a>
+                </li>
             </ul>
 
             <!-- Tab Content -->
@@ -557,7 +562,7 @@
                             </div>
                             <div class="list-group"> {{-- Using Bootstrap's list-group for a clean, structured list of items --}}
                                 @forelse($project->phases as $index => $phase)
-                                    <div class="list-group-item list-group-item-action py-3"> {{-- Each phase as a list item --}}
+                                    <div class="list-group-item list-group-item-action py-3 "> {{-- Each phase as a list item, add 'active' class to the first one --}}
                                         <div class="d-flex w-100 justify-content-between align-items-center">
                                             <div class="d-flex align-items-center flex-grow-1">
                                                 <span class="badge bg-secondary rounded-pill me-3">{{ $index + 1 }}</span> {{-- Serial Number Badge --}}
@@ -579,13 +584,12 @@
                                             </div>
                                         </div>
                                         <div class="row mt-2">
-                                            <div class="col-md-7">
+                                            <div class="col-md-5">
                                                 <p class="mb-1 text-muted small">{{ \Illuminate\Support\Str::limit($phase->description, 150, '...') }}</p> {{-- Truncated Description --}}
                                             </div>
-                                            <div class="col-md-5 text-end text-muted"> {{-- Status and Buttons together --}}
+                                            <div class="col-md-7 text-end text-muted"> {{-- Status and Buttons together --}}
                                                 {{-- Status Badge (if you want it here, next to buttons, or keep both if desired) --}}
                                                 <span class="badge {{  $phase->phase_status_badge }} rounded-pill me-2">{{ $phase->phase_status }}</span>
-
                                                 {{-- Action Buttons --}}
                                                 @php
                                                     $projectId = property_exists($project, 'obfuscated_id') ? $project->obfuscated_id : $project->id;
@@ -594,8 +598,10 @@
                                                 <a href="{{ route('v1.projects.phase', [$project->obfuscated_id, $phaseId]) }}" class="btn btn-info btn-sm me-1" title="View Phase Details">
                                                     <i class="fas fa-eye"></i> View
                                                 </a>
-                                                @if($phase->data_status!=\App\Models\ProjectPhase::STATUS_COMPLETED)
-                                               <button type="button"
+                                                @if($project->project_manager_id == auth()->user()->id)
+                                                @if($phase->data_status != \App\Models\ProjectPhase::STATUS_COMPLETED)
+                                                
+                                                <button type="button"
                                                         class="btn btn-primary btn-sm edit-phase-modal-btn"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#phaseDetailEditModal"
@@ -604,16 +610,77 @@
                                                         title="Edit Phase">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
+                                                    @if($project->current_phase!=$phase->id)
+                                                    <button type="button" 
+                                                            class="btn btn-secondary btn-sm set-default-phase-btn"
+                                                            data-project-id="{{ $project->obfuscated_id }}"
+                                                            data-phase-id="{{ $phase->id }}"
+                                                            title="Set as Default Phase">
+                                                        <i class="fas fa-star"></i> Set Default
+                                                    </button>
+                                                    @endif
                                                 @endif
                                                 <button type="button" class="btn btn-danger btn-sm delete-phase-btn invisible" data-project-id="{{ $projectId }}" data-phase-id="{{ $phaseId }}" title="Delete Phase">
                                                     <i class="fas fa-trash"></i> Delete
                                                 </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
                                 @empty
                                     <div class="list-group-item">
                                         <p class="text-muted mb-0">No phases defined for this project yet.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="project-stages" role="tabpanel" aria-labelledby="stages-tab">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0">Project Stage</h4>
+                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#phaseCreateModal">
+                                    <i class="fas fa-plus"></i> Add Stage
+                                </button>
+                                
+                            </div>
+                            <div class="list-group"> {{-- Using Bootstrap's list-group for a clean, structured list of items --}}
+                                @forelse($project->projectKanbanStage as $index => $stage)
+                                <div class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center">
+                                    {{-- Nama Stage --}}
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <span class="badge bg-secondary rounded-pill me-3">{{ $index + 1 }}</span> {{-- Nomor Urut --}}
+                                        <h5 class="mb-0 text-primary">{{ $stage->name }}</h5> {{-- Nama Tahapan --}}
+                                    </div>
+
+                                    {{-- Tombol Aksi --}}
+                                    <div class="d-flex align-items-center">
+                                        {{-- Tombol Edit --}}
+                                        <button type="button" 
+                                                class="btn btn-primary btn-sm me-2 edit-kanban-stage-btn"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editKanbanStageModal"
+                                                data-id="{{ $stage->id }}"
+                                                data-name="{{ $stage->name }}"
+                                                title="Edit Kanban Stage">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+
+                                        {{-- Tombol Delete --}}
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm delete-kanban-stage-btn"
+                                                data-id="{{ $stage->id }}"
+                                                title="Delete Kanban Stage">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                                @empty
+                                    <div class="list-group-item">
+                                        <p class="text-muted mb-0">No stage defined for this project yet.</p>
                                     </div>
                                 @endforelse
                             </div>
@@ -685,6 +752,32 @@
                                     </div>
                                 </div>
                 <script>
+                    $(document).on('click', '.set-default-phase-btn', function() {
+                        let projectId = $(this).data('project-id');
+                        let phaseId = $(this).data('phase-id');
+                        let url = `/v1/projects/${projectId}/${phaseId}/phase/default`;
+
+                        // Tampilkan konfirmasi kepada pengguna
+                        if (confirm('Are you sure you want to set this as the default phase?')) {
+                            // Kirim permintaan AJAX
+                            $.ajax({
+                                url: url,
+                                type: 'PUT', // Gunakan metode PUT atau PATCH
+                                data: {
+                                    _token: '{{ csrf_token() }}' // Pastikan token CSRF dikirim
+                                },
+                                success: function(response) {
+                                    alert(response.message);
+                                    // Muat ulang tabel atau perbarui UI secara dinamis jika diperlukan
+                                    location.reload(); 
+                                },
+                                error: function(xhr) {
+                                    alert('An error occurred. Please try again.');
+                                    console.error(xhr.responseText);
+                                }
+                            });
+                        }
+                    });
                     $(document).ready(function() {
                         const phaseDetailEditModal = new bootstrap.Modal(document.getElementById('phaseDetailEditModal'));
                         const phaseDetailAddModal = new bootstrap.Modal(document.getElementById('phaseCreateModal'));
@@ -898,7 +991,7 @@
                     <div class="mb-3">
                         <label class="form-label">Project Stage</label>
                         <select class="form-control" name="project_stage_id">
-                            @foreach(\App\Models\KanbanStage::all() as $row )
+                            @foreach($project->projectKanbanStage as $row )
                             <option value="{{ $row->id }}">{{ $row->name }}</option>
                             @endforeach
                         </select>

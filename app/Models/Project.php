@@ -23,6 +23,7 @@ class Project extends Model
         'start_at',
         'end_at',
         'phase',
+        'current_phase',
         'data_status'
     ];
     protected $casts = [
@@ -177,6 +178,11 @@ class Project extends Model
         return $this->hasMany(ProjectPhase::class);
     }
 
+    public function currentPhase()
+    {
+        return $this->belongsTo(ProjectPhase::class, 'current_phase');
+    }
+
     public function projectKanban()
     {
         return $this->hasMany(ProjectKanban::class);
@@ -185,5 +191,10 @@ class Project extends Model
     public function projectTask(): HasMany
     {
         return $this->hasMany(ProjectTask::class);
+    }
+
+    public function projectKanbanStage(): HasMany
+    {
+        return $this->hasMany(ProjectKanbanStage::class);
     }
 }

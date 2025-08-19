@@ -134,8 +134,7 @@ class ProjectController extends Controller
         $phases = $project->phases()->get();
         if (is_null($selectedPhaseId) && $phases->isNotEmpty()) {
             
-            $firstPhase = $phases->first(); // Ambil phase pertama
-            $selectedPhaseId = $firstPhase->id; // Gunakan ID phase pertama sebagai default
+            $selectedPhaseId = $project->current_phase;
 
             Session::put('selected_project_phase_id_' . $project->id, $selectedPhaseId);
             $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
@@ -303,5 +302,10 @@ class ProjectController extends Controller
     public function moveProjectTask(Request $request, $taskId)
     {
         return $this->projectService->moveProjectTask($request, $taskId);
+    }
+
+    public function setDefaultPhase($project_id, $id)
+    {
+        return $this->projectService->setDefaultPhase($project_id, $id);
     }
 }

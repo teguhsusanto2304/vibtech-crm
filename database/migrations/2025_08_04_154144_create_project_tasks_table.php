@@ -23,6 +23,9 @@ return new class extends Migration
             $table->foreignId('project_stage_id')
                   ->constrained('project_stages') // Assumes your project_stages table
                   ->onDelete('cascade');         // If a project stage is deleted, its tasks are also deleted
+            $table->foreignId('project_kanban_stage_id')
+                  ->constrained('project_kanban_stages') // Assumes your project_stages table
+                  ->onDelete('cascade'); 
             $table->foreignId('project_kanban_id')
                   ->constrained('project_kanbans') // Assumes your project_stages table
                   ->onDelete('cascade');

@@ -68,9 +68,11 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @can('view-product-category')
                                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#categoryModal">
                                     ...
                                 </button>
+                                @endcan
                             </div>
                         </div>
 
@@ -154,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         let formData = new FormData(this);
 
-        let res = await fetch('/categories', {
+        let res = await fetch('/v1/inventory-management/product-category/store', {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
             body: formData
@@ -187,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let newName = prompt('Edit category name:', nameCell.textContent);
             if (newName) {
                 let id = row.dataset.id;
-                let res = await fetch(`/categories/${id}`, {
+                let res = await fetch(`/v1/inventory-management/${id}/product-category/update`, {
                     method: 'PUT',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -210,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let row = e.target.closest('tr');
             let id = row.dataset.id;
 
-            let res = await fetch(`/categories/${id}`, {
+            let res = await fetch(`/v1/inventory-management/${id}/product-category/delete`, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
             });
