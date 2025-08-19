@@ -298,6 +298,8 @@ class ProjectService {
         ]);
 
         $validated['created_by'] = Auth::id();
+        $validated['project_kanban_stage_id'] = $request->project_kanban_id;
+        $validated['project_kanban_id'] = 1;
 
         ProjectTask::create($validated);
 
