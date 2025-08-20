@@ -11,6 +11,7 @@ use Auth;
 use App\Helpers\IdObfuscator;
 use App\Models\KanbanStage;
 use App\Models\ProjectKanban;
+use App\Models\ProjectKanbanStage;
 use App\Models\ProjectStageLog;
 use App\Models\ProjectStageTask;
 use App\Models\ProjectTask;
@@ -127,13 +128,6 @@ class ProjectService {
                 ]);
             }
 
-            foreach(KanbanStage::all() as $row){
-                $project->projectKanbanStage()->create([
-                    'name' => $row->name,
-                    'data_status'=>1
-                ]);
-            }
-
             // 4. Return a success response
             return redirect()->route('v1.project-management.detail', ['project' => $project->obfuscated_id])->with('success', 'Project has been stored successfully.');
 
@@ -240,7 +234,7 @@ class ProjectService {
                     'description' => 'Phase #'.($iphases+1).' of '.$validatedData['name'].' description',
                     'start_date' => date('Y-m-d'),
                     'end_date' => date('Y-m-d'),
-                    'data_status'=>1
+                    'data_status'=>($iphases==0)?2:1
                 ]);
             }
 
@@ -252,6 +246,19 @@ class ProjectService {
                     'name'       => $kanban,
                     'data_status'=> $index+1,
                     'color_background'=>$defaultKanbanColor[$index]
+                ]);
+            }
+
+            $firstPhase = $project->phases()->first();
+            if ($firstPhase) {
+                $project->current_phase = $firstPhase->id;
+                $project->save();
+            }
+
+            foreach(KanbanStage::all() as $row){
+                $project->projectKanbanStage()->create([
+                    'name' => $row->name,
+                    'data_status'=>1
                 ]);
             }
 
@@ -288,8 +295,8 @@ class ProjectService {
         $validated = $request->validate([
             'project_id'         => 'required|exists:projects,id',
             'project_phase_id'   => 'required|exists:project_phases,id',
-            'project_stage_id'   => 'required|exists:kanban_stages,id',
-            'project_kanban_id'  => 'required|exists:project_kanbans,id',
+            'project_kanban_id'   => 'required|exists:project_kanbans,id',
+            'project_kanban_stage_id'  => 'required|exists:project_kanban_stages,id',
             'assigned_to_user_id'=> 'nullable|exists:users,id',
             'name'               => 'required|string|max:255',
             'description'        => 'nullable|string',
@@ -298,10 +305,34 @@ class ProjectService {
         ]);
 
         $validated['created_by'] = Auth::id();
-        $validated['project_kanban_stage_id'] = $request->project_kanban_id;
-        $validated['project_kanban_id'] = 1;
 
-        ProjectTask::create($validated);
+        $task = ProjectTask::create($validated);
+        $project_id = $request->project_id;
+
+        if ($request->hasFile('project_files')) {
+                foreach ($request->file('project_files') as $index => $file) {
+                    $originalFileName = $file->getClientOriginalName();
+                    $fileMimeType = $file->getClientMimeType();
+                    $fileSize = $file->getSize(); // Size in bytes
+
+                    // Store file in storage/app/public/projects/{project_id}/files
+                    $path = $file->store('projects/' . $task->id . '/files', 'public');
+
+                    // Save file details to project_files table
+                    $taskFile = new ProjectFile();
+                    // Save file details to project_files table, linking to the task
+                    $taskFile->project_id = $project_id;
+                    $taskFile->project_stage_task_id = $task->id;
+                    $taskFile->file_name = $originalFileName;
+                    $taskFile->description = $request->input('project_file_descriptions')[$index] ?? null;
+                    $taskFile->file_path = $path;
+                    $taskFile->mime_type = $fileMimeType;
+                    $taskFile->file_size = $fileSize;
+                    $taskFile->uploaded_by_user_id = Auth::id();
+                        // 'project_id' is nullable, so we don't set it here if files belong to tasks
+                    $taskFile->save();
+                }
+            }
 
         return redirect()->back()->with('success', 'Task created successfully.');
     }
@@ -1347,6 +1378,35 @@ class ProjectService {
     }
 
     /**
+     * Fetch project phase details to populate a modal.
+     * Returns rendered HTML for view/edit form.
+     *
+     * @param  \App\Models\Project  $project
+     * @param  \App\Models\ProjectPhase  $phase
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStageDetailsForModal($projectId, $stageId, Request $request)
+    {
+        $stage = ProjectKanbanStage::find($stageId);
+        $project = Project::find($projectId);
+
+        // Determine if this is for viewing or editing based on request (or button class in JS)
+        // For simplicity, we'll assume the same endpoint renders the content and JS handles read-only vs editable fields
+        // Or you can pass an additional parameter like /get-details?mode=edit
+        $mode = $request->query('mode', 'view'); // Default to view mode
+
+        // Render the partial Blade view with the phase data
+        // You'll need to create this Blade partial (e.g., resources/views/projects/phases/_modal_content.blade.php)
+        $html = view('projects.phases._modal_content', compact('stage', 'project', 'mode'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+            'stage_name' => $stage->name // Send name for modal title
+        ]);
+    }
+
+    /**
      * Update the specified project phase in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -1584,6 +1644,47 @@ class ProjectService {
             Session::get('selected_project_phase_id_' . $decodedId);
         }
         return response()->json(['message' => 'The phase is successfully set as default.'], 200);
+    }
+
+    /**
+     * Menyimpan tahapan kanban baru.
+     */
+    public function storeProjectSTage(Request $request)
+    {
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'project_id' => 'required|exists:projects,id',
+        ]);
+
+        $stage = ProjectKanbanStage::create($validatedData);
+
+        return response()->json(['message' => 'Stage added successfully.', 'stage' => $stage], 201);
+    }
+
+    /**
+     * Memperbarui tahapan kanban yang ada.
+     */
+    public function updateProjectSTage(Request $request, $id)
+    {
+        $stage = ProjectKanbanStage::find($id);
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $stage->update($validatedData);
+
+        return response()->json(['message' => 'Stage updated successfully.', 'stage' => $stage], 200);
+    }
+
+    /**
+     * Menghapus tahapan kanban.
+     */
+    public function destroyProjectSTage($id)
+    {
+        $stage = ProjectKanbanStage::find($id); 
+        $stage->delete();
+
+        return response()->json(['message' => 'Stage deleted successfully.'], 200);
     }
     
 }

@@ -186,6 +186,8 @@ class ProjectController extends Controller
 
     }
 
+    
+
     public function managementDetail($id)
     {
         $project = $this->projectService->getProject($id);
@@ -269,6 +271,11 @@ class ProjectController extends Controller
         return $this->projectService->getPhaseDetailsForModal($projectId, $phaseId, $request);
     }
 
+     public function getStageDetailsForModal($projectId, $stageId, Request $request)
+    {
+        return $this->projectService->getStageDetailsForModal($projectId, $stageId, $request);
+    }
+
     public function updateProjectPhase(Request $request, $projectId, $phaseId)
     {
         return $this->projectService->updateProjectPhase($request, $projectId, $phaseId);
@@ -307,5 +314,15 @@ class ProjectController extends Controller
     public function setDefaultPhase($project_id, $id)
     {
         return $this->projectService->setDefaultPhase($project_id, $id);
+    }
+
+    public function storeProjectSTage(Request $request)
+    {
+        return $this->projectService->storeProjectSTage($request);
+    }
+
+    public function updateProjectSTage(Request $request, $id)
+    {
+         return $this->projectService->updateProjectSTage($request, $id);
     }
 }

@@ -44,6 +44,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/monthly-chart','monthlyStatusChartData')->name('v1.project-management.monthly-chart');
             Route::get('/project-files/data','getProjectFileData')->name('v1.project-management.project-files.data');
             Route::get('/{projectId}/phases/{phaseId}/get-details','getPhaseDetailsForModal')->name('v1.project-management.phases.get-details');
+            Route::get('/{projectId}/stage/{stageId}/get-details','getStageDetailsForModal')->name('v1.project-management.stage.get-details');
             Route::put('/{projectId}/phases/{phaseId}','updateProjectPhase')->name('v1.project-management.phases');
             Route::get('/{projectId}/kanban','showKanban')->name('v1.project-management.kanban');
             Route::get('/{projectId}/gantt','showGantt')->name('v1.project-management.gantt');
@@ -70,10 +71,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/{project}/detail', 'detailProject')->name('v1.projects.detail');
             Route::get('/{projectId}/gantt-daily','showGanttDaily')->name('v1.projects.gantt-daily');
             Route::get('/{project_id}/{id}/phase', 'phaseProject')->name('v1.projects.phase');
+            Route::get('/{project_id}/{id}/stage', 'stageProject')->name('v1.projects.stage');
             Route::put('/{project_id}/{id}/phase/default', 'setDefaultPhase')->name('v1.projects.phase.default');
             Route::get('/{projectId}/board','showKanban')->name('v1.projects.board');
             Route::post('/{taskId}/tasks/move','moveProjectTask')->name('v1.projects.tasks.move');
             Route::get('/data', 'getProjectsData')->name('v1.projects.data');
+            Route::post('/stages/store','storeProjectSTage')->name('v1.projects.stage.store');
         });
         
     });

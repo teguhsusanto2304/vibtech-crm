@@ -637,28 +637,24 @@
                         </div>
                     </div>
                 </div>
-                <div class="tab-pane fade" id="project-stages" role="tabpanel" aria-labelledby="stages-tab">
+                <div class="tab-pane fade show" id="project-stages" role="tabpanel" aria-labelledby="stages-tab">
                     <div class="row">
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="mb-0">Project Stage</h4>
-                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#phaseCreateModal">
+                                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#stageCreateModal">
                                     <i class="fas fa-plus"></i> Add Stage
                                 </button>
-                                
                             </div>
-                            <div class="list-group"> {{-- Using Bootstrap's list-group for a clean, structured list of items --}}
+                            
+                            <div class="list-group">
                                 @forelse($project->projectKanbanStage as $index => $stage)
                                 <div class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center">
-                                    {{-- Nama Stage --}}
                                     <div class="d-flex align-items-center flex-grow-1">
-                                        <span class="badge bg-secondary rounded-pill me-3">{{ $index + 1 }}</span> {{-- Nomor Urut --}}
-                                        <h5 class="mb-0 text-primary">{{ $stage->name }}</h5> {{-- Nama Tahapan --}}
+                                        <span class="badge bg-secondary rounded-pill me-3">{{ $index + 1 }}</span>
+                                        <h5 class="mb-0 text-primary">{{ $stage->name }}</h5>
                                     </div>
-
-                                    {{-- Tombol Aksi --}}
                                     <div class="d-flex align-items-center">
-                                        {{-- Tombol Edit --}}
                                         <button type="button" 
                                                 class="btn btn-primary btn-sm me-2 edit-kanban-stage-btn"
                                                 data-bs-toggle="modal" 
@@ -668,8 +664,6 @@
                                                 title="Edit Kanban Stage">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
-
-                                        {{-- Tombol Delete --}}
                                         <button type="button" 
                                                 class="btn btn-danger btn-sm delete-kanban-stage-btn"
                                                 data-id="{{ $stage->id }}"
@@ -687,6 +681,60 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Modal for Creating Stage --}}
+                <div class="modal fade" id="stageCreateModal" tabindex="-1" aria-labelledby="stageCreateModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form id="createStageForm">
+                                @csrf
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="stageCreateModalLabel">Add New Stage</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="stageName" class="form-label">Stage Name</label>
+                                        <input type="text" class="form-control" id="stageName" name="name" required>
+                                        <input type="hidden" name="project_id" value="{{ $project->id }}">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-success">Save Stage</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal for Editing Stage --}}
+                <div class="modal fade" id="editKanbanStageModal" tabindex="-1" aria-labelledby="editKanbanStageModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form id="editStageForm">
+                                @csrf
+                                @method('PUT')
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editKanbanStageModalLabel">Edit Kanban Stage</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="editStageName" class="form-label">Stage Name</label>
+                                        <input type="text" class="form-control" id="editStageName" name="name" required>
+                                        <input type="hidden" id="editStageId" name="id">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-success">Update Stage</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal fade" id="phaseDetailEditModal" tabindex="-1" aria-labelledby="phaseDetailEditModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
@@ -711,6 +759,125 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+
+    // Menangani pengiriman formulir 'Add Stage'
+    const createStageForm = document.getElementById('createStageForm');
+    createStageForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const response = await fetch('{{ route('v1.projects.stage.store') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            // Tambahkan stage baru ke daftar
+            const newStageHtml = `
+                <div class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center" data-id="${result.stage.id}">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="badge bg-secondary rounded-pill me-3">${document.querySelectorAll('.list-group-item').length + 1}</span>
+                        <h5 class="mb-0 text-primary">${result.stage.name}</h5>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-primary btn-sm me-2 edit-kanban-stage-btn" data-bs-toggle="modal" data-bs-target="#editKanbanStageModal" data-id="${result.stage.id}" data-name="${result.stage.name}" title="Edit Kanban Stage">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm delete-kanban-stage-btn" data-id="${result.stage.id}" title="Delete Kanban Stage">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.querySelector('.list-group').insertAdjacentHTML('beforeend', newStageHtml);
+            
+            // Tutup modal
+            bootstrap.Modal.getInstance(document.getElementById('stageCreateModal')).hide();
+            this.reset();
+            alert('Stage added successfully!');
+        } else {
+            alert('Failed to add stage.');
+        }
+    });
+
+    // Menangani klik tombol 'Edit'
+    document.querySelector('.list-group').addEventListener('click', function (e) {
+        if (e.target.closest('.edit-kanban-stage-btn')) {
+            const button = e.target.closest('.edit-kanban-stage-btn');
+            const stageId = button.dataset.id;
+            const stageName = button.dataset.name;
+            
+            document.getElementById('editStageId').value = stageId;
+            document.getElementById('editStageName').value = stageName;
+            alert(stageName);
+        }
+    });
+
+    // Menangani pengiriman formulir 'Edit Stage'
+    const editStageForm = document.getElementById('editStageForm');
+    editStageForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        
+        const stageId = document.getElementById('editStageId').value;
+        const formData = new FormData(this);
+        
+        const response = await fetch(`{{ url('project-kanban-stages') }}/${stageId}`, {
+            method: 'POST', // Gunakan POST dan tambahkan method PUT di form
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            // Perbarui nama stage di UI
+            const stageItem = document.querySelector(`.list-group-item[data-id="${stageId}"]`);
+            if (stageItem) {
+                stageItem.querySelector('h5').textContent = result.stage.name;
+            }
+            
+            // Tutup modal
+            bootstrap.Modal.getInstance(document.getElementById('editKanbanStageModal')).hide();
+            alert('Stage updated successfully!');
+        } else {
+            alert('Failed to update stage.');
+        }
+    });
+
+    // Menangani klik tombol 'Delete'
+    document.querySelector('.list-group').addEventListener('click', async function (e) {
+        if (e.target.closest('.delete-kanban-stage-btn')) {
+            const button = e.target.closest('.delete-kanban-stage-btn');
+            const stageId = button.dataset.id;
+            
+            if (confirm('Are you sure you want to delete this stage?')) {
+                const response = await fetch(`{{ url('project-kanban-stages') }}/${stageId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    // Hapus elemen dari UI
+                    button.closest('.list-group-item').remove();
+                    alert('Stage deleted successfully!');
+                } else {
+                    alert('Failed to delete stage.');
+                }
+            }
+        }
+    });
+});
+
+                </script>
 
                 <div class="modal fade" id="phaseCreateModal" tabindex="-1" aria-labelledby="phaseCreateModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
@@ -921,6 +1088,8 @@
                         });
                     });
                 </script>
+
+                
                 <hr>  
                 <div class="d-flex justify-content-between align-items-center mb-2">
     <!-- Left side: Button group -->
@@ -943,7 +1112,7 @@
 <div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('v1.projects.tasks.store') }}" method="POST">
+            <form action="{{ route('v1.projects.tasks.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="createTaskModalLabel">Create New Task</h5>
@@ -990,7 +1159,7 @@
                     
                     <div class="mb-3">
                         <label class="form-label">Project Stage</label>
-                        <select class="form-control" name="project_stage_id">
+                        <select class="form-control" name="project_kanban_stage_id">
                             @foreach($project->projectKanbanStage as $row )
                             <option value="{{ $row->id }}">{{ $row->name }}</option>
                             @endforeach
@@ -1009,6 +1178,21 @@
                             </div>
                         </div>                        
                     </div>
+
+                    <div class="mb-4">
+                                            <label class="form-label">Upload New Project Files (PNG, JPG, PDF, DOC/DOCX)</label>
+                                            <div id="create-new-file-upload-container">
+                                                <div class="file-upload-item">
+                                                    <div class="input-group mb-2">
+                                                        <input type="file" name="project_files[]" class="form-control" accept=".png, .jpg, .pdf,.doc,.docx">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-file-input"><i class="fas fa-trash"></i></button>
+                                                    </div>
+                                                    <input type="text" name="project_file_descriptions[]" class="form-control mt-1 mb-1" placeholder="Please enter file description">
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="create-add-more-files-btn"><i class="fas fa-plus"></i> Add Another File</button>
+                                            <small class="form-text text-muted d-block mt-2">Max file size: 3MB per file. Allowed types: PNG, JPG, PDF, DOC, DOCX.</small>
+                                    </div>
                     
                 </div>
 

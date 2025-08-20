@@ -34,7 +34,7 @@ class ProjectTask extends Model
     protected $fillable = [
         'project_id',
         'project_phase_id',
-        'project_stage_id',
+        'project_kanban_stage_id',
         'project_kanban_id',
         'assigned_to_user_id',
         'created_by',
