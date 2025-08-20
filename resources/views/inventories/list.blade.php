@@ -58,6 +58,16 @@
                
             </div>
             <div class="card-body" style="overflow-x: auto;">
+                <div class="mb-3">
+                    <label for="categoryFilter" class="form-label">Filter by Category:</label>
+                    <select id="categoryFilter" class="form-select w-25">
+                        <option value="">All Categories</option>
+                        {{-- Loop untuk menampilkan kategori dari database Anda --}}
+                        @foreach(\App\Models\ProductCategory::WhereNot('data_status',0)->get() as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <table id="products-table" class="table table-striped table-bordered" style="width:100%">
                     <thead>
                         <tr>
@@ -237,7 +247,13 @@
            processing: true,
            serverSide: true,
            scrollX: true,
-           ajax: "{{ route('v1.inventory-management.list.data') }}",
+           ajax: {
+                url: "{{ route('v1.inventory-management.list.data') }}",
+                // Tambahkan data filter ke dalam permintaan AJAX
+                data: function (d) {
+                    d.category_id = $('#categoryFilter').val();
+                }
+            },
            columns: [
                     { data: 'product_image', name: 'product_image', orderable: false, searchable: false },
                     { data: 'name', name: 'name' },
@@ -252,6 +268,10 @@
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'action-col' }
                 ]
        });
+
+        $('#categoryFilter').on('change', function () {
+            table.ajax.reload();
+        });
 
      });
    </script>

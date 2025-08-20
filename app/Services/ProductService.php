@@ -13,7 +13,9 @@ class ProductService {
     public function getProductsData(Request $request)
     {
         $productsQuery = Product::with(['productCategory','createdBy']); // Assuming projectMembers is the correct relationship name
-
+        if ($request->filled('category_id')) {
+            $productsQuery->where('product_category_id', $request->input('category_id'));
+        }
         
         $products = $productsQuery->orderBy('created_at', 'ASC')->get();
 
