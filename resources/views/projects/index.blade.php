@@ -65,7 +65,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">New Project <small><span class="badge bg-danger pill-rounded">New Version</span></small></h5>
-                                <a href="{{ route('v1.projects.create')}}" class="btn btn_primary mt-auto">View</a>
+                                <a href="{{ route('v1.projects.create')}}" class="btn btn_primary mt-auto">Create</a>
                             </div>
                         </div>
                     </div>
