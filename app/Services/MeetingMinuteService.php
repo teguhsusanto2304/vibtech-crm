@@ -152,6 +152,7 @@ class MeetingMinuteService
                     $all ='?all=yes';
             }
                 $btn = '<a href="'.route('v1.meeting-minutes.detail', $minute->obfuscated_id).''.$all.'" class="btn btn-info btn-sm me-1">View</a>';
+                $btn .= '<a href="'.route('v1.meeting-minutes.download-pdf', $minute->obfuscated_id).'" class="btn btn-danger btn-sm" target="_blank" title="Download PDF">Export PDF</a>';
                 // Add other actions like edit, delete if needed
                 return $btn;
             })
@@ -280,11 +281,28 @@ class MeetingMinuteService
      * @param  \App\Models\MeetingMinute  $minute
      * @return \Illuminate\Http\Response
      */
-    public function downloadPdf(MeetingMinute $minute)
+    public function downloadPdf1(MeetingMinute $minute)
     {
         $pdf = Pdf::loadView('pdfs.meeting_minute_detail', compact('minute'));
         $filename = 'Meeting_Minutes_' . $minute->meeting_date->format('Y-m-d') . '_' . str_replace([' ', '/', '\\'], '_', $minute->topic) . '.pdf';
         $filename = preg_replace('/[^a-zA-Z0-9_.-]/', '', $filename); // Sanitize filename
         return $pdf->download($filename); // Force download
     }
+
+    /**
+     * Menghasilkan dan mengunduh PDF untuk satu notulen rapat.
+     */
+    public function downloadPdf($id)
+    {
+        $decodedId = IdObfuscator::decode($id);
+        // Temukan notulen rapat dengan eager loading
+        $minute = MeetingMinute::with(['attendees.user', 'savedBy'])->findOrFail($decodedId);
+        
+        // Buat instance PDF dari tampilan Blade
+        $pdf = Pdf::loadView('pdfs.meeting_minute_detail', compact('minute'));
+
+        // Unduh file PDF dengan nama file yang sesuai
+        return $pdf->download('meeting-minutes-'.$minute->id.'.pdf');
+    }
+
 }

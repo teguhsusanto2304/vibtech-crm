@@ -31,8 +31,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}/destroy', 'destroyClaim')->name('v1.meeting-minutes.destroy');
             Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.meeting-minutes.update-status');
             Route::post('/{id}/action', 'handleApprovalAction')->name('v1.meeting-minutes.action');
-            Route::get('/bulk-export-pdf','pdf')->name('v1.meeting-minutes.bulk-export-pdf');
+            //Route::get('/bulk-export-pdf','pdf')->name('v1.meeting-minutes.bulk-export-pdf');
             Route::get('/bulk-export-pdf', 'bulkExportPdf')->name('v1.meeting-minutes.bulk-export-pdf');
+            Route::get('/{id}/download-pdf','downloadPdf')->name('v1.meeting-minutes.download-pdf');
             //->middleware('can:approve-claims');
         });
     });

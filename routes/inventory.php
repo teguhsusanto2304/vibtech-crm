@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 |
 */
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ReceivingOrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -31,6 +32,21 @@ Route::prefix('v1')->group(function () {
             Route::post('/product-category/store','categoryStore');
             Route::put('/{id}/product-category/update','categoryUpdate');
             Route::delete('/{id}/product-category/delete','categoryDelete');
+            Route::get('/{productId}/history','getStockHistory')->name('v1.inventory-management.history');
             //->middleware('can:approve-claims');
+        });
+    });
+
+Route::prefix('v1')->group(function () {
+    // 🔹 Client Database Management Routes
+        Route::prefix('receiving-order')->controller(ReceivingOrderController::class)->group(function () {
+            Route::get('/list', 'list')->name('v1.receiving-order.list');
+            Route::get('/{id}/show', 'show')->name('v1.receiving-order.show');
+            Route::get('/data', 'getReceivingOrderData')->name('v1.receiving-order.data');
+            Route::get('/create', 'create')->name('v1.receiving-order.create');
+            Route::post('/store', 'store')->name('v1.receiving-order.store');
+            Route::get('/edit', 'list')->name('v1.receiving-order.edit');
+            Route::put('/update', 'list')->name('v1.receiving-order.update');
+            Route::put('/delete', 'list')->name('v1.receiving-order.delete');
         });
     });

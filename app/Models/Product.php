@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Helpers\IdObfuscator;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -39,5 +41,15 @@ class Product extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class,'created_by','id');
+    }
+
+    public function latestStockAdjustment(): HasOne
+    {
+        return $this->hasOne(StockAdjustments::class)->latestOfMany();
+    }
+
+    public function stockAdjustments(): HasMany
+    {
+        return $this->hasMany(StockAdjustments::class, 'product_id', 'id');
     }
 }

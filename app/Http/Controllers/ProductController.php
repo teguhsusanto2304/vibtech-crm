@@ -82,4 +82,9 @@ class ProductController extends Controller
     {
          return $this->productService->categoryDelete($id);
     }
+
+    public function getStockHistory($productId)
+    {
+        return $this->productService->getStockHistory($productId);
+    }
 }

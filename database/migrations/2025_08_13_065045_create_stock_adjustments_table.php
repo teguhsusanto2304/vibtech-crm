@@ -16,10 +16,11 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->integer('adjust_type'); // 'increase' or 'decrease'
             $table->integer('quantity');
+            $table->integer('previous_quantity');
             $table->string('adjust_number',20);
             $table->string('for_or_from',100);
-            $table->text('reason')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null'); // Optional: to track who made the adjustment
+            $table->text('reason')->nullable();            
+            $table->tinyInteger('data_status')->default(1);  // Optional: to track who made the adjustment
             $table->timestamps();
         });
     }

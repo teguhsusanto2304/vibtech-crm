@@ -50,6 +50,17 @@
                         </div>
                     </div>
                    @endcan
+
+                   @can('view-receiving-order')
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Receiving Order</h5>
+                                <a href="{{ route('v1.receiving-order.list')}}" class="btn btn_primary mt-auto">View</a>
+                            </div>
+                        </div>
+                    </div>
+                   @endcan
                    
                 </div>
             </div>

@@ -296,7 +296,7 @@
                 const newStatusId = boardElement.getAttribute('data-id').replace('kanban-', '');
                 // --- Kunci Logika Role-Based Access ---
                 if (projectManagerId == currentUserId) {
-                    if(newStatusId==lastProjectKanbanId || newStatusId==secondLastProjectKanbanId){
+                    if(newStatusId==lastProjectKanbanId && newStatusId==secondLastProjectKanbanId){
                         const response = await fetch(`/v1/projects/${taskId}/tasks/move`, {
                             method: 'POST',
                             headers: {

@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 class ProductService {
     public function getProductsData(Request $request)
     {
-        $productsQuery = Product::with(['productCategory','createdBy']); // Assuming projectMembers is the correct relationship name
+        $productsQuery = Product::with(['productCategory','createdBy','latestStockAdjustment']); // Assuming projectMembers is the correct relationship name
         if ($request->filled('category_id')) {
             $productsQuery->where('product_category_id', $request->input('category_id'));
         }
@@ -39,7 +39,16 @@ class ProductService {
                 return $product->created_at->format('d-M-Y H:i');
             })
             ->addColumn('updatedAt', function (Product $product) {
-                return $product->updated_at->format('d-M-Y H:i');
+                if ($product->latestStockAdjustment) {
+                    return $product->latestStockAdjustment->created_at->format('d-M-Y H:i');
+                }
+                return 'N/A'; // Atau string lain yang sesuai jika data null
+            })
+            ->addColumn('updatedBy', function (Product $product) {
+                if ($product->latestStockAdjustment) {
+                    return $product->latestStockAdjustment->user->name;
+                }
+                return 'N/A'; // Atau string lain yang sesuai jika data null
             })
             ->addColumn('createdBy', function (Product $product) {
                 return $product->createdBy->name;
@@ -80,7 +89,18 @@ class ProductService {
             $request['image'] = $imagePath;
         }
         $request['created_by'] = auth()->user()->id;
-        Product::create($request->all());
+        
+        $product = Product::create($request->all());
+        StockAdjustments::create([
+                'product_id' => $product->id,
+                'adjust_type' => 3,
+                'quantity' => $product->quantity,
+                'adjust_number' => 'N/A',
+                'for_or_from' => 'N/A',
+                'reason' => 'Product created via Create New Inventory ',
+                'user_id' => auth()->id(),
+                'previous_quantity'=> 0
+            ]);
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
     }
 
@@ -162,6 +182,7 @@ class ProductService {
 
         DB::transaction(function () use ($validated) {
             $product = Product::findOrFail($validated['product_id']);
+            $lastStock = $product->quantity;
 
             if ((int) $validated['adjust_type'] === 1) {
                 $product->quantity += (int) $validated['quantity'];
@@ -178,6 +199,7 @@ class ProductService {
                 'for_or_from' => $validated['for_or_from'],
                 'reason' => $validated['reason'],
                 'user_id' => auth()->id(),
+                'previous_quantity'=> $lastStock
             ]);
         });
 
@@ -193,6 +215,25 @@ class ProductService {
         $product->load('productCategory');
         // Kembalikan produk sebagai respons JSON
         return response()->json($product);
+    }
+
+    /**
+     * Mengambil histori penyesuaian stok untuk sebuah produk.
+     *
+     * @param  \App\Models\Product  $product
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStockHistory($productId)
+    {
+        $product = Product::find($productId);
+        $history = $product->stockAdjustments()
+                           ->with('user') // Memuat relasi createdBy
+                           ->latest() // Mengurutkan dari yang terbaru
+                           ->get();
+
+        return response()->json([
+            'data' => $history
+        ]);
     }
 
 }

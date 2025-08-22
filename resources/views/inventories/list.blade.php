@@ -76,9 +76,10 @@
                             <th>SKU</th>
                             <th>Category</th>
                             <th>Quantity</th>
-                            <th>Created At</th>
-                            <th>Created By</th>
-                            <th>Last Update</th>
+                            <th>First Created At</th>
+                            <th>First Created By</th>
+                            <th>Last Update At</th>
+                            <th>Last Update By</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -264,6 +265,7 @@
                     { data: 'createdAt', name: "createdAt" },
                     { data: 'createdBy', name: 'createdBy' },
                     { data: 'updatedAt', name: 'updatedAt' },
+                    { data: 'updatedBy', name: 'updatedBy' },
                     // Gunakan 'aksi' dari controller
                     { data: 'action', name: 'action', orderable: false, searchable: false, className: 'action-col' }
                 ]
@@ -277,35 +279,72 @@
    </script>
    <!-- Modal Detail Produk -->
 <div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productDetailModalLabel">Product Detail</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-4">
-                    <img id="productImage" src="" alt="Product Image" class="img-fluid rounded-lg shadow-sm" style="max-height: 200px;">
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Product Name:</span>
-                        <span id="productNameDetail"></span>
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="detail-tab" data-bs-toggle="tab" data-bs-target="#product-detail" type="button" role="tab" aria-controls="product-detail" aria-selected="true">
+                            Product Detail
+                        </button>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">SKU:</span>
-                        <span id="productSku"></span>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#product-history" type="button" role="tab" aria-controls="product-history" aria-selected="false">
+                            History
+                        </button>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Quantity:</span>
-                        <span id="productQuantity"></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Category:</span>
-                        <span id="productCategory"></span>
-                    </li>
-                   
                 </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="myTabContent">
+                    <!-- Product Detail Tab Pane -->
+                    <div class="tab-pane fade show active p-3" id="product-detail" role="tabpanel" aria-labelledby="detail-tab">
+                        <div class="text-center mb-4">
+                            <img id="productImage" src="" alt="Product Image" class="img-fluid rounded-lg shadow-sm" style="max-height: 200px;">
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Product Name:</span>
+                                <span id="productNameDetail"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">SKU:</span>
+                                <span id="productSku"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Quantity:</span>
+                                <span id="productQuantity"></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Category:</span>
+                                <span id="productCategory"></span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- History Tab Pane -->
+                    <div class="tab-pane fade p-3" id="product-history" role="tabpanel" aria-labelledby="history-tab">
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-striped table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th class="text-nowrap" style="width: 15%;">Date</th>
+                    <th style="width: 70%;">History</th>
+                    <th class="text-nowrap" style="width: 15%;">Staff</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <!-- Data histori akan dimuat di sini oleh JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -313,6 +352,7 @@
         </div>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
     // Tangkap modal ketika terbuka
@@ -352,7 +392,152 @@
                 // Anda dapat menampilkan pesan kesalahan di sini
                 document.getElementById('productName').textContent = 'Data tidak ditemukan.';
             });
+
+            // Dapatkan elemen-elemen DOM
+    const historyTableBody = document.getElementById('historyTableBody');
+    
+    // Tampilkan loading state
+    historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
+
+    if (productId) {
+        fetch(`/v1/inventory-management/${productId}/history`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const historyData = data.data;
+                historyTableBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi
+
+                if (historyData.length > 0) {
+                    historyData.forEach(item => {
+                        const formattedDate = new Date(item.created_at).toLocaleDateString('en-GB');
+                        let adjust_type_name ='';
+                        if(item.adjust_type==1){
+                            adjust_type_name='Increase Stock';
+                            productTotal = item.previous_quantity+item.quantity; 
+                        } else {
+                            adjust_type_name='Decrease Stock';
+                            productTotal = item.previous_quantity-item.quantity; 
+                        }
+                        
+                        // Membangun konten untuk kolom History
+                        let historyContent = `
+                            <strong>Adjustment Type:</strong> ${adjust_type_name}<br>
+                            <strong>Previous Product Total:</strong> ${item.previous_quantity}<br>
+                            <strong>Adjustment:</strong> ${item.quantity > 0 ? '+' : ''}${item.quantity}<br>
+                            <strong>New Product Total:</strong> ${productTotal}<br>
+                            <strong>Remarks:</strong> ${item.reason ?? 'N/A'}<br>
+                        `;
+
+                        // Tambahkan detail spesifik jika adjustment_type adalah 'Increase Stock'
+                        if (item.adjust_type === 1) {
+                            historyContent += `
+                                <strong>PO Number:</strong> ${item.adjust_number ?? 'N/A'}<br>
+                                <strong>From:</strong> ${item.for_or_from ?? 'N/A'}<br>
+                                <strong>Product Purchased Date:</strong> ${item.updated_at ?? 'N/A'}<br>
+                                <strong>Product Received Date:</strong> ${item.created_at ?? 'N/A'}<br>
+                            `;
+                        } else if (item.adjust_type === 2) {
+                            historyContent += `
+                                <strong>PO Number (Client):</strong> ${item.adjust_number ?? 'N/A'}<br>
+                                <strong>Product Draw Out Date:</strong> ${item.created_at ?? 'N/A'}<br>
+                            `;
+                        } 
+                        
+                        const newRow = `
+                            <tr>
+                                <td class="text-nowrap">${formattedDate}</td>
+                                <td>${historyContent}</td>
+                                <td class="text-nowrap">${item.user.name ?? 'N/A'}</td>
+                            </tr>
+                        `;
+        
+                        historyTableBody.insertAdjacentHTML('beforeend', newRow);
+                    });
+                } else {
+                    historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No history found.</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Failed to load history.</td></tr>';
+            });
+    }
     });
 });
+    const productDetailModal = document.getElementById('productDetailModal');
+productDetailModal.addEventListener('shown.bs.modal', function (event) {
+    // Dapatkan ID produk dari tombol yang memicu modal
+    const productId = event.relatedTarget.getAttribute('data-product-id');
+
+    // Dapatkan elemen-elemen DOM
+    const historyTableBody = document.getElementById('historyTableBody');
+    
+    // Tampilkan loading state
+    historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center">Loading...</td></tr>';
+
+    if (productId) {
+        fetch(`/v1/inventory-management/${productId}/history`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const historyData = data.data;
+                historyTableBody.innerHTML = ''; // Kosongkan tabel sebelum mengisi
+
+                if (historyData.length > 0) {
+                    historyData.forEach(item => {
+                        const formattedDate = new Date(item.created_at).toLocaleDateString('en-GB');
+                        
+                        // Membangun konten untuk kolom History
+                        let historyContent = `
+                            <strong>Adjustment Type:</strong> ${item.adjustment_type}<br>
+                            <strong>Previous Product Total:</strong> ${item.previous_quantity}<br>
+                            <strong>Adjustment:</strong> ${item.adjusted_quantity > 0 ? '+' : ''}${item.adjusted_quantity}<br>
+                            <strong>New Product Total:</strong> ${item.new_quantity}<br>
+                            <strong>Notes:</strong> ${item.notes ?? 'N/A'}<br>
+                        `;
+
+                        // Tambahkan detail spesifik jika adjustment_type adalah 'Increase Stock'
+                        if (item.adjustment_type === 'Increase Stock') {
+                            historyContent += `
+                                <strong>PO Number:</strong> ${item.po_number ?? 'N/A'}<br>
+                                <strong>From:</strong> ${item.source ?? 'N/A'}<br>
+                                <strong>Product Purchased Date:</strong> ${item.purchase_date ?? 'N/A'}<br>
+                                <strong>Product Received Date:</strong> ${item.received_date ?? 'N/A'}<br>
+                            `;
+                        } else if (item.adjustment_type === 'Decrease Stock') {
+                            historyContent += `
+                                <strong>PO Number (Client):</strong> ${item.po_number ?? 'N/A'}<br>
+                                <strong>Product Draw Out Date:</strong> ${item.draw_out_date ?? 'N/A'}<br>
+                            `;
+                        }
+                        
+                        const newRow = `
+                            <tr>
+                                <td class="text-nowrap">${formattedDate}</td>
+                                <td>${historyContent}</td>
+                                <td class="text-nowrap">${item.created_by.name ?? 'N/A'}</td>
+                            </tr>
+                        `;
+        
+                        historyTableBody.insertAdjacentHTML('beforeend', newRow);
+                    });
+                } else {
+                    historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No history found.</td></tr>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                historyTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Failed to load history.</td></tr>';
+            });
+    }
+    });
 </script>
 @endsection

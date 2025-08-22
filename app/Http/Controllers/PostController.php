@@ -58,7 +58,7 @@ class PostController extends Controller
             }
         }
 
-        return view('handbook.list', compact('posts', 'selectedPost'))->with('title', 'Employee Handbooks')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Getting Started']);
+        return view('handbook.list', compact('posts', 'selectedPost'))->with('title', 'Employee Handbook')->with('breadcrumb', ['Home', 'Staff Information Hub', 'Employee Handbook']);
     }
 
     public function staffResources(Request $request)
@@ -411,8 +411,13 @@ class PostController extends Controller
         $post = Post::findOrFail($id);
         $post->data_status = $status;
         $post->save();
+        if($post->post_type==3){
+            return redirect()->route('v1.staff-resources.list')->with('success', 'Staff resources updated successfully.');
+        } else {
+            return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
+        }
 
-        return redirect()->route('v1.employee-handbooks.list')->with('success', 'Handbook updated successfully.');
+        
     }
 
     public function destroy_memo($id, $status)

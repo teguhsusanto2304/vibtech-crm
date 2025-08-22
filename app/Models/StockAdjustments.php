@@ -17,6 +17,12 @@ class StockAdjustments extends Model
         'for_or_from',
         'reason',
         'user_id',
+        'previous_quantity'
+    ];
+
+    protected $casts = [
+        'created_at'=>'datetime',
+        'updated_at'=>'datetime'
     ];
 
     public function product(): BelongsTo

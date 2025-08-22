@@ -707,17 +707,37 @@
                                     $eventsDisplayArea.removeClass('d-none');
                                     $.each(response.events, function(index, event) {
                                         // Append each event to the display area
-                                        $eventsDisplayArea.append(`
-                                            <div class="card mb-2">
-                                                <div class="card-body">
-                                                    <h5 class="card-title"><a href="/v1/job-assignment-form/view/${event.real_id}/yes">${event.title}</a></h5>
-                                                    <p class="card-text">
-                                                        <strong>Time:</strong> ${event.time || 'N/A'}<br>
-                                                        
-                                                    </p>
+                                        if(event.type=='Vehicle Booking'){
+                                            $eventsDisplayArea.append(`
+                                                <div class="card mb-2">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title"><a class="dropdown-item view-booking"
+                                                            id="vehiclebookingid"
+                                                            data-id="${event.id.replace("booking_", "")}"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#bookingModal">${event.title}</a></h5>
+                                                        <p class="card-text">
+                                                            <strong>Time:</strong> ${event.time || 'N/A'}<br>
+                                                            
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        `);
+                                            `);
+                                        } else 
+                                        {
+                                            $eventsDisplayArea.append(`
+                                                <div class="card mb-2">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title"><a href="/v1/job-assignment-form/view/${event.real_id}/yes">${event.title}</a></h5>
+                                                        <p class="card-text">
+                                                            <strong>Time:</strong> ${event.time || 'N/A'}<br>
+                                                            
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            `);
+                                        }
+                                        
                                     });
                                 } else {
                                     $noEventsMessage.removeClass('d-none'); // Show no events message
