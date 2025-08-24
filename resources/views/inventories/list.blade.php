@@ -138,19 +138,19 @@
                     <div id="increaseFields" class="d-none">
                         <div class="mb-3">
                             <label for="po_number_increase" class="form-label">PO Number</label>
-                            <input type="text" class="form-control" id="po_number_increase" name="po_number_increase" required>
+                            <input type="text" class="form-control" id="po_number_increase" name="po_number_increase" >
                         </div>
                         <div class="mb-3">
                             <label for="source" class="form-label">From (Company)</label>
-                            <input type="text" class="form-control" id="source" name="source" required>
+                            <input type="text" class="form-control" id="source" name="source">
                         </div>
                         <div class="mb-3">
                             <label for="purchase_date" class="form-label">Purchase Date</label>
-                            <input type="date" class="form-control" id="purchase_date" name="purchase_date" required>
+                            <input type="date" class="form-control" id="purchase_date" name="purchase_date" >
                         </div>
                         <div class="mb-3">
                             <label for="receive_date" class="form-label">Receive Date</label>
-                            <input type="date" class="form-control" id="receive_date" name="receive_date" required>
+                            <input type="date" class="form-control" id="receive_date" name="receive_date" >
                         </div>
                     </div>
 
@@ -158,11 +158,11 @@
                     <div id="decreaseFields" class="d-none">
                         <div class="mb-3">
                             <label for="po_number_decrease" class="form-label">PO Number</label>
-                            <input type="text" class="form-control" id="po_number_decrease" name="po_number_decrease" required>
+                            <input type="text" class="form-control" id="po_number_decrease" name="po_number_decrease" >
                         </div>
                         <div class="mb-3">
                             <label for="draw_out_date" class="form-label">Product Draw Out Date</label>
-                            <input type="date" class="form-control" id="draw_out_date" name="draw_out_date" required>
+                            <input type="date" class="form-control" id="draw_out_date" name="draw_out_date" >
                         </div>
                     </div>
                     
@@ -187,15 +187,54 @@
     const adjustTypeSelect = document.getElementById('adjust_type');
     const increaseFields = document.getElementById('increaseFields');
     const decreaseFields = document.getElementById('decreaseFields');
+    const quantityInput = document.getElementById('quantity');
+    
+    // Dapatkan semua input di dalam fieldset "Increase Stock"
+    const increaseInputs = increaseFields.querySelectorAll('input, select, textarea');
+    
+    // Dapatkan semua input di dalam fieldset "Decrease Stock"
+    const decreaseInputs = decreaseFields.querySelectorAll('input, select, textarea');
 
     function toggleFields() {
         const selectedValue = adjustTypeSelect.value;
+        
+        // Atur quantity sebagai required setiap saat
+        quantityInput.setAttribute('required', 'required');
+
         if (selectedValue === '1') { // Increase Stock
             increaseFields.classList.remove('d-none');
             decreaseFields.classList.add('d-none');
+
+            // Tambahkan atribut 'required' untuk input Increase
+            increaseInputs.forEach(input => {
+                input.setAttribute('required', 'required');
+            });
+            // Hapus atribut 'required' untuk input Decrease
+            decreaseInputs.forEach(input => {
+                input.removeAttribute('required');
+            });
+
         } else if (selectedValue === '2') { // Decrease Stock
             increaseFields.classList.add('d-none');
             decreaseFields.classList.remove('d-none');
+
+            // Tambahkan atribut 'required' untuk input Decrease
+            decreaseInputs.forEach(input => {
+                input.setAttribute('required', 'required');
+            });
+            // Hapus atribut 'required' untuk input Increase
+            increaseInputs.forEach(input => {
+                input.removeAttribute('required');
+            });
+
+        } else {
+            // Jika tidak ada yang dipilih, hapus semua atribut 'required'
+            increaseInputs.forEach(input => {
+                input.removeAttribute('required');
+            });
+            decreaseInputs.forEach(input => {
+                input.removeAttribute('required');
+            });
         }
     }
 
