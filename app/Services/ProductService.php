@@ -90,7 +90,7 @@ class ProductService {
             // Contoh tambahan untuk 'Product created'
             if ($item->adjustment_type === 0) {
                  $history = "Product created via Create New Inventory<br>"
-                          . "Created Product Total: {$item->new_total}";
+                          . "Created Product Total: {$item->new_quantity}";
              }
             
             return [
