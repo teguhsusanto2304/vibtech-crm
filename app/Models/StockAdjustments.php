@@ -11,18 +11,23 @@ class StockAdjustments extends Model
     use HasFactory;
     protected $fillable = [
         'product_id',
-        'adjust_type',
-        'quantity',
-        'adjust_number',
-        'for_or_from',
-        'reason',
         'user_id',
-        'previous_quantity'
+        'adjustment_type',
+        'quantity_adjusted',
+        'previous_quantity',
+        'new_quantity',
+        'po_number',
+        'source',
+        'purchase_date',
+        'received_date',
+        'draw_out_date',
+        'notes',
     ];
 
     protected $casts = [
-        'created_at'=>'datetime',
-        'updated_at'=>'datetime'
+        'purchase_date'=>'datetime',
+        'received_date'=>'datetime',
+        'draw_out_date'=>'datetime',
     ];
 
     public function product(): BelongsTo

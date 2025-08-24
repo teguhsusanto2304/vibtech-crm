@@ -32,7 +32,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/product-category/store','categoryStore');
             Route::put('/{id}/product-category/update','categoryUpdate');
             Route::delete('/{id}/product-category/delete','categoryDelete');
-            Route::get('/{productId}/history','getStockHistory')->name('v1.inventory-management.history');
+            Route::get('/{productId}/history','getProductHistory')->name('v1.inventory-management.history');
             //->middleware('can:approve-claims');
         });
     });

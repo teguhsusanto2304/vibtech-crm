@@ -10,6 +10,104 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ProductService {
+    /**
+     * Dapatkan data riwayat penyesuaian stok untuk DataTables.
+     */
+    public function getProductHistory(Request $request,$productId)
+    {
+        // Parameter dari DataTables
+        // Parameter dari DataTables
+        $start = $request->input('start');
+        $length = $request->input('length');
+        $searchValue = $request->input('search.value');
+        $orderColumnIndex = $request->input('order.0.column');
+        $orderDir = $request->input('order.0.dir');
+        $draw = $request->input('draw');
+
+        // Mapping kolom ke nama kolom database
+        $columns = [
+            'created_at',
+            null, // Kolom history tidak dapat diurutkan
+            'user_id'
+        ];
+        $orderColumn = $columns[$orderColumnIndex];
+
+        // Query dasar dengan relasi
+        $query = StockAdjustments::where('product_id',$productId)->with('user');
+        $totalRecords = $query->count();
+
+        // Filter pencarian
+        if (!empty($searchValue)) {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('adjustment_type', 'like', "%{$searchValue}%")
+                  ->orWhere('notes', 'like', "%{$searchValue}%")
+                  ->orWhereHas('user', function ($q) use ($searchValue) {
+                      $q->where('name', 'like', "%{$searchValue}%");
+                  });
+            });
+        }
+
+        // Total data setelah filter
+        $filteredRecords = $query->count();
+
+        // Pengurutan
+        if (!is_null($orderColumn)) {
+            $query->orderBy($orderColumn, $orderDir);
+        }
+        
+        // Pagination
+        $query->offset($start)->limit($length);
+
+        $stockAdjustments = $query->orderBy('created_at','DESC')->get();
+
+        // Format data untuk DataTables
+        $formattedData = $stockAdjustments->map(function ($item) {
+            $history = '';
+            
+            // Format untuk "Increase Stock"
+            if ($item->adjustment_type === 1) {
+                $history = "Adjustment Type: Increase Stock<br>"
+                         . "Previous Product Total: {$item->previous_quantity}<br>"
+                         . "Adjustment: +{$item->quantity_adjusted}<br>"
+                         . "New Product Total: {$item->new_quantity}<br>"
+                         . "PO Number (Vibtech): {$item->po_number}<br>"
+                         . "From: {$item->source}<br>"
+                         . "Product Purchased Date: " . ($item->purchase_date ? $item->purchase_date->format('d-m-Y') : '-') . "<br>"
+                         . "Product Received Date: ".($item->received_date ? $item->received_date->format('d-m-Y') : '-')."<br>"
+                         . "Remarks: {$item->notes}";
+
+            // Format untuk "Decrease Stock"
+            } elseif ($item->adjustment_type === 2) {
+                $history = "Adjustment Type: Decrease Stock<br>"
+                         . "Previous Product Total: {$item->previous_quantity}<br>"
+                         . "Adjustment: -{$item->quantity_adjusted}<br>"
+                         . "New Product Total: {$item->new_quantity}<br>"
+                         . "PO Number (Client): {$item->po_number}<br>"
+                         . "Product Draw Out Date: ".($item->draw_out_date ? $item->draw_out_date->format('d-m-Y') : '-')."<br>"
+                         . "Remarks: {$item->notes}";
+            }
+
+            // Contoh tambahan untuk 'Product created'
+            if ($item->adjustment_type === 0) {
+                 $history = "Product created via Create New Inventory<br>"
+                          . "Created Product Total: {$item->new_total}";
+             }
+            
+            return [
+                'date' => $item->created_at->format('d-m-Y H:i:s'),
+                'history' => $history,
+                'staff' => $item->user->name ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($draw),
+            'recordsTotal' => intval($totalRecords),
+            'recordsFiltered' => intval($filteredRecords),
+            'data' => $formattedData,
+        ]);
+    }
+
     public function getProductsData(Request $request)
     {
         $productsQuery = Product::with(['productCategory','createdBy','latestStockAdjustment']); // Assuming projectMembers is the correct relationship name
@@ -91,16 +189,21 @@ class ProductService {
         $request['created_by'] = auth()->user()->id;
         
         $product = Product::create($request->all());
-        StockAdjustments::create([
-                'product_id' => $product->id,
-                'adjust_type' => 3,
-                'quantity' => $product->quantity,
-                'adjust_number' => 'N/A',
-                'for_or_from' => 'N/A',
-                'reason' => 'Product created via Create New Inventory ',
-                'user_id' => auth()->id(),
-                'previous_quantity'=> 0
-            ]);
+        $stockAdjustment = new StockAdjustments([
+                    'product_id' => $product->id,
+                    'user_id' => auth()->id(),
+                    'adjustment_type' => 0,
+                    'quantity_adjusted' => $product->quantity,
+                    'previous_quantity' => 0,
+                    'new_quantity' => $product->quantity,
+                    'po_number' => 'N/A',
+                    'source' => 'N/A',
+                    'purchase_date' => date('Y-m-d'),
+                    'received_date' => date('Y-m-d'),
+                    'notes' => 'Product created via Create New Inventory',
+                ]);
+                $stockAdjustment->save();
+
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
     }
 
@@ -169,7 +272,104 @@ class ProductService {
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been updated!');
     }
 
+    /**
+     * Simpan penyesuaian stok.
+     */
     public function adjustStock(Request $request)
+    {
+        // Validasi data input
+        $validatedData = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'adjust_type' => 'required|in:1,2', // 1 untuk Increase, 2 untuk Decrease
+            'quantity' => 'required|integer|min:1',
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        $productId = $validatedData['product_id'];
+        $product = Product::findOrFail($productId);
+        $adjustmentType = $validatedData['adjust_type'];
+        $quantity = $validatedData['quantity'];
+        
+        // Mulai transaksi database untuk memastikan konsistensi
+        DB::beginTransaction();
+
+        try {
+            if ($adjustmentType == 1) { // Increase Stock
+                // Lakukan validasi tambahan untuk Increase Stock
+                $request->validate([
+                    'po_number_increase' => 'nullable|string|max:255',
+                    'source' => 'nullable|string|max:255',
+                    'purchase_date' => 'nullable|date',
+                    'receive_date' => 'nullable|date',
+                ]);
+
+                // Update kuantitas produk
+                $product->quantity += $quantity;
+                $product->save();
+
+                // Simpan data ke tabel stock_adjustments
+                $stockAdjustment = new StockAdjustments([
+                    'product_id' => $productId,
+                    'user_id' => auth()->id(),
+                    'adjustment_type' => 1,
+                    'quantity_adjusted' => $quantity,
+                    'previous_quantity' => $product->quantity - $quantity,
+                    'new_quantity' => $product->quantity,
+                    'po_number' => $request->input('po_number_increase'),
+                    'source' => $request->input('source'),
+                    'purchase_date' => $request->input('purchase_date'),
+                    'received_date' => $request->input('receive_date'),
+                    'notes' => $request->input('remarks'),
+                ]);
+                $stockAdjustment->save();
+
+            } elseif ($adjustmentType == 2) { // Decrease Stock
+                // Lakukan validasi tambahan untuk Decrease Stock
+                $request->validate([
+                    'po_number_decrease' => 'nullable|string|max:255',
+                    'draw_out_date' => 'nullable|date',
+                ]);
+
+                // Pastikan stok tidak menjadi negatif
+                if ($product->quantity < $quantity) {
+                    return back()->with('error', 'Quantity to decrease is more than current stock.');
+                }
+
+                // Update kuantitas produk
+                $product->quantity -= $quantity;
+                $product->save();
+
+                // Simpan data ke tabel stock_adjustments
+                $stockAdjustment = new StockAdjustments([
+                    'product_id' => $productId,
+                    'user_id' => auth()->id(),
+                    'adjustment_type' => 2,
+                    'quantity_adjusted' => -$quantity, // Simpan sebagai nilai negatif
+                    'previous_quantity' => $product->quantity + $quantity,
+                    'new_quantity' => $product->quantity,
+                    'po_number' => $request->input('po_number_decrease'),
+                    'draw_out_date' => $request->input('draw_out_date'),
+                    'notes' => $request->input('remarks'),
+                ]);
+                $stockAdjustment->save();
+            }
+
+            DB::commit(); // Simpan perubahan
+           return response()->json([
+            'success'=>true,
+            'message' => 'Stock adjustment saved successfully.'
+        ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan semua perubahan jika terjadi kesalahan
+            //return back()->with('error', 'Failed to adjust stock. ' . $e->getMessage());
+            return response()->json([
+            'message' => 'Failed to adjust stock. ' . $e->getMessage()
+        ], 500);
+        }
+    }
+
+    public function adjustStockOld(Request $request)
     {
         $validated = $request->validate([
             'product_id' => ['required', 'exists:products,id'],

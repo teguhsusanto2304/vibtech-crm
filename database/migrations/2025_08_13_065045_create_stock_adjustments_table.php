@@ -13,13 +13,18 @@ return new class extends Migration
     {
         Schema::create('stock_adjustments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('adjust_type'); // 'increase' or 'decrease'
-            $table->integer('quantity');
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->tinyInteger('adjustment_type'); // 'Increase Stock' atau 'Decrease Stock'
+            $table->integer('quantity_adjusted');
             $table->integer('previous_quantity');
-            $table->string('adjust_number',20);
-            $table->string('for_or_from',100);
-            $table->text('reason')->nullable();            
+            $table->integer('new_quantity');
+            $table->string('po_number')->nullable();
+            $table->string('source')->nullable(); // Untuk 'From' (nama perusahaan)
+            $table->date('purchase_date')->nullable();
+            $table->date('received_date')->nullable();
+            $table->date('draw_out_date')->nullable();
+            $table->text('notes')->nullable();           
             $table->tinyInteger('data_status')->default(1);  // Optional: to track who made the adjustment
             $table->timestamps();
         });

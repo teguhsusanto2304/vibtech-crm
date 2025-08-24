@@ -125,9 +125,6 @@
 
                                <path style="fill:#CAD1D8;" d="M400,432H96v16h304c8.8,0,16-7.2,16-16v-16C416,424.8,408.8,432,400,432z"/>
                                -->
-                               <text x="300" y="250" font-family="Arial, sans-serif" font-size="100" fill="#5509f7ff" text-anchor="middle" alignment-baseline="middle">
-                                  File
-                              </text>
                                </svg></p>
                                 <div class="mt-auto d-flex justify-content-center">
                                     <div class="btn-group" role="group" aria-label="Basic example">
