@@ -58,7 +58,7 @@
         }
       </style>
   </head>
-  <script>
+  <!-- <script>
     (function () {
         let idleTime = 0;
         const maxIdleMinutes = 10; // 30 minutes
@@ -89,4 +89,5 @@
 <form id="autoLogoutForm" action="{{ route('logout') }}" method="POST" style="display: none;">
     @csrf
 </form>
+      -->
 

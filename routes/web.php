@@ -31,9 +31,14 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleBookingController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\WhistleblowningPolicyController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\V2\ClientController as ClientControllerV2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/api/v2/login', [AuthController::class, 'login'])->name('api.v1.login');
+Route::get('/api/v2/users', [AuthController::class, 'list']); // New route
+Route::get('/api/v2/users/{id}', [AuthController::class, 'show']);
 
 Route::get('/initiate', [JobAssignmentController::class, 'initiate'])->name('initiate');
 Route::post('/bulk-email/send', [JobAssignmentController::class, 'initiateBulkSend'])->name('bulk_email.send');
