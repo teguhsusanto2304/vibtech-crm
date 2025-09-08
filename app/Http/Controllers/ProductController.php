@@ -22,25 +22,25 @@ class ProductController extends Controller
 
     public function index()
     {
-        return view('inventories.index')->with('title', 'Inventory Management')->with('breadcrumb', ['Home', 'Inventory Management']);
+        return view('inventories.index')->with('title', 'Inventory')->with('breadcrumb', ['Home', 'Inventory Management']);
     }
 
     public function list()
     {
-        return view('inventories.list')->with('title', 'Inventory Management')->with('breadcrumb', ['Home', 'Inventory Management','List of Inventory']);
+        return view('inventories.list')->with('title', 'Inventory')->with('breadcrumb', ['Home', 'Inventory Management','List of Inventory']);
     }
 
     public function create()
     {
         $productCategories = $this->commonService->getProductCategories();
-        return view('inventories.form',compact('productCategories'))->with('title', 'Create An New Inventory')->with('breadcrumb', ['Home', 'Inventory Management','Create An New Inventory']);
+        return view('inventories.form',compact('productCategories'))->with('title', 'Create An New Inventory')->with('breadcrumb', ['Home', 'Inventory','Create An New Inventory']);
     }
 
     public function edit($id)
     {
         $product = $this->productService->getProductData($id);
         $productCategories = $this->commonService->getProductCategories();
-        return view('inventories.edit',compact('productCategories','product'))->with('title', 'Edit Inventory')->with('breadcrumb', ['Home', 'Inventory Management','Edit Inventory']);
+        return view('inventories.edit',compact('productCategories','product'))->with('title', 'Edit Inventory')->with('breadcrumb', ['Home', 'Inventory','Edit Inventory']);
     }
 
     public function getProductsData(Request $request)
