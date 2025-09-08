@@ -1537,6 +1537,61 @@ class ProjectService {
         
     }
 
+    /**
+     * Get project task data for a datatable using Yajra.
+     *
+     * @param  string  $projectId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getProjectTaskData($projectId)
+    {
+        $project = Project::with(['projectKanban.tasks'])->findOrFail($projectId);
+
+        $selectedPhaseId = Session::get('selected_project_phase_id_' . $project->id);
+        $tasks = $project->projectTask()
+        ->where('project_phase_id',$selectedPhaseId);
+            
+        // 4. Return the data using Yajra Datatables, passing the query builder.
+        return DataTables::eloquent($tasks)
+            // Add a new column for the project stage name
+            ->addColumn('stage_name', function ($task) {
+                return $task->projectKanbanStage->name ?? 'N/A';
+            })
+            // Add a new column for the creator's name
+            ->addColumn('created_by_name', function ($task) {
+                return $task->createdBy->name ?? 'N/A';
+            })
+            // Add a column for the remarks, with a button to show the full text
+            ->addColumn('remarks_action', function ($task) {
+                // If there's a description, show a "View" button
+                if (!empty($task->description)) {
+                    return '<button type="button" class="btn btn-sm btn-info view-remarks-btn" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#viewRemarksModal" 
+                                data-remarks="' . e($task->description) . '">
+                                View Remarks
+                            </button>';
+                }
+                return 'N/A';
+            })
+            // Your existing action column
+            ->addColumn('action', function($task) {
+                $obfuscatedId = IdObfuscator::encode($task->id);
+                //$editUrl = route('project-tasks.edit', $obfuscatedId);
+                //$deleteUrl = route('project-tasks.destroy', $obfuscatedId);
+
+                return '<a href="" class="btn btn-sm btn-primary me-2">Edit</a>' .
+                       '<form action="" method="POST" style="display:inline;">' .
+                       csrf_field() . method_field("DELETE") .
+                       '<button type="submit" class="btn btn-sm btn-danger">Delete</button>' .
+                       '</form>';
+            })
+            ->rawColumns(['action', 'remarks_action'])
+            ->make(true);
+    }
+
+    
+
     public function ganttViewBootstrap($projectId)
     {
         $decodedId = IdObfuscator::decode($projectId);
@@ -1664,7 +1719,7 @@ class ProjectService {
     /**
      * Memperbarui tahapan kanban yang ada.
      */
-    public function updateProjectSTage(Request $request, $id)
+    public function updateProjectStage(Request $request, $id)
     {
         $stage = ProjectKanbanStage::find($id);
         $validatedData = $request->validate([

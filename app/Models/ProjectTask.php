@@ -90,6 +90,11 @@ class ProjectTask extends Model
     {
         return $this->belongsTo(KanbanStage::class, 'project_stage_id');
     }
+
+    public function projectKanbanStage(): BelongsTo
+    {
+        return $this->belongsTo(ProjectKanbanStage::class, 'project_kanban_stage_id');
+    }
     
     /**
      * Get the project kanban that the task belongs to.

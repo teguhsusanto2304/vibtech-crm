@@ -69,6 +69,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/store','storeProject')->name('v1.projects.store');
             Route::post('/tasks/store','storeProjectTask')->name('v1.projects.tasks.store');
             Route::get('/{project}/detail', 'detailProject')->name('v1.projects.detail');
+            Route::get('/tasks/{projectId}/data', 'getProjectTaskData')->name('v1.projects.tasks.data');
             Route::get('/{projectId}/gantt-daily','showGanttDaily')->name('v1.projects.gantt-daily');
             Route::get('/{project_id}/{id}/phase', 'phaseProject')->name('v1.projects.phase');
             Route::get('/{project_id}/{id}/stage', 'stageProject')->name('v1.projects.stage');
@@ -77,6 +78,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{taskId}/tasks/move','moveProjectTask')->name('v1.projects.tasks.move');
             Route::get('/data', 'getProjectsData')->name('v1.projects.data');
             Route::post('/stages/store','storeProjectSTage')->name('v1.projects.stage.store');
+            Route::put('/stage/{id}/update','updateProjectStage')->name('v1.projects.stage.update');
         });
         
     });

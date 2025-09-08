@@ -227,7 +227,7 @@
                                 </div>
 
                                 <p class="text-xs text-gray-600 mt-1">
-                                    <small><span class="badge bg-info">{{ $task->projectStage->name ?? '-' }}</span></small>
+                                    <small><span class="badge bg-info">{{ $task->projectKanbanStage->name ?? '-' }}</span></small>
                                 </p>
 
                                 <p class="text-xs text-gray-600 mt-1 mb-0">

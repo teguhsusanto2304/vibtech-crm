@@ -321,8 +321,13 @@ class ProjectController extends Controller
         return $this->projectService->storeProjectSTage($request);
     }
 
-    public function updateProjectSTage(Request $request, $id)
+    public function updateProjectStage(Request $request, $id)
     {
-         return $this->projectService->updateProjectSTage($request, $id);
+         return $this->projectService->updateProjectStage($request, $id);
+    }
+
+    public function getProjectTaskData($projectId)
+    {
+        return $this->projectService->getProjectTaskData($projectId);
     }
 }

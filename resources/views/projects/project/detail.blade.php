@@ -213,7 +213,7 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" id="stages-tab" data-bs-toggle="tab" href="#project-stages" type="button" role="tab" aria-controls="project-stages" aria-selected="false">
-                        Stage
+                        Activity
                     </a>
                 </li>
             </ul>
@@ -641,9 +641,9 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 class="mb-0">Project Stage</h4>
+                                <h4 class="mb-0">Project Activity</h4>
                                 <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#stageCreateModal">
-                                    <i class="fas fa-plus"></i> Add Stage
+                                    <i class="fas fa-plus"></i> Add Activity
                                 </button>
                             </div>
                             
@@ -681,6 +681,42 @@
                         </div>
                     </div>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        // Get the modal element
+                        const editKanbanStageModal = document.getElementById('editKanbanStageModal');
+                        
+                        // Get the form elements inside the modal
+                        const editStageIdInput = document.getElementById('editStageId');
+                        const editStageNameInput = document.getElementById('editStageName');
+
+                        // Listen for the modal to be shown
+                        editKanbanStageModal.addEventListener('show.bs.modal', function (event) {
+                            // Get the button that triggered the modal
+                            const button = event.relatedTarget;
+                            
+                            // Extract data-* attributes from the button
+                            const stageId = button.getAttribute('data-id');
+                            const stageName = button.getAttribute('data-name');
+                            
+                            // Populate the form fields with the extracted data
+                            editStageIdInput.value = stageId;
+                            editStageNameInput.value = stageName;
+                        });
+                        
+                        // This is just a sample for form submission.
+                        // Your original code for form submission should go here.
+                        const editStageForm = document.getElementById('editStageForm');
+                        editStageForm.addEventListener('submit', function (e) {
+                            e.preventDefault();
+                            alert('Form submitted! Stage ID: ' + editStageIdInput.value + ', Name: ' + editStageNameInput.value);
+                            // In a real app, you would perform your fetch request here.
+                            const modal = bootstrap.Modal.getInstance(editKanbanStageModal);
+                            modal.hide();
+                        });
+                    });
+                </script>
 
                 {{-- Modal for Creating Stage --}}
                 <div class="modal fade" id="stageCreateModal" tabindex="-1" aria-labelledby="stageCreateModalLabel" aria-hidden="true">
@@ -827,7 +863,7 @@
         const stageId = document.getElementById('editStageId').value;
         const formData = new FormData(this);
         
-        const response = await fetch(`{{ url('project-kanban-stages') }}/${stageId}`, {
+        const response = await fetch(`/v1/projects/stage/${stageId}/update`, {
             method: 'POST', // Gunakan POST dan tambahkan method PUT di form
             body: formData,
             headers: {
@@ -846,6 +882,7 @@
             // Tutup modal
             bootstrap.Modal.getInstance(document.getElementById('editKanbanStageModal')).hide();
             alert('Stage updated successfully!');
+            location.reload();
         } else {
             alert('Failed to update stage.');
         }
@@ -1204,8 +1241,86 @@
         </div>
     </div>
 </div>    
-                </div>     
-                <div id="gantt_here" style="width: 100%; height: 400px;"></div>
+                </div>    
+                <div class="container my-5">
+    <!-- The tabs container -->
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#home">List of Project Item</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#gantt">Gantt Chart</a>
+        </li>
+    </ul>
+
+    <!-- The tab content sections -->
+    <div class="tab-content pt-3">
+        <!-- Tab for the DataTables table -->
+        <div class="tab-pane fade show active" id="home">
+            <table id="projectTasksTable" class="table table-striped table-hover" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Task Name</th>
+                        <th>Created By</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data loaded by Yajra Datatables -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tab for the Gantt Chart -->
+        <div class="tab-pane fade" id="gantt">
+            <div id="gantt_here" style="width: 100%; height: 400px;"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+$(document).ready(function() {
+    // Initialize the DataTable first
+    let table = $('#projectTasksTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: `/v1/projects/tasks/{{ $project->id ?? '' }}/data`,
+            type: 'GET'
+        },
+        columns: [
+            { data: 'stage_name', name: 'stage_name', title: 'Activity' },
+            { data: 'name', name: 'name', title: 'Task Name' },
+            { data: 'created_by_name', name: 'createdBy.name', title: 'Created By' },
+            { 
+                data: 'description', 
+                name: 'description', 
+                title: 'Remarks',
+                render: function(data, type, row) {
+                    if (type === 'display' && data) {
+                        let truncated = data.length > 50 ? data.substr(0, 50) + '...' : data;
+                        return `<span title="${data}">${truncated}</span>`;
+                    }
+                    return 'N/A';
+                }
+            },
+            { data: 'action', name: 'action', orderable: false, searchable: false, title: 'Action' }
+        ]
+    });
+
+    // The fix: Listen for the Bootstrap tab event
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // This is the key line. It tells Datatables to re-adjust its columns
+        // after the tab has been shown.
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+    });
+});
+</script>
+                
                 <link rel="stylesheet" href="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
     <script src="https://cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
 
