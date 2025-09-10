@@ -21,7 +21,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('inventory-management')->controller(ProductController::class)->group(function () {
             Route::get('/', 'index')->name('v1.inventory-management');
             Route::get('/list', 'list')->name('v1.inventory-management.list');
-            Route::get('/all', 'all')->name('v1.submit-claim.all');
+            //Route::get('/all', 'all')->name('v1.submit-claim.all');
             Route::get('/list/data', 'getProductsData')->name('v1.inventory-management.list.data');
             Route::get('/{product}/detail', 'show')->name('v1.inventory-management.detail');
             Route::get('/create', 'create')->name('v1.inventory-management.create');
