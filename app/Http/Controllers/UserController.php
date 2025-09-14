@@ -43,8 +43,7 @@ class UserController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'email' => 'required|email|unique:users,email|max:255',
             'path_image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:2048',
-            'role_id' => 'required',
-            'position_level_id' => 'required',
+            'role_id' => 'required'
         ]);
 
         $validatedData['password'] = 'password';

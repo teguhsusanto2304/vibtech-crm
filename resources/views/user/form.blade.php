@@ -60,7 +60,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="department" class="form-label">1st Department</label>
+                            <label for="department" class="form-label">Department</label>
                             <div class="input-group mb-3">
                             <select class="form-control" name="department_id">
                                 <option value="">Choose a Department</option>
@@ -76,7 +76,7 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" style="display:none;">
                             <label for="department" class="form-label">2nd Department</label>
                             <div class="input-group mb-3">
                             <select class="form-control" name="2nd_department_id">
@@ -99,7 +99,7 @@
                                 value="{{ old('location', $user->location ?? '') }}" placeholder="Enter location">
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="position" class="form-label">Position</label>
                             <input type="text" class="form-control" name="position"
                                 value="{{ old('position') }}" placeholder="Enter position">
@@ -113,7 +113,7 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-4" style="display: none;">
                             <label for="position" class="form-label">Position Level</label>
                             <select class="form-control" name="position_level_id">
                                 <option value="">Choose a Position Level</option>
@@ -124,7 +124,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="joined_at" class="form-label">Date Joined</label>
                             <input type="date" class="form-control" name="joined_at"
                                 value="{{ old('joined_at', $user->joined_at ?? '') }}">

@@ -37,12 +37,6 @@
 
     <!-- Card -->
     <div class="card">
-        @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('message') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
         <div class="card-header text-white d-flex flex-wrap justify-content-between align-items-center">
             <!-- Department Filter -->
             <div class="mb-2 mb-md-0">

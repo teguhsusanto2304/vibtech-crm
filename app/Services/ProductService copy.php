@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\Product;
@@ -9,7 +8,6 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Exception; // Tambahkan ini
 
 class ProductService {
     /**
@@ -91,9 +89,9 @@ class ProductService {
 
             // Contoh tambahan untuk 'Product created'
             if ($item->adjustment_type === 0) {
-                   $history = "Product created via Create New Inventory<br>"
-                             . "Created Product Total: {$item->new_quantity}";
-                 }
+                 $history = "Product created via Create New Inventory<br>"
+                          . "Created Product Total: {$item->new_quantity}";
+             }
             
             return [
                 'date' => $item->created_at->format('d-m-Y H:i:s'),
@@ -192,19 +190,19 @@ class ProductService {
         
         $product = Product::create($request->all());
         $stockAdjustment = new StockAdjustments([
-                             'product_id' => $product->id,
-                             'user_id' => auth()->id(),
-                             'adjustment_type' => 0,
-                             'quantity_adjusted' => $product->quantity,
-                             'previous_quantity' => 0,
-                             'new_quantity' => $product->quantity,
-                             'po_number' => 'N/A',
-                             'source' => 'N/A',
-                             'purchase_date' => date('Y-m-d'),
-                             'received_date' => date('Y-m-d'),
-                             'notes' => 'Product created via Create New Inventory',
-                         ]);
-                         $stockAdjustment->save();
+                    'product_id' => $product->id,
+                    'user_id' => auth()->id(),
+                    'adjustment_type' => 0,
+                    'quantity_adjusted' => $product->quantity,
+                    'previous_quantity' => 0,
+                    'new_quantity' => $product->quantity,
+                    'po_number' => 'N/A',
+                    'source' => 'N/A',
+                    'purchase_date' => date('Y-m-d'),
+                    'received_date' => date('Y-m-d'),
+                    'notes' => 'Product created via Create New Inventory',
+                ]);
+                $stockAdjustment->save();
 
         return redirect()->route('v1.inventory-management.list')->with('success', 'Inventory has been succesfully stored!');
     }
@@ -264,7 +262,7 @@ class ProductService {
             'product_category_id' => 'required|exists:product_categories,id',
             'path_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-          if ($request->hasFile('path_image')) {
+         if ($request->hasFile('path_image')) {
             // Simpan gambar ke storage dan dapatkan path-nya
             $imagePath = $request->file('path_image')->store('inventories', 'public');
             // Tambahkan path gambar ke data yang divalidasi
@@ -334,9 +332,7 @@ class ProductService {
 
                 // Pastikan stok tidak menjadi negatif
                 if ($product->quantity < $quantity) {
-                    // Melempar exception alih-alih redirect.
-                    // Controller akan menangani exception ini.
-                    throw new \Exception('Quantity to decrease is more than current stock.');
+                    return back()->with('error', 'Quantity to decrease is more than current stock.');
                 }
 
                 // Update kuantitas produk
@@ -359,16 +355,17 @@ class ProductService {
             }
 
             DB::commit(); // Simpan perubahan
-            return response()->json([
-             'success'=>true,
-             'message' => 'Stock adjustment saved successfully.'
-         ], 201);
+           return response()->json([
+            'success'=>true,
+            'message' => 'Stock adjustment saved successfully.'
+        ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack(); // Batalkan semua perubahan jika terjadi kesalahan
+            //return back()->with('error', 'Failed to adjust stock. ' . $e->getMessage());
             return response()->json([
-             'message' => 'Failed to adjust stock. ' . $e->getMessage()
-         ], 500);
+            'message' => 'Failed to adjust stock. ' . $e->getMessage()
+        ], 500);
         }
     }
 
@@ -438,4 +435,5 @@ class ProductService {
             'data' => $history
         ]);
     }
+
 }

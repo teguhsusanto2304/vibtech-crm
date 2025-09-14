@@ -196,7 +196,7 @@ return [
     |
     */
 
-    define('MEMO', 2),
-    define('HANDBOOK', 1),
+    //define('MEMO', 2),
+    //define('HANDBOOK', 1),
 
 ];
