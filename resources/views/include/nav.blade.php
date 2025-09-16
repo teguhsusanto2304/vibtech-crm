@@ -170,7 +170,7 @@
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <i class="bx bx-bell bx-md" style="color: #fff; font-size: 24px; margin-right: 25px;"></i>
-                    <span class="badge bg-danger rounded-circle position-absolute" id="notification-count"
+                    <span class="badge bg-danger rounded-circle position-absolute" id="notification-count-badge"
                         style="top: 5px; right: 30px; font-size: 12px;">0</span>
                 </a>
 
@@ -195,9 +195,8 @@
                             success: function (data) {
                                 let list = $("#notification-list");
                                 list.find("li:not(:last)").remove(); // Clear existing notifications
-
+                                $("#notification-count-badge").text(data.length).show();
                                 if (data.length > 0) {
-                                    $("#notification-count").text(data.length).show();
                                     data.forEach(function (notif) {
                                         let color = notif.data.type === "success" ? "green" :
                                             notif.data.type === "error" ? "red" :
@@ -205,38 +204,39 @@
                                                     notif.data.type === "accept" ? "blue" :
                                                         "orange";
                                         let link = notif.data.url ? notif.data.url : "#";
+                                        let caption = notif.data.type === "accept" ? "Job Requisition Form":"Submit Claim";
                                         list.prepend(`
-                                    <li>
-                                        <div class="flex-grow-1 dropdown-item">
-                                            <h6 class="small mb-0">Job Requisition Form</h6>
-                                        <a class="" href="${link}?notif=${notif.id}">
-                                            <small style="color: ${color};">${notif.data.message} [${notif.data.time}]</small>
-                                        </a>
-                                        </div>
-                                    </li>
-                                `);
+                                            <li>
+                                                <div class="flex-grow-1 dropdown-item">
+                                                    <h6 class="small mb-0">${caption}</h6>
+                                                <a class="" href="${link}?notif=${notif.id}">
+                                                    <small style="color: ${color};">${notif.data.message} [${notif.data.time}]</small>
+                                                </a>
+                                                </div>
+                                            </li>
+                                        `);
                                     });
                                     list.prepend(`<li class="dropdown-menu-header border-bottom">
-            <div class="dropdown-header d-flex align-items-center py-3">
-              <h6 class="mb-0 me-auto">Notification</h6>
-              <div class="d-flex align-items-center h6 mb-0">
-                <span class="badge bg-label-primary me-2" >`+ data.length + ` New</span>
-                <a href="javascript:void(0)" class="dropdown-notifications-all p-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark all as read"><i class="icon-base bx bx-envelope-open text-heading"></i></a>
-              </div>
-            </div>
-          </li>`);
+                                        <div class="dropdown-header d-flex align-items-center py-3">
+                                        <h6 class="mb-0 me-auto">Notification</h6>
+                                        <div class="d-flex align-items-center h6 mb-0">
+                                            <span class="badge bg-label-primary me-2" >`+ data.length + ` New</span>
+                                            <a href="javascript:void(0)" class="dropdown-notifications-all p-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark all as read"><i class="icon-base bx bx-envelope-open text-heading"></i></a>
+                                        </div>
+                                        </div>
+                                    </li>`);
                                 } else {
-                                    $("#notification-count").hide();
+                                    $("#notification-count-badge").hide();
                                     list.prepend(`<li class="text-center py-2"><small>No new notifications</small></li>`);
                                     list.prepend(`<li class="dropdown-menu-header border-bottom">
-            <div class="dropdown-header d-flex align-items-center py-3">
-              <h6 class="mb-0 me-auto">Notification</h6>
-              <div class="d-flex align-items-center h6 mb-0">
-                <span class="badge bg-label-primary me-2" >`+ data.length + ` New</span>
-                <a href="javascript:void(0)" class="dropdown-notifications-all p-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark all as read"><i class="icon-base bx bx-envelope-open text-heading"></i></a>
-              </div>
-            </div>
-          </li>`);
+                                        <div class="dropdown-header d-flex align-items-center py-3">
+                                        <h6 class="mb-0 me-auto">Notification</h6>
+                                        <div class="d-flex align-items-center h6 mb-0">
+                                            <span class="badge bg-label-primary me-2" >`+ data.length + ` New</span>
+                                            <a href="javascript:void(0)" class="dropdown-notifications-all p-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Mark all as read"><i class="icon-base bx bx-envelope-open text-heading"></i></a>
+                                        </div>
+                                        </div>
+                                    </li>`);
                                 }
                             }
                         });

@@ -7,6 +7,7 @@ use App\Models\SubmitClaimApproval;
 use App\Models\SubmitClaimItem;
 use App\Models\ClaimType;
 use App\Models\ExchangeRate;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 use App\Helpers\IdObfuscator;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Response; // Import Response facade
 use Illuminate\Support\Facades\Log; // For logging errors
 use Auth;
 use Illuminate\Validation\Rule;
+use App\Notifications\UserNotification;
 
 class SubmitClaimService {
     /**
@@ -512,6 +514,14 @@ class SubmitClaimService {
 
     public function show($id)
     {
+        $notif = request('notif');
+
+        if ($id) {
+            Auth::user()->notifications()
+                ->where('id', $notif)
+                ->update(['read_at' => now()]);
+        }
+
         $decodedId = IdObfuscator::decode($id);
         $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
         return view('submit_claim.detail',compact('claim'))->with('title', 'Submit Claim Detail')->with('breadcrumb', ['Home', 'Staff Task','Submit Claim Detail']);
@@ -520,6 +530,7 @@ class SubmitClaimService {
     public function getSubmitClaimItemDetails($id)
     {
         try {
+            
             $decodedId = IdObfuscator::decode($id);
             $item = SubmitClaimItem::where('id', $decodedId) // Assuming base64_decode for obfuscated_id
                                    ->with(['claimType', 'files']) // Eager load relationships
@@ -596,6 +607,18 @@ class SubmitClaimService {
 
             $submitClaimItemsCacheKey = 'submit_claim_items_' . $claim->id;
             Cache::forget($submitClaimItemsCacheKey);
+            $users = User::permission('view-all-submit-claim')->get();
+                foreach ($users as $user) {
+                    try {
+                        $user->notify(new UserNotification(
+                            '<strong>'.auth()->user()->name.' </strong> has submitted a claim. Please check the claim at All Submitted Claims',
+                            'submit-claim',
+                            route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id])
+                        ));
+                    } catch (\Exception $e) {
+                        \Log::error('Notification failed: '.$e->getMessage());
+                    }
+                }
             
 
             return Response::json(['message' => 'Claim status updated successfully to submitted'], 200);
@@ -694,6 +717,17 @@ class SubmitClaimService {
                 'transfered_at' => date('Y-m-d H:i:s'),
                 'transfer_document_path' => $transferDocumentPath,
             ]); 
+            
+            $user = User::find($claim->staff_id);
+                    try {
+                        $user->notify(new UserNotification(
+                            '<strong>'.auth()->user()->name.' </strong> has completed your claim. Please check your completed claim at Your Submitted Claims – Completed Claims',
+                            'submit-claim',
+                            route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id])
+                        ));
+                    } catch (\Exception $e) {
+                        \Log::error('Notification failed: '.$e->getMessage());
+                    }
 
             DB::commit(); // Commit the transaction
 
