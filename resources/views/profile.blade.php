@@ -64,11 +64,14 @@
 		<div class="account-settings">
 			<div class="user-profile">
 				<div class="user-avatar">
-					<img src="{{ asset(auth()->user()->path_image) }}" alt="User Profile Picture">
+					<img src="{{ asset(auth()->user()->avatar_url) }}" alt="User Profile Picture">
 				</div>
 				<h5 class="user-name">{{ $user->name }}</h5>
         <h6 class="user-email"><strong>{{ $user->position }}</strong></h6>
 				<h6 class="user-email">{{ $user->email }}</h6>
+				@foreach(auth()->user()->getRoleNames() as $role)
+					<span class="badge bg-info rounded-pill">{{ $role }}</span>
+				@endforeach
         <p class="mt-4"><a href="{{ route('profile.change-password')}}" class="btn btn-primary btn-sm">Change Password</a></p>
 			</div>
 			<div class="about">
@@ -113,7 +116,7 @@
 			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="eMail"><small><strong>Date of Birth</strong></small></label>
-					<input type="text" class="form-control-plaintext" disabled id="eMail" value="{{ $user->dob->format('d M Y') }}">
+					<input type="text" class="form-control-plaintext" disabled id="eMail" value="{{ $user->dob ? $user->dob->format('d M Y') : 'N/A' }}">
 				</div>
 			</div>
 		</div>
@@ -136,7 +139,7 @@
       		<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
 				<div class="form-group">
 					<label for="phone"><small><strong>Joined Date</strong></small></label>
-					<input type="text" class="form-control-plaintext" disabled value="{{ $user->joined_at->format('d M Y') }}">
+					<input type="text" class="form-control-plaintext" disabled value="{{ $user->joined_at ? $user->joined_at->format('d M Y') : 'N/A' }}">
 				</div>
 			</div>
 			<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">

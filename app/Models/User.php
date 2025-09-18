@@ -108,4 +108,6 @@ class User extends Authenticatable
         $placeholderUrl = 'https://placehold.co/45x45/d0c5f3/333333?text=' . urlencode($initials);
         return $placeholderUrl;
     }
+
+    
 }
