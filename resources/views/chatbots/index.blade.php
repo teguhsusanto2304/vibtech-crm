@@ -84,7 +84,7 @@
 
                 // API call to your Ollama endpoint
                 $.ajax({
-                    url: 'http://localhost:11434/api/generate',
+                    url: '/api/ollama-proxy',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify({

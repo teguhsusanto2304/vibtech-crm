@@ -35,6 +35,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\V2\ClientController as ClientControllerV2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
 
 Route::post('/api/v2/login', [AuthController::class, 'login'])->name('api.v1.login');
 Route::get('/api/v2/users', [AuthController::class, 'list']); // New route
@@ -47,6 +48,17 @@ Route::post('/bulk-email/send', [JobAssignmentController::class, 'initiateBulkSe
 Route::get('/bulk-email/progress/{batchId}', [JobAssignmentController::class, 'getBatchProgress'])->name('bulk_email.progress');
 
 Route::get('/', [LoginController::class, 'showLoginForm']);
+
+Route::post('/api/ollama-proxy', function (Request $request) {
+    $response = Http::post('http://localhost:11434/api/generate', [
+        'model' => $request->input('model'),
+        'prompt' => $request->input('prompt'),
+        'stream' => false,
+    ]);
+
+    return $response->json();
+});
+
 Route::get('/v1/chatbot', function(){
     return view('chatbots/index');
 });
