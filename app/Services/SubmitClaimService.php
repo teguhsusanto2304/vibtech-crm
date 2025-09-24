@@ -309,7 +309,7 @@ class SubmitClaimService {
                 return '<div style="text-align: right;">' . implode('<br>', $output) . '</div>'; // Use <br> for new lines
             })
             ->addColumn('claim_date',fn($claim) => 
-                $claim->claim_date->format('d M Y h:i')
+                $claim->created_at->format('d M Y h:i')
             )
             ->addColumn('claim_status', function ($claim) {
                 return $claim->submit_claim_status;
@@ -319,6 +319,9 @@ class SubmitClaimService {
                 $btn = '<div class="btn-group btn-group-vertical" role="group" aria-label="Claim Actions">';
                 if($claim->data_status==1){
                     $btn .= '<a class="btn btn-primary btn-sm" href="'.route("v1.submit-claim.create").'?id='.$claim->obfuscated_id.'">Create Item</a>';
+                    $btn .= '<a href="#" class="btn btn-danger btn-sm delete-claim-btn" data-id="'.$claim->obfuscated_id.'">Delete</a>';
+                }
+                if($claim->data_status==2){
                     $btn .= '<a href="#" class="btn btn-danger btn-sm delete-claim-btn" data-id="'.$claim->obfuscated_id.'">Delete</a>';
                 }
                 if($request->input('status_filter')){
@@ -475,8 +478,8 @@ class SubmitClaimService {
                 if($claim->submitClaim->data_status==1){
                     $btn .= '<a class="btn btn-warning btn-sm" href="'.route('v1.submit-claim.edit',['id'=>$claim->obfuscated_id]).'" disabled>Edit</a>';
                     $btn .= '<a class="btn btn-danger btn-sm delete-item-btn" href="#" data-id="' . $claim->obfuscated_id . '">Delete</a>';
-                }                
-                 $btn .= '</div>';
+                } 
+                $btn .= '</div>';
                 return $btn;
             })
 

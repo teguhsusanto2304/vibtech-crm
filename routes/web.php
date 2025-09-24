@@ -47,6 +47,9 @@ Route::post('/bulk-email/send', [JobAssignmentController::class, 'initiateBulkSe
 Route::get('/bulk-email/progress/{batchId}', [JobAssignmentController::class, 'getBatchProgress'])->name('bulk_email.progress');
 
 Route::get('/', [LoginController::class, 'showLoginForm']);
+Route::get('/v1/chatbot', function(){
+    return view('chatbots/index');
+});
 
 // Route to show the form where the user enters their email to request a reset link
 Route::get('/password/reset', [PasswordResetLinkController::class, 'create'])

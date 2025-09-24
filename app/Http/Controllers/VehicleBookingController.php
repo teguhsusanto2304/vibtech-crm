@@ -208,7 +208,13 @@ class VehicleBookingController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['name', 'action'])
+                ->addColumn('start_date',function($row){
+                    return $row->start_at;
+                })
+                ->addColumn('end_date',function($row){
+                    return $row->end_at;
+                })
+                ->rawColumns(['name', 'action','start_date','end_date'])
                 ->make(true);
         }
     }
@@ -237,7 +243,13 @@ class VehicleBookingController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['name', 'action'])
+                ->addColumn('start_date',function($row){
+                    return $row->start_at->format('d-m-Y H:i:s');
+                })
+                ->addColumn('end_date',function($row){
+                    return $row->end_at->format('d-m-Y H:i:s');
+                })
+                ->rawColumns(['name', 'action','start_date','end_date'])
                 ->make(true);
         }
     }

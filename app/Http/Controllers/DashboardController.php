@@ -16,6 +16,54 @@ use Illuminate\Http\Request;
 class DashboardController extends Controller
 {
     public function index()
+{
+    // Define the start and end dates for the three months
+    $lastMonthStart = now()->subMonth()->startOfMonth();
+    $nextMonthEnd = now()->addMonth()->endOfMonth();
+
+    // Use a single query for JobAssignments, filtering by the date range
+    $jobAssignments = JobAssignment::where('is_publish', 1)
+        ->select('id', 'job_type', 'start_at', 'end_at')
+        ->whereBetween('start_at', [$lastMonthStart, $nextMonthEnd])
+        ->get();
+
+    // Use a single query for VehicleBookings, filtering by the date range
+    // Eager load the vehicle relationship to prevent N+1 queries
+    $vehicleBookings = VehicleBooking::with('vehicle')
+        ->select('id', 'start_at', 'end_at', 'vehicle_id')
+        ->whereBetween('start_at', [$lastMonthStart, $nextMonthEnd])
+        ->get();
+
+    // Transform and combine the data into a single events array
+    $events = $jobAssignments->map(function ($job) {
+        return [
+            'id' => $job->id,
+            'url' => '',
+            'title' => $job->job_type,
+            'start' => $job->start_at->toDateTimeString(),
+            'end' => $job->end_at->addDay()->toDateTimeString(),
+            'allDay' => true,
+            'extendedProps' => ['calendar' => 'Holiday'],
+            'event_status' => 'JR',
+            'color' => 'primary',
+        ];
+    })->concat($vehicleBookings->map(function ($booking) {
+        return [
+            'id' => $booking->id,
+            'url' => '',
+            'title' => $booking->vehicle->name,
+            'start' => $booking->start_at->toDateTimeString(),
+            'end' => $booking->end_at->addDay()->toDateTimeString(),
+            'allDay' => true,
+            'extendedProps' => ['calendar' => 'Business'],
+            'event_status' => 'VB',
+            'color' => 'success',
+        ];
+    }))->all();
+
+    return view('dashboard.dashboard', compact('events'))->with('title', 'Staff Calendar')->with('breadcrumb', ['Home', 'Dashboard']);
+}
+    public function index1()
     {
 
         $events = [];

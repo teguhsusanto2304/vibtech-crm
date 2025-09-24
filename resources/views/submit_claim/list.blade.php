@@ -86,7 +86,7 @@
                         <tr>
                             <th>Serial Number</th>
                             <th>Description</th>
-                            <th>Claim Date</th>
+                            <th>Claim Date & Time</th>
                             <th>Staff Name</th>
                             <th>Status</th>
                             <th>Items Count</th>

@@ -63,8 +63,8 @@
                             success: function (response) {
                                 $("#bookingImage").attr("src", response.vehicle.path_image ? "/" + response.vehicle.path_image : "/images/default-car.jpg");
                                 $("#bookingVehicle").text(response.vehicle.name);
-                                $("#bookingStart").text(response.start_at);
-                                $("#bookingEnd").text(response.end_at);
+                                $("#bookingStart").text(response.start_at_formatted);
+                                $("#bookingEnd").text(response.end_at_formatted);
                                 $("#bookingPurpose").text(response.purposes);
                                 $("#bookingJob").text(response.job_assignment ? response.job_assignment.scope_of_work : "N/A");
                                 $("#bookingCreator").text(response.creator ? response.creator.name : "Unknown");

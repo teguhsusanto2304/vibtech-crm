@@ -61,8 +61,8 @@
                         ajax: "{{ route('v1.vehicle-bookings.histories-data') }}",
                         columns: [
                             { data: 'name', name: 'name' },
-                            { data: 'start_at', name: 'start_at' },
-                            { data: 'end_at', name: 'end_at' },
+                            { data: 'start_at_formatted', name: 'start_at_formatted' },
+                            { data: 'end_at_formatted', name: 'end_at_formatted' },
                             { data: 'purposes', name: 'purposes' },
                             { data: 'action', name: 'action' }
                         ]

@@ -72,13 +72,12 @@
                     <table class="table table-bordered table-striped nowrap w-100" id="user_datatable">
                         <thead>
                             <tr>
-                                <th>Picture</th>
+                                <th>Picture</th>                                
                                 <th>Department</th>
                                 <th>Name</th>
-                                <th>Nick Name</th>
+                                <th>Role</th>
                                 <th>Position</th>
                                 <th>Email</th>
-                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -118,11 +117,11 @@
                         {data: 'path_image', name: 'path_image', orderable: false, searchable: false },
                         {data: 'dept', name: 'dept'},
                         {data: 'name', name: 'name'},
-                        {data: 'nick_name', name: 'nick_name'},
+                        {data: 'role', name: 'role'},
                         {data: 'position', name: 'position'},
-                        {data: 'email', name: 'email'},
-                        {data: 'user_status', name: 'user_status'},
-                        {data: 'action', name: 'action', orderable: false, searchable: false},
+                        {data: 'email', name: 'email'},  
+                        {data: 'action', name: 'action', orderable: false, searchable: true},                      
+                        { data: 'user_status', name: 'user_status', visible: false, searchable: true },
                     ],
                     scrollX: true, // Enable horizontal scrolling
                     responsive: false, // Disable responsive mode to ensure scrolling works
@@ -131,14 +130,14 @@
             rightColumns: 1  // Fix the last column (action column) on the right
         }
                 });
-                table.column(6).search(1).draw();
+                table.column(7).search(1).draw();
 
                 // --- Bootstrap Tab Event Listener ---
                 $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
                     const selectedStatus = $(e.target).data('status'); // Get 'active' or 'inactive' from data-status attribute
                     // Update DataTable's AJAX URL dynamically
                     // DataTables redraws the table and re-sends AJAX request with the new data parameter.
-                    table.column(6).search(selectedStatus).draw();
+                    table.column(7).search(selectedStatus).draw();
                     //$('#user_datatable').DataTable().ajax.reload(null, false); // Reload data, don't reset pagination
                 });
 

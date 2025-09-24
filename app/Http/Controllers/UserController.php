@@ -185,15 +185,17 @@ class UserController extends Controller
                     return $btn;
                 })
                 ->addColumn('dept', function ($row) {
-                    if (!empty($row->dept) && !empty($row->secondDept)) {
-                        $result = $row->dept->name . ' / ' . $row->secondDept->name;
-                    } else {
-                        $result = $row->dept->name ?? $row->secondDept->name ?? 'No Department';
-                    }
+                    
+                        $result = $row->dept->name ?? 'No Department';
 
                     return $result;
                 })
-                ->rawColumns(['path_image', 'action', 'dept'])
+                ->addColumn('role', function($row) {
+                    foreach($row->getRoleNames() as $role){
+                        return $role;
+                    }
+                })
+                ->rawColumns(['path_image', 'action', 'dept','role'])
                 ->make(true);
         }
     }
