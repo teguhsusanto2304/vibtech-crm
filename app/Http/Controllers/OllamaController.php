@@ -13,7 +13,7 @@ class OllamaController extends Controller
 
         $response = Http::timeout(120) // Ollama may take time
             ->post('http://127.0.0.1:11434/api/chat', [
-                'model' => 'llama3', // or your custom model like travelmapbot
+                'model' => 'travelmap', // or your custom model like travelmapbot
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt]
                 ],
