@@ -321,9 +321,7 @@ class SubmitClaimService {
                     $btn .= '<a class="btn btn-primary btn-sm" href="'.route("v1.submit-claim.create").'?id='.$claim->obfuscated_id.'">Create Item</a>';
                     $btn .= '<a href="#" class="btn btn-danger btn-sm delete-claim-btn" data-id="'.$claim->obfuscated_id.'">Delete</a>';
                 }
-                if($claim->data_status==2){
-                    $btn .= '<a href="#" class="btn btn-danger btn-sm delete-claim-btn" data-id="'.$claim->obfuscated_id.'">Delete</a>';
-                }
+                
                 if($request->input('status_filter')){
                     $btn .= '<a class="btn btn-info btn-sm" href="' . route('v1.submit-claim.detail', ['id' => $claim->obfuscated_id,'from'=>'all']) . '">View</a>';
                 } else {
@@ -594,7 +592,7 @@ class SubmitClaimService {
 
             // Validate the new status if needed (e.g., must be a specific value)
             $request->validate([
-                'new_status' => 'required|integer|in:1,2,3,4', // Example: only allow 1, 2, or 3
+                'new_status' => 'required|integer|in:0,1,2,3,4', // Example: only allow 1, 2, or 3
             ]);
 
             $newStatus = $request->input('new_status');

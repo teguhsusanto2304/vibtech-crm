@@ -76,6 +76,13 @@
                             <i class="fas fa-arrow-left me-1 mr-2"></i> Back to Claims List
                         </a>
                         @endif
+                        @if($claim->data_status==\App\Models\SubmitClaim::STATUS_SUBMIT)
+                        <a href="#" class="btn btn-warning bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
+                            data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
+                            data-new-status="1">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
+                                Return to Draft
+                        </a>
+                        @endif
                         @if($claim->data_status==\App\Models\SubmitClaim::STATUS_DRAFT || $claim->data_status==\App\Models\SubmitClaim::STATUS_REJECTED)
                         <a href="#" class="btn btn-info bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
                             data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
@@ -84,6 +91,11 @@
                         </a>
                         <a href="{{ route('v1.submit-claim.create') }}?id={{ $claim->obfuscated_id }}" class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm">
                             Add New Claim Item
+                        </a>
+                        <a href="#" class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
+                            data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
+                            data-new-status="0">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
+                                Delete
                         </a>
                         @endif
                         @can('view-all-submit-claim')
@@ -430,7 +442,16 @@
                 }
 
                 // Confirmation dialog
-                if (confirm(`Are you sure you want to submit this claim?`)) {
+                let msg = "";
+                if(newStatus===2){
+                    msg = `Are you sure you want to submit this claim?`;
+                } else if(newStatus===1){
+                    msg = `Are you sure you want to return to draft this claim?`;
+                } else if(newStatus===0){
+                    msg = `Are you sure you want to delete this claim?`;
+                }
+
+                if (confirm(msg)) {
                     const csrfToken = $('meta[name="csrf-token"]').attr('content');
                     const updateUrl = `/v1/submit-claim/${claimId}/update-status`; // Use the new API route
 
@@ -445,7 +466,12 @@
                         },
                         success: function(response) {
                             alert(response.message);
-                            location.reload(); // Full page refresh
+                            if(newStatus===0){
+                                window.location.replace(`{{ route('v1.submit-claim.list') }}`)
+                            } else {
+                                location.reload(); // Full page refresh
+                            }
+                            
                         },
                         error: function(xhr, status, error) {
                             console.error("Error updating claim status:", status, error, xhr.responseText);
