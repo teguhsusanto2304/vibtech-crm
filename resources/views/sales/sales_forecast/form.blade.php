@@ -68,46 +68,194 @@
                     @csrf
                     <!-- Project Name -->
                     <div class="row mb-3">
-                        <div class="col-md-10">
+                        <div class="row mb-3">
+                        <div class="col-md-6">
                             <label class="form-label mb-3">Individually Type:</label>
-                            <div class="claim-type-group">
-                                {{-- Loop through claim types fetched from the database --}}
-                                @foreach($claimTypes as $claimType)
-                                    <div class="form-check">
-                                        <input class="form-check-input claim-type-radio" type="radio" name="claim_type_id" id="claimType{{ $claimType->id }}" value="{{ $claimType->id }}"
-                                            {{ $loop->first ? 'checked' : '' }}> {{-- Check the first one by default --}}
-                                        <label class="form-check-label" for="claimType{{ $claimType->id }}">
-                                            {{ $claimType->name }}
-                                        </label>
-                                        @if($claimType->id==6)
-                                                                        <!-- NEW: Input field for Miscellaneous/Other claim type name -->
-                                        <div class="mb-3 mt-3" id="otherClaimTypeNameGroup" style="display: none;">
-                                            <label for="other_claim_type_name" class="form-label">Other Claim Type Name:</label>
-                                            <input type="text" class="form-control" id="other_claim_type_name" name="other_claim_type_name" placeholder="Enter specific claim type name">
-                                            <div class="invalid-feedback">
-                                                Please enter a name for the miscellaneous claim type.
-                                            </div>
+                            {{-- Global Select All Checkbox --}}
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="selectAllIndividually">
+                                <label class="form-check-label fw-bold" for="selectAllIndividually">
+                                    Select All Individually
+                                </label>
+                            </div>
+
+                            <div class="user-selection-container mb-3" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
+                                @foreach ($individuallies as $individually)
+                                    <div class="mb-3">
+                                        
+                                        <div class="ms-4"> {{-- Indent department users --}}
+                                        
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input indivudually-checkbox" type="checkbox"
+                                                        name="individually_ids[]"
+                                                        value="{{ $individually->id }}"
+                                                        id="user_{{ $individually->name }}">
+                                                    <label class="form-check-label" for="individually_{{ $individually->id }}">                                                        
+                                                        {{ $individually->name }}
+                                                    </label>
+                                                </div>
                                         </div>
-                                    @endif
                                     </div>
-                                    
                                 @endforeach
                             </div>
+                        <script>
+                            $(document).ready(function() {
+                                const selectAllIndividuallyCheckbox = $('#selectAllIndividually');
+                                const indivuduallyCheckboxes = $('.indivudually-checkbox');
+
+                                // 1. Global "Select All Users" functionality
+                                selectAllIndividuallyCheckbox.on('change', function() {
+                                    const isChecked = $(this).is(':checked');
+                                    indivuduallyCheckboxes.prop('checked', isChecked);
+                                     // Also check/uncheck department checkboxes
+                                });
+
+                                // 2. Department-level "Select All" functionality
+
+
+                                // 3. Individual User Checkbox change listener
+                                indivuduallyCheckboxes.on('change', function() {
+                                    
+                                    // Update global "Select All Users" checkbox
+                                    updateSelectAllIndividuallyCheckbox();
+                                });
+
+                                // Helper function to update the global "Select All Users" checkbox
+                                function updateSelectAllIndividuallyCheckbox() {
+                                    if (indivuduallyCheckboxes.length === indivuduallyCheckboxes.filter(':checked').length) {
+                                        selectAllIndividuallyCheckbox.prop('checked', true);
+                                    } else {
+                                        selectAllIndividuallyCheckbox.prop('checked', false);
+                                    }
+                                }
+
+                                // Initial check on page load (e.g., if some users are pre-selected)
+                                updateSelectAllIndividuallyCheckbox();
+                                
+                            });
+                        </script>
                         </div>
-                        
+                        <div class="col-md-6">
+                            <label class="form-label">Sent To</label>
+                            {{-- Global Select All Checkbox --}}
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="selectAllUsers">
+                                <label class="form-check-label fw-bold" for="selectAllUsers">
+                                    Select All Users
+                                </label>
+                            </div>
+
+                            <div class="user-selection-container mb-3" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 10px;">
+                                @foreach (\App\Models\User::where('user_status',1)->get() as $user)
+                                    <div class="mb-3">
+                                        
+                                        <div class="ms-4"> {{-- Indent department users --}}
+                                        
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input user-checkbox" type="checkbox"
+                                                        name="personnel_ids[]"
+                                                        value="{{ $user->id }}"
+                                                        id="user_{{ $user->id }}">
+                                                    <label class="form-check-label" for="user_{{ $user->id }}">
+                                                        {{-- Optional: Display avatar/initials --}}
+                                                        @if($user->avatar_url)
+                                                            <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="rounded-circle me-1" width="20" height="20">
+                                                        @else
+                                                            <span class="avatar-initials rounded-circle bg-secondary text-white me-1" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7em;">{{ Str::limit($user->name, 1, '') }}</span>
+                                                        @endif
+                                                        {{ $user->name }}
+                                                    </label>
+                                                </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        <script>
+                            $(document).ready(function() {
+                                const selectAllUsersCheckbox = $('#selectAllUsers');
+                                const departmentSelectAllCheckboxes = $('.select-all-department');
+                                const userCheckboxes = $('.user-checkbox');
+
+                                // 1. Global "Select All Users" functionality
+                                selectAllUsersCheckbox.on('change', function() {
+                                    const isChecked = $(this).is(':checked');
+                                    userCheckboxes.prop('checked', isChecked);
+                                    departmentSelectAllCheckboxes.prop('checked', isChecked); // Also check/uncheck department checkboxes
+                                });
+
+                                // 2. Department-level "Select All" functionality
+                                departmentSelectAllCheckboxes.on('change', function() {
+                                    const isChecked = $(this).is(':checked');
+                                    const departmentSlug = $(this).data('department');
+                                    // Select/deselect only users belonging to this department
+                                    userCheckboxes.filter(`[data-department="${departmentSlug}"]`).prop('checked', isChecked);
+
+                                    // Update global "Select All Users" checkbox based on department selections
+                                    updateSelectAllUsersCheckbox();
+                                });
+
+                                // 3. Individual User Checkbox change listener
+                                userCheckboxes.on('change', function() {
+                                    const departmentSlug = $(this).data('department');
+                                    const departmentUsers = userCheckboxes.filter(`[data-department="${departmentSlug}"]`);
+                                    const checkedDepartmentUsers = departmentUsers.filter(':checked');
+
+                                    // Update department "Select All" checkbox
+                                    if (checkedDepartmentUsers.length === departmentUsers.length) {
+                                        $(`#selectAllDept_${departmentSlug}`).prop('checked', true);
+                                    } else {
+                                        $(`#selectAllDept_${departmentSlug}`).prop('checked', false);
+                                    }
+
+                                    // Update global "Select All Users" checkbox
+                                    updateSelectAllUsersCheckbox();
+                                });
+
+                                // Helper function to update the global "Select All Users" checkbox
+                                function updateSelectAllUsersCheckbox() {
+                                    if (userCheckboxes.length === userCheckboxes.filter(':checked').length) {
+                                        selectAllUsersCheckbox.prop('checked', true);
+                                    } else {
+                                        selectAllUsersCheckbox.prop('checked', false);
+                                    }
+                                }
+
+                                // Initial check on page load (e.g., if some users are pre-selected)
+                                updateSelectAllUsersCheckbox();
+                                departmentSelectAllCheckboxes.each(function() {
+                                    const departmentSlug = $(this).data('department');
+                                    const departmentUsers = userCheckboxes.filter(`[data-department="${departmentSlug}"]`);
+                                    const checkedDepartmentUsers = departmentUsers.filter(':checked');
+                                    if (checkedDepartmentUsers.length === departmentUsers.length && departmentUsers.length > 0) {
+                                        $(this).prop('checked', true);
+                                    }
+                                });
+                            });
+                        </script>
+                        </div>
+
                     </div>
 
                     <!-- Project Start Date & End Date -->
                     <div class="row mb-3">
                         <div class="col-md-2">
                             <label for="projectStartDate" class="form-label">Forecast Year</label>
-                            <input type="number" name="forecast_year" id="forecast_year" class="form-control" min="{{ date('Y') }}" max="{{ date('Y')+5 }}" value="{{ date('Y') }}">
+                            <input type="number" name="year" id="year" class="form-control" min="{{ date('Y') }}" max="{{ date('Y')+5 }}" value="{{ date('Y') }}">
                         </div>
-                        <div class="col-md-10">
-                            <label for="projectEndDate" class="form-label invisible">End Date</label>
+                        <div class="col-md-4">
+                            <label for="projectStartDate" class="form-label">Currency</label>
+                            <select name="currency" id="currency" class="form-control" >
+                                <option value="SGD">Singapore Dollar</option>
+                                <option value="MYR">Malaysia Ringgit</option>
+                            </select>
                         </div>
+                        <div class="col-md-6">
+                            <label for="projectStartDate" class="form-label">Company</label>
+                            <input type="text" name="company" id="company" class="form-control" >
+                        </div>                        
                         
                     </div>
+                    
 
                     <!-- Project Description -->
                     

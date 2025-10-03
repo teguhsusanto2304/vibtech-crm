@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/submit-claim-items/{id}/destroy', 'submitClaimDestroy')->name('v1.submit-claim.submit-claim-items.destroy');
             Route::delete('/{id}/destroy', 'destroyClaim')->name('v1.submit-claim.destroy');
             Route::post('/{id}/update-status','submitClaimUpdateStatus')->name('v1.submit-claim.update-status');
+            Route::put('/{id}/update-description',  'updateDescription')->name('v1.submit-claim.update-description');
             Route::post('/{id}/action', 'handleApprovalAction')->name('v1.submit-claim.action');
             Route::post('/{id}/action-claim-item', 'handleRejectedAction')->name('v1.submit-claim.action-claim-item');
             Route::get('/exchange-rates', 'exchange')->name('v1.submit-claim.exchange-rates');

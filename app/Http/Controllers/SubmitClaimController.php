@@ -25,6 +25,11 @@ class SubmitClaimController extends Controller
         $this->commonService = $commonService;
         $this->submitClaimService = $submitClaimService;
     }
+
+    public function updateDescription(Request $request, $id)
+    {
+        return $this->submitClaimService->updateDescription($request,$id);
+    }
     public function index()
     {
         return view('submit_claim.index')->with('title', 'Submit Claim')->with('breadcrumb', ['Home', 'Staff Task', 'Submit Claim']);

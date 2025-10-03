@@ -19,6 +19,38 @@ use Illuminate\Validation\Rule;
 use App\Notifications\UserNotification;
 
 class SubmitClaimService {
+
+    /**
+     * Update the description of a specific claim.
+     */
+    public function updateDescription(Request $request, $id)
+    {
+        $claim = SubmitClaim::find($id);
+        // 1. Validation
+        $validated = $request->validate([
+            'description' => 'required|string|max:500', 
+            // The claim_id hidden field is often redundant if using route model binding
+        ]);
+
+        // 2. Update the model instance retrieved via Route Model Binding
+        // $claim already contains the Claim model instance for the ID in the URL
+        $claim->description = $validated['description'];
+        $claim->save();
+
+        // 3. Return a response
+        
+        // If NOT using AJAX (the simple form submit):
+        //return redirect()->back()->with('success', 'Claim title updated successfully.');
+
+        // If using AJAX (like the commented out JS):
+        
+        return response()->json([
+            'success' => true, 
+            'new_description' => $claim->description,
+            'message' => 'Updated successfully'
+        ]);
+        
+    }
     /**
      * Store a newly created claim in storage.
      */

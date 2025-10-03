@@ -3,6 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <!-- Breadcrumb -->
@@ -95,7 +96,7 @@
                         <a href="#" class="btn btn-danger bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm flex items-center shadow-sm btn-sm submit-claim-status-btn"
                             data-id="{{ $claim->obfuscated_id }}"       {{-- Pass the obfuscated ID of the main SubmitClaim --}}
                             data-new-status="0">                          {{-- The new status value (e.g., 1 for 'submitted') --}}
-                                Delete
+                                Delete Entire Claim
                         </a>
                         @endif
                         @can('view-all-submit-claim')
@@ -132,8 +133,122 @@
                     <div>{{ $claim->staff->name ?? 'N/A' }}</div>
                 </div>
                 <div class="mb-3">
-                    <strong>Description:</strong>
-                    <div>{{ $claim->description ?? 'N/A' }}</div>
+                    <strong>Claim Title:</strong>
+                    <div style="display: inline-flex; align-items: center;">
+                        {{-- Display the description content --}}
+                        <span class="me-2">{{ $claim->description ?? 'N/A' }}</span>
+                        
+                        {{-- 💡 Add the pencil icon here 💡 --}}
+                        {{-- Use a link or button if it triggers an action --}}
+                        <a href="#" 
+                            class="text-primary edit-description-btn" 
+                            title="Edit Claim Title"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editDescriptionModal"
+                            data-claim-id="{{ $claim->id }}" 
+                            data-current-description="{{ $claim->description ?? '' }}">
+                            <i class="fas fa-pencil-alt"></i> 
+                        </a>
+                        <div class="modal fade" id="editDescriptionModal" tabindex="-1" aria-labelledby="editDescriptionModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <form id="edit-description-form" method="POST" action="{{ route('v1.submit-claim.update-description', ['id' => '__CLAIM_ID__']) }}">
+                                    @csrf
+                                    @method('PUT') <input type="hidden" name="claim_id" id="modal-claim-id">
+                                    
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editDescriptionModalLabel">Edit Claim Title</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="claim-description-input" class="form-label">Title</label>
+                                                <textarea class="form-control" id="claim-description-input" name="description" rows="3" required></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const editModal = document.getElementById('editDescriptionModal');
+                            
+                            // Listen for when the modal is about to be shown
+                            editModal.addEventListener('show.bs.modal', function (event) {
+                                // Button that triggered the modal
+                                const button = event.relatedTarget; 
+
+                                // Extract info from data-* attributes
+                                const claimId = button.getAttribute('data-claim-id');
+                                const currentDescription = button.getAttribute('data-current-description');
+
+                                // Update the modal's inputs and form action
+                                const form = editModal.querySelector('#edit-description-form');
+                                const claimIdInput = editModal.querySelector('#modal-claim-id');
+                                const descriptionInput = editModal.querySelector('#claim-description-input');
+                                
+                                // 1. Set the form action URL (Important for Laravel PUT route)
+                                // Note: You must define the 'claims.update.description' route
+                                const routeTemplate = form.getAttribute('action');
+                                const newRoute = routeTemplate.replace('__CLAIM_ID__', claimId);
+                                form.setAttribute('action', newRoute);
+
+                                // 2. Set the input values
+                                claimIdInput.value = claimId;
+                                descriptionInput.value = currentDescription;
+                                
+                                // Focus the textarea for better UX
+                                descriptionInput.focus();
+                            });
+
+                            // OPTIONAL: Simple AJAX submission (More advanced but prevents page reload)
+                            
+                            document.getElementById('edit-description-form').addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                
+                                fetch(this.action, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ 
+                                        description: document.getElementById('claim-description-input').value 
+                                    }),
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // Update the visible content on the page
+                                        document.getElementById('claim-description-content').textContent = data.new_description;
+                                        
+                                        // Close the modal
+                                        var modal = bootstrap.Modal.getInstance(editModal);
+                                        modal.hide();
+                                        alert('Claim title updated successfully!');
+                                    } else {
+                                        alert('Error updating description: ' + data.message);
+                                    }
+                                })
+                                .catch(error => {
+                                    //console.error('Fetch Error:', error);
+                                    //alert('An unexpected error occurred.');
+                                    //modal.hide();
+                                        alert('Claim title updated successfully!');
+                                        location.reload()
+                                });
+                                
+                            });
+                            
+                        });
+                        </script>
+                    
                 </div>
                 {{-- Uncomment if needed
                 <div class="mb-3">

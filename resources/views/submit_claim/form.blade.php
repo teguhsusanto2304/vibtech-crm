@@ -67,7 +67,22 @@
                 <form action="{{ route('v1.submit-claim.store') }}" method="POST" class="p-4" enctype="multipart/form-data">
                     @csrf
                     <!-- Project Name -->
+                     <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="claimAmount" class="form-label">Claim Title:</label>
+                            <textarea class="form-control" id="description" name="description" readonly>@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
+                        </div>
+                        @if(!is_null($dataClaim))
+                        <div class="col-md-5">
+                            <label for="claimAmount" class="form-label">Serial Number</label>
+                            <input type="hidden" name="submit_claim_id" value="{{ $dataClaim->obfuscated_id }}">                            
+                            <input type="text"  class="form-control" id="serial_number" name="serial_number" value="{{ $dataClaim->serial_number }}" disabled>
+                        </div>
+                        @endif
+                        
+                    </div>
                     <div class="row mb-3">
+                        
                         <div class="col-md-10">
                             <label class="form-label mb-3">Claim Type:</label>
                             <div class="claim-type-group">
@@ -292,26 +307,10 @@
                         </script>
                         <div class="col-md-6">
                             <label for="claimAmount" class="form-label">Claim Purpose:</label>
-                            <textarea class="form-control" id="claim_purpose" name="claim_purpose" >@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
+                            <textarea class="form-control" id="claim_purpose" name="claim_purpose" ></textarea>
                         </div>
                     </div>
-                    <div class="col-md-12">
-                        <h6>Submit Claim Header</h6>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="claimAmount" class="form-label">Description:</label>
-                            <textarea class="form-control" id="description" name="description" >@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
-                        </div>
-                        @if(!is_null($dataClaim))
-                        <div class="col-md-5">
-                            <label for="claimAmount" class="form-label">Serial Number</label>
-                            <input type="hidden" name="submit_claim_id" value="{{ $dataClaim->obfuscated_id }}">                            
-                            <input type="text"  class="form-control" id="serial_number" name="serial_number" value="{{ $dataClaim->serial_number }}" disabled>
-                        </div>
-                        @endif
-                        
-                    </div>                   
+                                       
 
                     <!-- Buttons -->
                     <div class="col-12">

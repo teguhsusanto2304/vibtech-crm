@@ -19,8 +19,10 @@ Route::prefix('v1')->group(function () {
     // 🔹 Client Database Management Routes
         Route::prefix('sales-forecast')->controller(SalesForecastController::class)->group(function () {
             Route::get('/', 'index')->name('v1.sales-forecast');
+            Route::get('/list', 'showForecastGrid')->name('v1.sales-forecast.list');
             Route::get('/create', 'create')->name('v1.sales-forecast.create');
             Route::post('/store', 'store')->name('v1.sales-forecast.store');
+            Route::post('/save', 'save')->name('v1.sales-forecast.save');
             
         });
     });

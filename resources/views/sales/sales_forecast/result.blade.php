@@ -56,134 +56,313 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-        @if (session()->has('error_import'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <strong>Error:</strong> {{ session('error_import') }}
+         @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
         <div class="card">
             <div class="card-body">
-                <div class="space-y-4">
-            <p class="text-lg text-gray-700"><span class="font-semibold">Type:</span> {{ $claimTypeName }}</p>
-            <p class="text-lg text-gray-700"><span class="font-semibold">Forecast Year:</span> {{ $forecastYear }}</p>
+                <style>
+    /* Minimal CSS for a spreadsheet look */
+    table { 
+        border-collapse: collapse; 
+        font-family: Arial, sans-serif; 
+        
+        /* 💡 ADD THIS LINE: Forces the browser to honor explicit column widths */
+    }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
+    thead th { background-color: #c2c1beff; font-weight: bold; }
+    .variable-col { text-align: left; background-color: #f8f9fa; }
+    .input-field { width: 80px; text-align: right; border: none; } /* Slightly wider input */
+    .table-responsive-scroll {
+            overflow-x: auto; /* Enable horizontal scrollbar when content is too wide */
+                  /* Ensure the container takes up available width */
+        }
+</style>
+<div class="table-responsive-scroll"> 
+<form method="GET" action="{{ route('v1.sales-forecast.list') }}">
+    <div class="row mb-3">
+                        <div class="col-md-2">
+                            <label for="projectStartDate" class="form-label">Forecast Year</label>
+                            <input type="number" name="year" id="year" class="form-control" min="{{ date('Y')-5 }}" max="{{ date('Y')+5 }}" value="{{ $year }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="projectStartDate" class="form-label invisible">Create Forecast Year</label>
+                            <button type="submit" class="btn btn-info">Search</a>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="projectStartDate" class="form-label invisible">Create Forecast Year</label>
+                            <a href="{{ route('v1.sales-forecast.create') }}" class="btn btn-secondary">Add Variable</a>
+                        </div>
+    </div>
+</form>
+<form method="POST" action="{{ route('v1.sales-forecast.save') }}">
+    @csrf
+    <table>
+        <thead>
+            <tr>
+                <th rowspan="3" class="variable-col" style="width: 300px;">Variable</th>
+                <th rowspan="3" class="variable-col" style="width: 250px;">Company</th> 
+                @foreach ($quarters as $qName => $months)
+                    {{-- Colspan is now the number of months + 1 for the Quarter Total --}}
+                    <th colspan="{{ count($months) + 1 }}">{{ $qName }}</th>
+                @endforeach
+                <th rowspan="3">Grand Total</th>
+            </tr>
             
-            <div class="bg-green-50 p-4 rounded-lg border-l-4 border-green-500">
-                <p class="text-xl font-bold text-green-800">Forecasted Sales Value:</p>
-                <p class="text-4xl font-extrabold text-green-600 mt-1">
-                    $SGD {{ $forecastedSales }}
-                </p>
-            </div>
+            <tr>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <th>{{ $monthName }}</th> {{-- Each month is now a single column --}}
+                    @endforeach
+                    <th>{{ $qName }} Total</th>
+                @endforeach
+            </tr>
+            
+            <tr>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <th></th> {{-- Only one column header per month --}}
+                    @endforeach
+                    <th></th>
+                @endforeach
+            </tr>
+        </thead>
+        
+        <tbody>
+    {{-- Initialize Grand Totals for the entire table (Column Summaries) --}}
+    @php
+        // Grand Table Totals (SPLIT BY CURRENCY) 💰
+        $tableMonthTotals_SGD = [];
+        $tableMonthTotals_MYR = [];
+        $tableQuarterTotals_SGD = [];
+        $tableQuarterTotals_MYR = [];
+        $tableGrandTotal_SGD = 0;
+        $tableGrandTotal_MYR = 0;
+        
+        $iMonthCounter = 0;
+        
+        // Initialize arrays with 0 for both currencies
+        foreach ($quarters as $qName => $months) {
+            $tableQuarterTotals_SGD[$qName] = 0;
+            $tableQuarterTotals_MYR[$qName] = 0;
+            foreach ($months as $monthName) {
+                $iMonthCounter++;
+                $tableMonthTotals_SGD[$iMonthCounter] = 0;
+                $tableMonthTotals_MYR[$iMonthCounter] = 0;
+            }
+        }
+    @endphp
 
-            <div class="pt-4 text-sm text-gray-500 italic border-t mt-4">
-                <p class="font-semibold text-gray-600">Calculation Note:</p>
-                <p>{{ $calculationDetails }}</p>
-            </div>
-        </div>
+    @foreach ($groupedIndividuals as $individualName => $individualsInGroup)
+        
+        {{-- Initialize Totals for the current Variable Group (SPLIT BY CURRENCY) --}}
+        @php
+            $rowspanCount = $individualsInGroup->count(); 
+            $firstRow = true; 
+            
+            // Variable Group Totals (SPLIT BY CURRENCY)
+            $variableMonthTotals_SGD = [];
+            $variableMonthTotals_MYR = [];
+            $variableQuarterTotals_SGD = [];
+            $variableQuarterTotals_MYR = [];
+            
+            // Initialize arrays for the Variable Group totals
+            foreach ($quarters as $qName => $months) {
+                $variableQuarterTotals_SGD[$qName] = 0;
+                $variableQuarterTotals_MYR[$qName] = 0;
+                foreach ($months as $monthName) {
+                    $variableMonthTotals_SGD[] = 0;
+                    $variableMonthTotals_MYR[] = 0;
+                }
+            }
+        @endphp
 
-        <div class="mt-8">
-            <a href="{{ route('v1.sales-forecast.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 shadow-md">
-                Go Back
-            </a>
-        </div>
+        {{-- Loop through the Companies/Individuals within the current Variable Group --}}
+        @foreach ($individualsInGroup as $individual)
+            @php 
+                $individualRowTotal = 0;
+                $iMonth = 0;
+                // Get the currency for the current row
+
+                $currency = $individual->pivot->currency ?? 'N/A';
+                
+            @endphp
+            
+            <tr>
+                {{-- ... (Your Variable Name Column remains the same, rowspan will need to be +2 or more now) ... --}}
+                @if ($firstRow)
+                    {{-- Change rowspan to $rowspanCount + 2 if you add the currency summary row for the group --}}
+                    <td class="variable-col" rowspan="{{ $rowspanCount  }}" style="font-weight: bold;">
+                        {{ $individualName }} 
+                    </td>
+                    @php $firstRow = false; @endphp
+                @endif
+                
+                {{-- 2. COMPANY NAME COLUMN --}}
+                <td class="variable-col">
+                    {{ $individual->pivot->company ?? 'N/A' }} 
+                    <p><small><span class="badge {{ $currency=='SGD' ? 'bg-info':'bg-warning' }} ">{{ $currency }}</span></small></p>
+                </td>
+                
+                {{-- 3. MONTHLY FORECAST COLUMNS (Accumulation Logic) --}}
+                @foreach ($quarters as $qName => $months)
+                    @php $quarterTotal = 0; @endphp
+                    @foreach ($months as $monthIndex => $monthName)
+                        @php
+                            $iMonth++; 
+                            $monthDate = date('Y_m', strtotime($monthName));
+                            $key = $individual->pivot->id.'_'.$iMonth;
+                            $savedValue = $forecastValues->get($key)->amount ?? 0;
+                            
+                            $quarterTotal += $savedValue;
+                            $individualRowTotal += $savedValue;
+                            
+                            // 💡 ACCUMULATION SPLIT BY CURRENCY
+                            if ($individual->pivot->currency == 'SGD') {
+                                $variableMonthTotals_SGD[$iMonth - 1] += $savedValue; // Variable Group SGD Total
+                                $tableMonthTotals_SGD[$iMonth] += $savedValue;       // Table Grand SGD Total
+                            } elseif ($individual->pivot->currency == 'MYR') {
+                                $variableMonthTotals_MYR[$iMonth - 1] += $savedValue; // Variable Group MYR Total
+                                $tableMonthTotals_MYR[$iMonth] += $savedValue;       // Table Grand MYR Total
+                            }
+                        @endphp
+                        {{-- ... (Your Input Field HTML remains the same) ... --}}
+                        <td> 
+                            <input 
+                                type="number" 
+                                class="input-field" 
+                                name="forecast[{{ $individual->pivot->id }}][{{ $individual->pivot->id.'_'.$individual->pivot->individually_id.'_'.$monthDate }}][amount]" 
+                                value="{{ number_format($savedValue, 2, '.', '') }}" 
+                                step="0.01" 
+                            >
+                        </td>
+                    @endforeach
+                    
+                    {{-- Q Total for the current Company Row --}}
+                    <td data-quarter-total="{{ $qName }}"><strong style="color: #f51313ff;">{{ number_format($quarterTotal, 2) }}</strong></td>
+                    
+                    @php 
+                        // 💡 ACCUMULATION SPLIT BY CURRENCY for Quarters
+                        if ($currency == 'SGD') {
+                            $variableQuarterTotals_SGD[$qName] += $quarterTotal;
+                            $tableQuarterTotals_SGD[$qName] += $quarterTotal; 
+                        } elseif ($currency == 'MYR') {
+                            $variableQuarterTotals_MYR[$qName] += $quarterTotal;
+                            $tableQuarterTotals_MYR[$qName] += $quarterTotal; 
+                        }
+                    @endphp
+                @endforeach
+                
+                {{-- Grand Total for the current Company Row --}}
+                <td data-grand-total><strong style="color: #480ee8ff;">{{ number_format($individualRowTotal, 2) }}</strong></td>
+            </tr>
+        @endforeach
+        
+        {{-----------------------------------------------------------}}
+        {{-- VARIABLE GROUP SUMMARY ROW (SPLIT BY CURRENCY) --}}
+        {{-----------------------------------------------------------}}
+        @php
+            // Calculate Grand Total for the variable group
+            $variableGrandTotal_SGD = array_sum($variableMonthTotals_SGD);
+            $variableGrandTotal_MYR = array_sum($variableMonthTotals_MYR);
+            $iMonthCounter = 0; // Reset counter
+        @endphp
+        
+        @if ($variableGrandTotal_SGD > 0 || $variableGrandTotal_MYR > 0)
+            <tr style="background-color: #e6e6fa; font-weight: bold;">
+                <td rowspan="2">Total {{ $individualName }}</td>
+                
+                {{-- SGD Row --}}
+                <td>SGD</td>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <td>{{ number_format($variableMonthTotals_SGD[$iMonthCounter++], 2) }}</td>
+                    @endforeach
+                    <td>{{ number_format($variableQuarterTotals_SGD[$qName], 2) }}</td>
+                @endforeach
+                <td>{{ number_format($variableGrandTotal_SGD, 2) }}</td>
+            </tr>
+            
+            {{-- Reset month counter for MYR row --}}
+            @php $iMonthCounter = 0; @endphp 
+            
+            <tr style="background-color: #e6e6fa; font-weight: bold;">
+                {{-- Variable Name column is merged above, only need Company column --}}
+                <td>MYR</td>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <td>{{ number_format($variableMonthTotals_MYR[$iMonthCounter++], 2) }}</td>
+                    @endforeach
+                    <td>{{ number_format($variableQuarterTotals_MYR[$qName], 2) }}</td>
+                @endforeach
+                <td>{{ number_format($variableGrandTotal_MYR, 2) }}</td>
+            </tr>
+        @endif
+    @endforeach
+
+    {{-----------------------------------------------------------}}
+    {{-- FINAL TABLE GRAND SUMMARY ROW (SPLIT BY CURRENCY) --}}
+    {{-----------------------------------------------------------}}
+    @php
+        $iMonthCounter = 0; // Reset counter
+    @endphp
+    
+    <tr style="background-color: #dcdcdc; font-weight: bold; border-top: 3px double #333;">
+        <td colspan="2" rowspan="2">GRAND TOTAL</td>
+        
+        {{-- SGD Row --}}
+        @foreach ($quarters as $qName => $months)
+            @foreach ($months as $monthName)
+                <td>{{ number_format($tableMonthTotals_SGD[++$iMonthCounter], 2) }}</td>
+            @endforeach
+            <td>{{ number_format($tableQuarterTotals_SGD[$qName], 2) }}</td>
+        @endforeach
+        
+        <td>{{ number_format($tableGrandTotal_SGD = array_sum($tableMonthTotals_SGD), 2) }}</td>
+    </tr>
+    
+    {{-- Reset month counter for MYR row --}}
+    @php $iMonthCounter = 0; @endphp 
+    
+    <tr style="background-color: #dcdcdc; font-weight: bold;">
+        {{-- The first two columns are merged, only need the remaining cells --}}
+        @foreach ($quarters as $qName => $months)
+            @foreach ($months as $monthName)
+                <td>{{ number_format($tableMonthTotals_MYR[++$iMonthCounter], 2) }}</td>
+            @endforeach
+            <td>{{ number_format($tableQuarterTotals_MYR[$qName], 2) }}</td>
+        @endforeach
+        
+        <td>{{ number_format($tableGrandTotal_MYR = array_sum($tableMonthTotals_MYR), 2) }}</td>
+    </tr>
+</tbody>
+    </table>
+    
+    <button type="submit" class="btn btn-primary mt-3">Save Forecast</button>
+</form>
+</div>
+
+<script>
+    // Placeholder for JavaScript function to perform front-end calculation on input change
+    function calculateRow(inputElement) {
+        // Implement the logic to recalculate the Q-Total and Grand Total based on user input
+        // Example:
+        // let row = inputElement.closest('tr');
+        // let rowInputs = row.querySelectorAll('input[type="number"]');
+        // let grandTotal = 0;
+        // rowInputs.forEach(input => grandTotal += parseFloat(input.value) || 0);
+        // row.querySelector('[data-grand-total]').textContent = grandTotal.toFixed(2);
+    }
+</script>
+
             </div>
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- jQuery (Select2 depends on jQuery) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <!-- Select2 JS CDN -->
- <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <script>
-        // --- Select2 Custom Formatting Functions ---
-
-        // Function to get or generate avatar URL
-        function getAvatarOrPlaceholder(userOption) {
-            // Check if userOption has a direct avatar_url property (common if loaded via AJAX)
-            // or if it has an element (common if loaded from static <option> tags)
-            const avatarUrl = userOption.avatar_url || (userOption.element ? $(userOption.element).data('avatar-url') : null);
-            const initials = userOption.initials || (userOption.element ? $(userOption.element).data('initials') : null);
-            const userName = userOption.text || userOption.id; // Fallback to ID if no text
-
-            if (avatarUrl) {
-                return avatarUrl;
-            } else {
-                // Generate placeholder with initials
-                const fallbackInitials = initials || (userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase() : '?');
-                return `https://placehold.co/28x28/d0c5f3/333333?text=${encodeURIComponent(fallbackInitials)}`;
-            }
-        }
-
-        // Formats options in the dropdown results list
-        function formatUserResult(user) {
-            if (!user.id) {
-                return user.text; // Return original text for placeholder/search input
-            }
-
-            const avatarSrc = getAvatarOrPlaceholder(user);
-            
-            // Create a jQuery object for the option HTML
-            const $container = $(
-                `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
-                    <span>${user.text}</span>
-                </span>`
-            );
-            return $container;
-        }
-
-        // Formats selected items within the Select2 input box
-        function formatUserSelection(user) {
-            if (!user.id) {
-                return user.text; // Return original text for placeholder
-            }
-
-            const avatarSrc = getAvatarOrPlaceholder(user);
-
-            // Create a jQuery object for the selected tag HTML
-            const $container = $(
-                `<span class="d-flex align-items-center">
-                    <img src="${avatarSrc}" class="rounded-circle me-2" alt="${user.text || 'User'} Avatar" height="50px" width="50px" />
-                    <span>${user.text}</span>
-                </span>`
-            );
-            return $container;
-        }
-
-        // --- Select2 Initialization ---
-        $(document).ready(function() {
-            $('#addProjectMembers').select2({
-                placeholder: "Select project members", // Text shown when no items are selected
-                allowClear: true, // Allows clearing all selections
-                templateResult: formatUserResult,    // Function to format dropdown options
-                templateSelection: formatUserSelection, // Function to format selected items
-                // If you are fetching users via AJAX, you would add an 'ajax' configuration here:
-                // ajax: {
-                //     url: '/your-api-endpoint-for-users', // e.g., /api/users-for-select2
-                //     dataType: 'json',
-                //     delay: 250, // Delay in milliseconds before search performs
-                //     data: function (params) {
-                //         return {
-                //             search: params.term, // search term
-                //             page: params.page
-                //         };
-                //     },
-                //     processResults: function (data, params) {
-                //         params.page = params.page || 1;
-                //         return {
-                //             results: data.results, // Assume your API returns { results: [...] }
-                //             pagination: {
-                //                 more: (params.page * 20) < data.total_count // Adjust per your API's pagination
-                //             }
-                //         };
-                //     },
-                //     cache: true
-                // }
-            });
-        });
-</script>
 
    
 @endsection

@@ -3,7 +3,7 @@
     @if((int) $job->user_id === (int) auth()->user()->id)
         @if((int) $job->is_publish != 1 && (int) $job->job_status != 4 && (int) $job->job_status != 3)
             <button type="button" class="btn btn-primary btn-md action-btn"
-                    data-action="publish">Publish</button>
+                    data-action="publish">Publish Job</button>
         @endif
         @if((int) $job->job_status == 4)
             <a href="{{ route('v1.job-assignment-form.edit', ['id' => $job->id])}}"
@@ -11,11 +11,11 @@
         @endif
         @if((int) $job->job_status == 4)
             <button type="button" class="btn btn-danger btn-md action-btn"
-                    data-action="cancel">Cancel</button>
+                    data-action="cancel">Cancel Job</button>
         @endif
         @if((int) $job->job_status != 4 && (int) $job->job_status != 3)
             <button type="button" class="btn btn-warning btn-md action-btn"
-                    data-action="recall">Recall</button>
+                    data-action="recall">Recall Job</button>
         @endif
     @endif
 </div>

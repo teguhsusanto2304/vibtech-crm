@@ -46,7 +46,7 @@
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">Your Sales Forecast</h5>
-                                <a href="{{ route('v1.meeting-minutes.all')}}" class="btn btn_primary mt-auto">View</a>
+                                <a href="{{ route('v1.sales-forecast.list')}}" class="btn btn_primary mt-auto">View</a>
                             </div>
                         </div>
                     </div>

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 use App\Models\Country;
+use App\Models\Individual;
 use App\Models\IndustryCategory;
 use App\Models\ProductCategory;
 use App\Models\User;
@@ -43,6 +44,11 @@ class CommonService
     public function getIndustryCategories()
     {
         return IndustryCategory::orderBy('name','ASC')->get();
+    }
+
+    public function getIndividuallies()
+    {
+        return Individual::orderBy('name','ASC')->get();
     }
 
     public function getProductCategories()

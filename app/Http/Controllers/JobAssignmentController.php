@@ -247,6 +247,7 @@ class JobAssignmentController extends Controller
                 'start_at' => $validated['start_at'],
                 'end_at' => $validated['end_at'],
                 'is_vehicle_require' => $request->boolean('is_vehicle_require'),
+                'is_publish' => $request->filled('job_status') ? 1:0,
                 'user_id' => auth()->id(),
                 'job_status' => $request->filled('job_status'),
             ]);
