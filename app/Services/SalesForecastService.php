@@ -19,88 +19,77 @@ class SalesForecastService
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function storeOld(Request $request)
+    public function store(Request $request)
     {
-        // 1. Validation
+        // 1. Validation (Validation looks correct for all necessary fields)
         $request->validate([
             'year'              => ['required', 'integer', 'min:' . date('Y'), 'max:' . (date('Y') + 5)],
             'currency'          => ['required', 'string', 'max:3'],
             'company'           => ['required', 'string', 'max:255'],
-            // Checkboxes send arrays, so we validate they exist and contain valid IDs
             'individually_ids'  => ['required', 'array', 'min:1'],
-            'individually_ids.*' => ['exists:individuallies,id'], // Ensure all IDs exist
+            'individually_ids.*' => ['exists:individuallies,id'],
             'personnel_ids'     => ['required', 'array', 'min:1'],
-            'personnel_ids.*'   => ['exists:users,id'],          // Ensure all IDs exist
+            'personnel_ids.*'   => ['exists:users,id'],
         ]);
 
-        // Wrap database operations in a transaction for atomicity
         DB::beginTransaction();
         try {
-            // 2. Create the primary SalesForecast record
+            // 2. Create or Retrieve the primary SalesForecast record
             $attr = [
                 'year'       => $request->year,
-                'currency'   => $request->currency,
-                'created_by' => Auth::id(), // Get the ID of the currently authenticated user
-                // 'data_status' will use the default of 1 defined in the model/migration
+                'currency'   => $request->currency, // Changed from hardcoded 'SGD'
+                'created_by' => Auth::id(),
             ];
-            $forecast = SalesForecast::where($attr)->first();
-            if($forecast == NULL){                
-                $forecast = SalesForecast::create($attr);
-            }
+            $forecast = SalesForecast::firstOrCreate($attr); // Cleaner way to handle first() or create()
 
-            // 3. Attach relationships (using the BelongsToMany methods on the model)
+            // 3. Attach relationships
 
-            // 3a. Attach Individually Types (using the salesForecasts relationship on the Individual model or the inverse)
-            // Assuming you have the 'individuals' relationship set up on the SalesForecast model
+            // 3a. Attach Individually Types to SalesForecast
             $individuallyIds = array_unique($request->individually_ids);
             $syncData = [];
 
-            // Structure the data for the sync method, setting the 'company' field for each ID
-            foreach ($individuallyIds as $id) {
-                // The key is the Individual ID, and the value is the array of pivot data
-                $individually = [
-                    'sales_forecasts_id' => $forecast->id,
-                    'individually_id' => $id,
+            foreach ($individuallyIds as $individualId) {
+                $syncData[$individualId] = [
                     'company' => $request->company,
                     'currency' => $request->currency
                 ];
-                SalesForecastIndividually::create($individually);
             }
-
             
+            // This attaches or updates the 'sales_foreacast_individuallies' records.
+            // It returns an array containing IDs of attached/updated records.
+            $syncResult = $forecast->individuals()->syncWithoutDetaching($syncData);
 
-            // 3b. Attach Personnel (Users)
-            // Assuming you have the 'personalAssigned' relationship set up on the SalesForecast model
+            // -----------------------------------------------------------------------
+            // 3b. Attach Personnel to the newly created/updated SalesForecastIndividuals
+            // -----------------------------------------------------------------------
+            
+            $syncedIndividualIds = array_merge($syncResult['attached'], $syncResult['updated']);
+
+            $sfIndividuals = SalesForecastIndividually::whereIn('individually_id', $syncedIndividualIds)
+                                                ->where('sales_forecasts_id', $forecast->id)
+                                                ->get();
+
             $personnelIds = array_unique($request->personnel_ids);
-            
-            foreach ($personnelIds as $id) {
-                // The key is the Individual ID, and the value is the array of pivot data
-                $personals = [
-                    'sales_forecasts_id' => $forecast->id,
-                    'individually_id' => $id,
-                    'company' => $request->company,
-                    'currency' => $request->currency
-                ];
-                SalesForecastPersonal::create($personals);
+
+            // Loop through each relevant SalesForecastIndividual record
+            foreach ($sfIndividuals as $sfIndividual) {
+                $sfIndividual->personalAssigned()->syncWithoutDetaching($personnelIds);
             }
 
             DB::commit();
 
-            // Redirect with success message
             return redirect()
-                ->route('v1.sales-forecast')
-                ->with('success', 'Sales Forecast for ' . $forecast->company . ' successfully created.');
+                ->route('v1.sales-forecast.list')
+                ->with('success', 'Sales Forecast successfully created and personnel assigned.');
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Log the error for debugging
             \Log::error('Sales Forecast creation failed: ' . $e->getMessage());
 
-            // Redirect back with an error message
             return back()
                 ->withInput()
-                ->with('error', 'An error occurred while creating the Sales Forecast. Please try again.'.$e->getMessage());
+                ->with('error', 'An error occurred while creating the Sales Forecast: ' . $e->getMessage());
         }
     }
     /**
@@ -109,7 +98,7 @@ class SalesForecastService
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function storeOld(Request $request)
     {
         // 1. Validation
         $request->validate([
@@ -170,7 +159,7 @@ class SalesForecastService
 
             // Redirect with success message
             return redirect()
-                ->route('v1.sales-forecast')
+                ->route('v1.sales-forecast.list')
                 ->with('success', 'Sales Forecast for ' . $forecast->company . ' successfully created.');
 
         } catch (\Exception $e) {
@@ -206,6 +195,20 @@ class SalesForecastService
 
         $individuals = $forecast->individuals()
             ->where('sales_foreacast_individuallies.data_status', 1)
+            ->with([
+        // Assuming 'pivot' refers to the SalesForecastIndividual model instance
+        // You need to ensure your 'individuals()' relationship uses ->using() to 
+        // return the pivot data as a Model instance, or adjust the query below.
+        
+        // The most direct way is to eager load the personnel on the pivot object itself.
+        // Eloquent often requires specific setup for this. The cleaner approach is below:
+
+        // Load the personnel assigned to each pivot record.
+        'pivot.personalAssigned' => function ($query) {
+             // You can select only the name if desired
+             $query->select('users.id', 'users.name'); 
+        }
+    ])
             ->orderBy('individually_id','ASC')
             ->get();
         $groupedIndividuals = $individuals->groupBy('name');

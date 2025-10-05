@@ -104,7 +104,8 @@
         <thead>
             <tr>
                 <th rowspan="3" class="variable-col" style="width: 300px;">Variable</th>
-                <th rowspan="3" class="variable-col" style="width: 250px;">Company</th> 
+                <th rowspan="3" class="variable-col" style="width: 250px;">Company</th>
+                <th rowspan="3" class="variable-col" style="width: 250px;">Viewer</th> 
                 @foreach ($quarters as $qName => $months)
                     {{-- Colspan is now the number of months + 1 for the Quarter Total --}}
                     <th colspan="{{ count($months) + 1 }}">{{ $qName }}</th>

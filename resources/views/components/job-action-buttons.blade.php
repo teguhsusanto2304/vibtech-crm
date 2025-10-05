@@ -7,7 +7,7 @@
         @endif
         @if((int) $job->job_status == 4)
             <a href="{{ route('v1.job-assignment-form.edit', ['id' => $job->id])}}"
-                class="btn btn-success">Edit</a>
+                class="btn btn-success">Edit Job</a>
         @endif
         @if((int) $job->job_status == 4)
             <button type="button" class="btn btn-danger btn-md action-btn"

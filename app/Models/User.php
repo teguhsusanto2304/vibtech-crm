@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -107,6 +108,16 @@ class User extends Authenticatable
         $initials = $this->initials; // Access the initials accessor
         $placeholderUrl = 'https://placehold.co/45x45/d0c5f3/333333?text=' . urlencode($initials);
         return $placeholderUrl;
+    }
+
+    public function salesForecastIndividuals(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SalesForecastIndividually::class, // The related model
+            'sales_forecast_individual_personals', // The name of the pivot table
+            'personal_id', // The foreign key on the pivot table for THIS model (User)
+            'sf_individual_id' // The foreign key on the pivot table for the RELATED model (SalesForecastIndividual)
+        );
     }
 
     

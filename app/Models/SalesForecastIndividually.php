@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 // ADDED: Import the related models used in the relationships
 use App\Models\SalesForecast; 
@@ -55,5 +56,18 @@ class SalesForecastIndividually extends Pivot
     public function individual(): BelongsTo
     {
         return $this->belongsTo(Individual::class, 'individually_id');
+    }
+
+    /**
+     * Get the personnel (users) assigned to this specific forecast item.
+     */
+    public function personalAssigned(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class, // The related model
+            'sales_forecast_individual_personals', // The name of the pivot table
+            'sf_individual_id', // The foreign key on the pivot table for THIS model (SalesForecastIndividual)
+            'personal_id' // The foreign key on the pivot table for the RELATED model (User)
+        );
     }
 }

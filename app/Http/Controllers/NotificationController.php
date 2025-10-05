@@ -23,7 +23,9 @@ class NotificationController extends Controller
        $notifications = DatabaseNotification::where('notifiable_id', Auth::id())
         ->where(function ($query) {
             $query->where('data', 'LIKE', '%"message":"%management-memo%"%')
-                ->orWhere('data', 'LIKE', '%"message":"%employee-handbooks%"%');
+                ->orWhere('data', 'LIKE', '%"message":"%employee-handbooks%"%')
+                ->orWhere('data', 'LIKE', '%"message":"%job-assignment-form%"%')
+                ->orWhere('data', 'LIKE', '%"message":"%submit-claims%"%');
         })
         ->whereNull('read_at')
         ->orderBy('created_at', 'desc')

@@ -70,7 +70,7 @@
                      <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="claimAmount" class="form-label">Claim Title:</label>
-                            <textarea class="form-control" id="description" name="description" readonly>@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
+                            <textarea class="form-control" id="description" name="description" @if(!is_null($dataClaim)) readonly @endif>@if(!is_null($dataClaim)) {{ $dataClaim->description }} @endif</textarea>
                         </div>
                         @if(!is_null($dataClaim))
                         <div class="col-md-5">
