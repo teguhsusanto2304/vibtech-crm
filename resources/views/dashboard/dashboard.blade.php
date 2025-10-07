@@ -281,7 +281,7 @@
                                                     type="button" data-bs-toggle="collapse" 
                                                     data-bs-target="#collapse-general" 
                                                     aria-expanded="false" aria-controls="collapse-general">
-                                                    <i class="fas fa-bell me-2"></i> General Notifications
+                                                    <i class="fas fa-bell me-2"></i> Submit Claim
                                                 </button>
                                             </h2>
                                             <div id="collapse-general" class="accordion-collapse collapse" 
@@ -304,7 +304,7 @@
                                                     type="button" data-bs-toggle="collapse" 
                                                     data-bs-target="#collapse-general" 
                                                     aria-expanded="false" aria-controls="collapse-general">
-                                                    <i class="fas fa-bell me-2"></i> General Notifications
+                                                    <i class="fas fa-bell me-2"></i> Job Requisition
                                                 </button>
                                             </h2>
                                             <div id="collapse-general" class="accordion-collapse collapse" 

@@ -16,9 +16,10 @@ return new class extends Migration
             $table->foreignId('sf_individual_id')
                   ->constrained('sales_foreacast_individuallies') // Assumes your main table is 'sales_forecasts'
                   ->onDelete('cascade');
-
+            $table->string('company',100);
             $table->integer('sales_forecast_month'); 
             $table->integer('sales_forecast_year'); 
+            $table->string('sales_forecast_currency',3);
 
             // The actual forecast amount (using decimal for currency)
             $table->decimal('amount', 15, 2)->default(0.00);

@@ -47,4 +47,14 @@ class SalesForecastController extends Controller
         return $this->salesForecastService->save($request);   
     }
 
+    public function storeVariable(Request $request)
+    {
+        return $this->salesForecastService->storeVariable($request);  
+    }
+
+    public function addCompany(Request $request)
+    {
+         return $this->salesForecastService->addCompany($request);  
+    }
+
 }

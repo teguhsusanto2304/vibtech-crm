@@ -15,7 +15,7 @@ class SalesForecastPersonal extends Model
      *
      * @var string
      */
-    protected $table = 'sales_foreacast_personals';
+    protected $table = 'sales_forecast_personals';
 
     /**
      * The attributes that are mass assignable.

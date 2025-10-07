@@ -41,12 +41,12 @@ class SalesForecast extends Model
     {
         return $this->belongsToMany(
             User::class,                     // 1. The related model
-            'sales_foreacast_personals',     // 2. The pivot table name (from your migration)
+            'sales_forecast_personals',     // 2. The pivot table name (from your migration)
             'sales_forecasts_id',            // 3. Foreign key on the pivot table for THIS model (SalesForecast)
             'personal_id'                    // 4. Foreign key on the pivot table for the RELATED model (User)
         )
         // Include any pivot columns needed for storage/retrieval
-        ->withPivot('data_status','company'); 
+        ->withPivot('data_status','personal_id'); 
     }
 
 
@@ -59,6 +59,6 @@ class SalesForecast extends Model
             'individually_id'
         )
         ->using(SalesForecastIndividually::class) // <-- Use the custom pivot model
-        ->withPivot('company','individually_id','id','currency'); // <-- Make the 'company' field available
+        ->withPivot('individually_id','id'); // <-- Make the 'company' field available
     }
 }

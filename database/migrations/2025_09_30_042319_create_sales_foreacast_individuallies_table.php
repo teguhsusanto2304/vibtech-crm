@@ -13,10 +13,8 @@ return new class extends Migration
     {
         Schema::create('sales_foreacast_individuallies', function (Blueprint $table) {
             $table->id();
-            $table->string('company',100);
             $table->foreignId('sales_forecasts_id')->constrained('sales_forecasts');
             $table->foreignId('individually_id')->constrained('individuallies')->onDelete('cascade');
-            $table->string('currency', 3); 
             $table->integer('data_status')->default(1);
             $table->timestamps();
         });

@@ -242,17 +242,7 @@
                             <label for="projectStartDate" class="form-label">Forecast Year</label>
                             <input type="number" name="year" id="year" class="form-control" min="{{ date('Y') }}" max="{{ date('Y')+5 }}" value="{{ date('Y') }}">
                         </div>
-                        <div class="col-md-4">
-                            <label for="projectStartDate" class="form-label">Currency</label>
-                            <select name="currency" id="currency" class="form-control" >
-                                <option value="SGD">Singapore Dollar</option>
-                                <option value="MYR">Malaysia Ringgit</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="projectStartDate" class="form-label">Company</label>
-                            <input type="text" name="company" id="company" class="form-control" >
-                        </div>                        
+                                                
                         
                     </div>
                     

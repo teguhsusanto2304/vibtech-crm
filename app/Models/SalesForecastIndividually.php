@@ -31,8 +31,6 @@ class SalesForecastIndividually extends Pivot
     protected $fillable = [
         'sales_forecasts_id',
         'individually_id',
-        'company',
-        'currency',
         'data_status',
     ];
     
@@ -67,7 +65,6 @@ class SalesForecastIndividually extends Pivot
             User::class, // The related model
             'sales_forecast_individual_personals', // The name of the pivot table
             'sf_individual_id', // The foreign key on the pivot table for THIS model (SalesForecastIndividual)
-            'personal_id' // The foreign key on the pivot table for the RELATED model (User)
         );
     }
 }

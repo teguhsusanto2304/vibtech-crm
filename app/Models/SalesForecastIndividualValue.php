@@ -26,6 +26,8 @@ class SalesForecastIndividualValue extends Model
         'sf_individual_id',
         'sales_forecast_month',
         'sales_forecast_year',
+        'company',
+        'sales_forecast_currency',
         'amount',
         'data_type',
     ];

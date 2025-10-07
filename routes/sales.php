@@ -23,6 +23,8 @@ Route::prefix('v1')->group(function () {
             Route::get('/create', 'create')->name('v1.sales-forecast.create');
             Route::post('/store', 'store')->name('v1.sales-forecast.store');
             Route::post('/save', 'save')->name('v1.sales-forecast.save');
+            Route::post('/add-variable','storeVariable')->name('v1.sales-forecast.add-variable');
+            Route::post('/add-company','addCompany')->name('v1.sales-forecast.add-company');
             
         });
     });
