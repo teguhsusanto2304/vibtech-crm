@@ -8,7 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -110,14 +110,18 @@ class User extends Authenticatable
         return $placeholderUrl;
     }
 
-    public function salesForecastIndividuals(): BelongsToMany
+    /**
+     * Get the sales forecasts associated with the user.
+     * The method assumes the foreign key 'personal_id' links to this user's 'id'.
+     *
+     * @return HasMany
+     */
+    public function salesForecasts(): HasMany
     {
-        return $this->belongsToMany(
-            SalesForecastIndividually::class, // The related model
-            'sales_forecast_individual_personals', // The name of the pivot table
-            'personal_id', // The foreign key on the pivot table for THIS model (User)
-            'sf_individual_id' // The foreign key on the pivot table for the RELATED model (SalesForecastIndividual)
-        );
+        // Parameter 1: The related model
+        // Parameter 2: The foreign key on the SalesForecastPersonal table (personal_id)
+        // Parameter 3: The local key on the User table (id)
+        return $this->hasMany(SalesForecastPersonal::class, 'personal_id', 'id');
     }
 
     

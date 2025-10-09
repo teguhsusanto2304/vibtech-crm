@@ -9,9 +9,144 @@ use App\Models\SalesForecastPersonal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class SalesForecastService
 {
+    public function reviewDetail($id)
+    {
+        
+        $forecast = SalesForecast::find($id); // Assuming you fetch a single master forecast
+
+        if ($forecast === null) {
+             return redirect()
+                ->route('v1.sales-forecast.create')
+                ->with('success', 'Could you create your sales forecast first');
+        } else {
+            // The forecast object exists.
+            $forecastId = $forecast->id;
+        }
+
+        $individuals = $forecast->individuals()
+            ->where('sales_foreacast_individuallies.data_status', 1)
+            ->with([])
+            ->orderBy('individually_id','ASC')
+            ->get();
+        $groupedIndividuals = $individuals->groupBy('name');
+
+        // 2. Fetch the existing forecast data efficiently
+        // This assumes you have a way to link the sales forecast values back to the individuals
+        // For simplicity, we'll assume a single SalesForecast record is being viewed/edited.
+        
+        // Find or create the master SalesForecast record (for headers)
+        
+
+        // Get all monthly values tied to this forecast record
+        // This assumes the MonthlyForecastValue model exists (as described above)
+        $forecastValues = SalesForecastIndividualValue::with(['salesForecastIndividual'])
+            // Query the *parent* relationship records to filter by the master forecast ID
+            ->whereHas('salesForecastIndividual', function ($query) use ($forecastId) {
+                $query->where('sales_forecasts_id', $forecastId);
+            })
+            ->get()
+            
+            // 3. Generate the key using the individual ID from the loaded relationship 
+            //    and the year/month from the current model.
+            ->keyBy(function ($item) {
+                return str_replace(' ','',strtolower($item->company)).'_'.$item->sf_individual_id.'_'.$item->sales_forecast_month;
+            });
+
+
+        // Generate the complex header structure (Months/Quarters)
+        $quarters = [
+            'Q1' => ['January', 'February', 'March'],
+            'Q2' => ['April', 'May', 'June'],
+            'Q3' => ['July', 'August', 'September'],
+            'Q4' => ['October', 'November', 'December'],
+            // Add Q4 if needed
+        ];
+
+        return view('sales.sales_forecast.result_review', compact('forecast','forecastId','groupedIndividuals', 'forecastValues', 'quarters'))->with('title', 'Sales Forecast Review')->with('breadcrumb', ['Home', 'Sales','Sales Forecast','Review']);
+    }
+
+    public function getSalesForecastData(Request $request)
+    {
+        $query = SalesForecast::with(['creator', 'personalAssigned'])
+            ->withCount('individuals')
+            ->withCount([
+        'individuals as distinct_companies_count' => function ($q) {
+            // Alias for the sales_foreacast_individuallies table
+            $pivotTable = 'sales_foreacast_individuallies'; 
+            
+            // Alias for the sales_forecast_individual_values table
+            $valuesTable = 'sales_forecast_individual_values'; 
+            
+            // Alias for the 'individuals' table, which is the table $q is currently querying (the pivot)
+            $pivotAlias = $q->getModel()->getTable(); 
+
+            // 1. Join the individuals pivot table (which $q is on) to the values table
+            $q->leftJoin($valuesTable, 
+                        "{$valuesTable}.sf_individual_id", '=', "{$pivotTable}.id") 
+              
+              // 2. Select the count of DISTINCT company IDs from the values table
+              // Note: The 'company' column stores the company ID/name.
+              ->selectRaw("COUNT(DISTINCT {$valuesTable}.company)");
+        }
+    ])
+            ->whereHas('personalAssigned', function ($q) {
+                // Filter the SalesForecasts to only include those 
+                // where the current user is assigned.
+                $q->where('personal_id', auth()->user()->id);
+                //$q->where('personal_id', 2);
+            });
+            if ($request->filled('filter_year')) {
+                $query->where('year', $request->input('filter_year'));
+            }
+
+        // 2. Use DataTables to process the query
+        return DataTables::of($query)
+            
+            // 3. Add any custom columns (e.g., action buttons, formatted data)
+            ->addColumn('action', function ($salesForecast) {
+                // Example action buttons. Adjust as needed.
+                return '<a href="'.route('v1.sales-forecast.review-detail', ['id' => $salesForecast->id]).'" class="btn btn-sm btn-info">View</a>';
+            })
+            
+            // 4. Format the creator name
+            ->addColumn('created_by_name', function ($salesForecast) {
+                // Uses the eager-loaded 'creator' relationship
+                return $salesForecast->creator->name ?? 'N/A'; 
+            })
+
+            // 5. Specify columns that are safe for searching/ordering 
+            // This is crucial if you want to search/order on relationships.
+            ->filter(function ($query) use ($request) {
+                if ($request->has('search') && !empty($request->input('search')['value'])) {
+                    $searchValue = $request->input('search')['value'];
+                    $query->where(function ($q) use ($searchValue) {
+                        $q->where('year', 'like', "%{$searchValue}%");
+                        // You can add more complex relationship searches here if needed
+                    });
+                }
+            })
+            ->addColumn('individuals_count', function ($salesForecast) {
+                // Access the attribute added by withCount
+                return $salesForecast->individuals_count; 
+            })
+            ->addColumn('distinct_companies_count', function ($salesForecast) {
+                // Access the attribute added by withCount
+                return floor($salesForecast->distinct_companies_count/12); 
+            })
+
+            // 6. Make the DataTables response
+            ->rawColumns(['action','individuals_count','distinct_companies_count']) // Tell DataTables that the 'action' column contains HTML
+            ->make(true);
+    }
+
+    public function salesForecastReviews(Request $request)
+    {
+        return view('sales.sales_forecast.list')->with('title', 'Sales Forecast Review')->with('breadcrumb', ['Home', 'Sales','Sales Forecast','Review']);
+    }
 
     /**
      * Store a newly created sales forecast in storage.
@@ -134,8 +269,7 @@ class SalesForecastService
 
         $individuals = $forecast->individuals()
             ->where('sales_foreacast_individuallies.data_status', 1)
-            ->with([
-    ])
+            ->with([])
             ->orderBy('individually_id','ASC')
             ->get();
         $groupedIndividuals = $individuals->groupBy('name');

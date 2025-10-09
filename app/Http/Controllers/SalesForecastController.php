@@ -57,4 +57,19 @@ class SalesForecastController extends Controller
          return $this->salesForecastService->addCompany($request);  
     }
 
+    public function review(Request $request)
+    {
+        return $this->salesForecastService->salesForecastReviews($request);
+    }
+
+    public function getSalesForecastData(Request $request)
+    {
+        return $this->salesForecastService->getSalesForecastData($request);
+    }
+
+    public function reviewDetail($id)
+    {
+        return $this->salesForecastService->reviewDetail($id);
+    }
+
 }

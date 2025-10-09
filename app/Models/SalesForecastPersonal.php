@@ -45,6 +45,6 @@ class SalesForecastPersonal extends Model
     public function personal(): BelongsTo
     {
         // Assumes the User model is in App\Models\User
-        return $this->belongsTo(User::class, 'personal_id');
+        return $this->belongsTo(User::class, 'personal_id','id');
     }
 }

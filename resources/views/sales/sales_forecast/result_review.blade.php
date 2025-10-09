@@ -105,8 +105,7 @@
             max-width: 100%;
         }
     </style>
-<div > 
-<form method="GET" action="{{ route('v1.sales-forecast.list') }}">
+<div class=""> 
     @php
     // --- MOCK DATA FOR NEW HEADER INFO (Replace these with actual data passed from your controller) ---
     // Example: $salesForecastModel->creator->name
@@ -120,8 +119,8 @@
     <!-- Sales Forecast Header Information -->
         <div class="row">
             <div class="col-12 mb-3">
-                <a href="{{ route('v1.sales-forecast') }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-arrow-left me-2"></i> Back to Main Menu
+                <a href="{{ route('v1.sales-forecast.review') }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Sales Forecast List
                 </a>
             </div>
         </div>
@@ -132,7 +131,7 @@
                         <!-- Sales Forecast Year -->
                         <div class="col-md-4 mb-3 mb-md-0">
                             <p class="mb-1 text-muted small"><i class="fas fa-calendar-alt me-2 text-info"></i>SALES FORECAST YEAR</p>
-                            <h4 class="text-primary font-bold">{{ $year }}</h4>
+                            <h4 class="text-primary font-bold">{{ $forecast->year }}</h4>
                         </div>
                         
                         <!-- Created by -->
@@ -157,31 +156,13 @@
         </div>
         <!-- End Sales Forecast Header Information -->
     
-    <div class="row mb-3">
-                        <div class="col-md-2">
-                            <label for="projectStartDate" class="form-label">Forecast Year</label>
-                            <input type="number" name="year" id="year" class="form-control" min="{{ date('Y')-5 }}" max="{{ date('Y')+5 }}" value="{{ $year }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="projectStartDate" class="form-label invisible">Create Forecast Year</label>
-                            <button type="submit" class="btn btn-info">Search</a>
-                        </div>
-                        
-    </div>
-</form>
-<form method="POST" action="{{ route('v1.sales-forecast.save') }}">
-    <input type="hidden" name="year" value="{{ $year }}">
-    @csrf
+
+
     <div class="table-responsive-scroll">
-    <table>
+    <table >
         <thead>
             <tr>
-                <th rowspan="2" class="variable-col variable-col-header">Variable</th>
-                <th rowspan="2" class="variable-col variable-col-header"><button type="button" class="btn btn-sm btn-primary ms-2"
-                        data-bs-toggle="modal" data-bs-target="#addVariableModal">
-                    Add Variable
-                </button>
-                
+                <th rowspan="2" colspan="2" class="variable-col variable-col-header text-center">Variable</th>         
             </th>
                 @foreach ($quarters as $qName => $months)
                     {{-- Colspan is now the number of months + 1 for the Quarter Total --}}
@@ -276,14 +257,7 @@
                         {{ $individualName }}
                     </td>
                     <td class="variable-col" rowspan="{{ $rowspanCount  }}" colspan="17">
-                        <button type="button" class="btn btn-sm btn-secondary ms-2"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#addCompanyModal"
-                            data-individual-id="{{ $individual->id }}"
-                            data-sf-individual-id="{{ $individual->pivot->id }}"
-                            data-individual-name="{{ $individualName }}">
-                            Add Company
-                        </button>
+                        
                     </td>
                     @php $firstRow = false; @endphp
                 @endif
@@ -335,14 +309,8 @@
                             }
                         @endphp
                         {{-- ... (Your Input Field HTML remains the same) ... --}}
-                        <td>
-                            <input 
-                                type="number" 
-                                class="input-field" 
-                                name="forecast[{{ $individual->pivot->id }}][{{ $key.'_'.$iMonth }}][amount]" 
-                                value="{{ number_format($savedValue, 2, '.', '') }}" 
-                                step="0.01" 
-                            >
+                        <td style="text-align: right; padding-right: 5px;">{{ number_format($savedValue, 2) }}
+                            
                         </td>
                     @endforeach
                     
@@ -449,9 +417,6 @@
 </tbody>
     </table>
     </div>
-    
-    <button type="submit" class="btn btn-primary mt-3">Save Forecast</button>
-</form>
 </div>
 
 <!-- This modal should be defined once outside your main data loop -->

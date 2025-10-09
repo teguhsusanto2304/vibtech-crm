@@ -25,6 +25,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/save', 'save')->name('v1.sales-forecast.save');
             Route::post('/add-variable','storeVariable')->name('v1.sales-forecast.add-variable');
             Route::post('/add-company','addCompany')->name('v1.sales-forecast.add-company');
+            Route::get('/review','review')->name('v1.sales-forecast.review');
+            Route::get('/{id}/review-detail}','reviewDetail')->name('v1.sales-forecast.review-detail');
+            Route::get('/data','getSalesForecastData')->name('v1.sales-forecast.data');
             
         });
     });
