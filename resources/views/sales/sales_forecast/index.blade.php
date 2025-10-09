@@ -52,7 +52,7 @@
                     </div>
                    @endcan
 
-                   @can('view-sales-forecast')
+                   @can('review-sales-forecast')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
