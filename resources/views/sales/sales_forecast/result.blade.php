@@ -4,6 +4,7 @@
 
 @section('content')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
     .claim-type-group {
             display: grid;
@@ -492,6 +493,7 @@
                     <button type="submit" class="btn btn-primary bg-indigo-600 hover:bg-indigo-700 text-white" id="saveCompanyBtn">Save Company</button>
                 </div>
             </form>
+            
         </div>
     </div>
 </div>
@@ -732,6 +734,103 @@ document.addEventListener('DOMContentLoaded', function () {
         // rowInputs.forEach(input => grandTotal += parseFloat(input.value) || 0);
         // row.querySelector('[data-grand-total]').textContent = grandTotal.toFixed(2);
     }
+</script>
+@php
+$chartLabels = collect($quarters)->flatMap(fn($months) => array_keys($months))->toArray();
+
+// Filter and prepare the data arrays for JavaScript
+// Note: $tableMonthTotals_SGD and $tableMonthTotals_MYR are indexed 1 to 12.
+$chartDataSGD = array_values(array_filter($tableMonthTotals_SGD, fn($k) => is_int($k) && $k >= 1 && $k <= 12, ARRAY_FILTER_USE_KEY));
+$chartDataMYR = array_values(array_filter($tableMonthTotals_MYR, fn($k) => is_int($k) && $k >= 1 && $k <= 12, ARRAY_FILTER_USE_KEY));
+
+// Convert PHP arrays to JSON for JavaScript
+$chartLabelsJson = json_encode($chartLabels);
+$chartDataSGDJson = json_encode($chartDataSGD);
+$chartDataMYRJson = json_encode($chartDataMYR);
+@endphp
+<div class="row mb-4">
+            <div class="col-12">
+                <div class="card p-4 shadow-sm">
+                    <h5 class="card-title">Monthly Forecast Trend ({{ $forecast->year }})</h5>
+                    <div style="height: 350px;"> 
+                        <canvas id="monthlyForecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Retrieve data passed from PHP Blade
+        const labels = {!! $chartLabelsJson !!};
+        const dataSGD = {!! $chartDataSGDJson !!};
+        const dataMYR = {!! $chartDataMYRJson !!};
+
+        const ctx = document.getElementById('monthlyForecastChart');
+
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line', // The type of chart
+                data: {
+                    labels: labels, // Month names for the X-axis
+                    datasets: [
+                        {
+                            label: 'Total SGD Forecast',
+                            data: dataSGD,
+                            borderColor: 'rgba(25, 118, 210, 1)', // Blue color for SGD
+                            backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                            fill: false,
+                            tension: 0.2, // Smoother line
+                        },
+                        {
+                            label: 'Total MYR Forecast',
+                            data: dataMYR,
+                            borderColor: 'rgba(255, 152, 0, 1)', // Orange color for MYR
+                            backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                            fill: false,
+                            tension: 0.2,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allows setting a custom height/width via CSS
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        // Format the number to currency style
+                                        label += new Intl.NumberFormat('en-US', { 
+                                            style: 'currency', 
+                                            currency: context.dataset.label.includes('SGD') ? 'SGD' : 'MYR' 
+                                        }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
 </script>
 
             </div>

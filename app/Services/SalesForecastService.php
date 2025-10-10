@@ -96,8 +96,8 @@ class SalesForecastService
             ->whereHas('personalAssigned', function ($q) {
                 // Filter the SalesForecasts to only include those 
                 // where the current user is assigned.
-                $q->where('personal_id', auth()->user()->id);
-                //$q->where('personal_id', 2);
+                //$q->where('personal_id', auth()->user()->id);
+                $q->where('personal_id', 2);
             });
             if ($request->filled('filter_year')) {
                 $query->where('year', $request->input('filter_year'));
