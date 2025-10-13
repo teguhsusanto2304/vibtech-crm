@@ -3,76 +3,9 @@
 @section('title', 'Dashboard')
 
 @section('content')
-@php
-            $tableQuarterTotals_SGD = [];
-            $tableQuarterTotals_MYR = [];
-            $tableMonthTotals_SGD = [];
-            $tableMonthTotals_MYR = [];
-            $tableGrandTotal_SGD = 0;
-            $tableGrandTotal_MYR = 0;
-            $totalGrand[] = 0;
-
-            foreach ($quarters as $qName => $months) {
-                $tableQuarterTotals_SGD[$qName] = 0;
-                $tableQuarterTotals_MYR[$qName] = 0;
-                foreach ($months as $monthName) {
-                    $tableMonthTotals_SGD[] = 0;
-                    $tableMonthTotals_MYR[] = 0;
-                }
-            }
-        @endphp
-
-        {{-- Only Quarter Total per Variable --}}
-        @foreach ($groupedIndividuals as $individualName => $individualsInGroup)
-            @php
-                $variableQuarterTotals_SGD = [];
-                $variableQuarterTotals_MYR = [];
-                $totalGrand[$individualName] =0;
-                foreach ($quarters as $qName => $months) {
-                    $variableQuarterTotals_SGD[$qName] = 0;
-                    $variableQuarterTotals_MYR[$qName] = 0;
-                }
-
-                // Loop to calculate totals
-                foreach ($individualsInGroup as $individual) {
-                    $sfIndividualValues = \App\Models\SalesForecastIndividualValue::where('sf_individual_id', $individual->pivot->id)->distinct('company')->pluck('company');
-                    foreach ($sfIndividualValues as $companyName) {
-                        $key = str_replace(' ','',strtolower($companyName)).'_'.$individual->pivot->id;
-                        $sf_currency = $forecastValues->get($key.'_1')->sales_forecast_currency ?? 'N/A';
-                        $iMonth = 0;
-                        
-
-                        foreach ($quarters as $qName => $months) {
-                            $quarterTotal = 0;
-                            foreach ($months as $monthName) {
-                                $iMonth++;
-                                $savedValue = $forecastValues->get($key.'_'.$iMonth)->amount ?? 0;
-                                $quarterTotal += $savedValue;
-
-                                if ($sf_currency == 'SGD') {
-                                    $variableQuarterTotals_SGD[$qName] += $savedValue;
-                                    $tableQuarterTotals_SGD[$qName] += $savedValue;
-                                } elseif ($sf_currency == 'MYR') {
-                                    $variableQuarterTotals_MYR[$qName] += $savedValue;
-                                    $tableQuarterTotals_MYR[$qName] += $savedValue;
-                                }
-                            }
-                        }
-                    }
-                }
-            @endphp
-                @foreach ($quarters as $qName => $months)
-                     @php
-                        $totalQuarter[$individualName][$qName] = $variableQuarterTotals_SGD[$qName] + $variableQuarterTotals_MYR[$qName];
-                        $totalGrand[$individualName] += $variableQuarterTotals_SGD[$qName] + $variableQuarterTotals_MYR[$qName];
-                     @endphp                    
-                @endforeach    
-                        
-        @endforeach
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
-    
     .claim-type-group {
             display: grid;
             grid-template-columns: 1fr; /* Default to single column on small screens */
@@ -84,88 +17,8 @@
                 grid-template-columns: repeat(2, 1fr); /* Force exactly 2 equal columns on medium screens and up */
             }
         }
-        </style>
-        <style>
-            <style>
-        table { 
-            border-collapse: collapse; 
-            font-family: 'Inter', Arial, sans-serif; 
-            table-layout: fixed; 
-            width: 100%; /* Ensure the table fills its container */
-        }
-        th, td { 
-            border: 1px solid #ccc; 
-            padding: 8px 4px; 
-            text-align: center; 
-            overflow: hidden; /* Prevent content overflow from expanding cells */
-            text-overflow: ellipsis; /* Optional: Show '...' if content is cut off */
-            white-space: nowrap; /* Optional: Prevent wrapping in narrow cells */
-        }
-        thead th { 
-            background-color: #e5e7eb; /* Light gray */
-            font-weight: bold; 
-        }
-        .variable-col { 
-            text-align: left; 
-            background-color: #f8f9fa; 
-        }
-        .variable-col-header {
-            width: 500px; /* Explicit width will now be honored */
-        }
-        .input-field { 
-            width: 100%; 
-            height: 30px;
-            text-align: right; 
-            border: none; 
-            padding: 2px;
-            box-sizing: border-box;
-        }
-        .table-responsive-scroll {
-            overflow-x: auto; 
-            max-width: 100%;
-        }
 
-.forecast-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 13px;
-    text-align: right;
-}
-.forecast-table th, .forecast-table td {
-    border: 1px dashed #666;
-    padding: 4px 6px;
-    vertical-align: middle;
-}
-.forecast-table thead th {
-    text-align: center;
-    background-color: #f2f2f2;
-    font-weight: bold;
-}
-.forecast-table td.variable-col {
-    text-align: left;
-    font-weight: bold;
-    background-color: #fafafa;
-}
-.forecast-table td[data-quarter-total] {
-    font-weight: bold;
-    color: #b30000;
-    background-color: #fff7f7;
-}
-.forecast-table tr:nth-child(even) td {
-    background-color: #fbfbfb;
-}
-.forecast-table td input {
-    width: 100%;
-    border: none;
-    text-align: right;
-    background: transparent;
-}
-.forecast-table td input:focus {
-    outline: none;
-    background-color: #fff;
-    border: 1px solid #007bff;
-}
-</style>
+                        </style>
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="row">
             <!-- custom-icon Breadcrumb-->
@@ -212,6 +65,47 @@
         @endif
         <div class="card">
             <div class="card-body">
+                <style>
+    <style>
+        /* CRITICAL FIX: Forces the browser to honor explicit column widths */
+        table { 
+            border-collapse: collapse; 
+            font-family: 'Inter', Arial, sans-serif; 
+            table-layout: fixed; 
+            width: 100%; /* Ensure the table fills its container */
+        }
+        th, td { 
+            border: 1px solid #ccc; 
+            padding: 8px 4px; 
+            text-align: center; 
+            overflow: hidden; /* Prevent content overflow from expanding cells */
+            text-overflow: ellipsis; /* Optional: Show '...' if content is cut off */
+            white-space: nowrap; /* Optional: Prevent wrapping in narrow cells */
+        }
+        thead th { 
+            background-color: #e5e7eb; /* Light gray */
+            font-weight: bold; 
+        }
+        .variable-col { 
+            text-align: left; 
+            background-color: #f8f9fa; 
+        }
+        .variable-col-header {
+            width: 500px; /* Explicit width will now be honored */
+        }
+        .input-field { 
+            width: 100%; 
+            height: 30px;
+            text-align: right; 
+            border: none; 
+            padding: 2px;
+            box-sizing: border-box;
+        }
+        .table-responsive-scroll {
+            overflow-x: auto; 
+            max-width: 100%;
+        }
+    </style>
 <div > 
 <form method="GET" action="{{ route('v1.sales-forecast.list') }}">
     @php
@@ -280,7 +174,7 @@
     <input type="hidden" name="year" value="{{ $year }}">
     @csrf
     <div class="table-responsive-scroll">
-    <table class="table table-bordered table-sm forecast-table">
+    <table>
         <thead>
             <tr>
                 <th rowspan="2" class="variable-col variable-col-header">Variable</th>
@@ -403,13 +297,11 @@
                                     ->distinct('company') 
                                     // Execute the query and pluck the values into a simple array of strings
                                     ->pluck('company'); 
-                                    $idxCompany = 0;
                     
                                     
             @endphp
             @foreach ($sfIndividualValues as $companyName)
             @php
-                $idxCompany++;
                 $key = str_replace(' ','',strtolower($companyName)).'_'.$individual->pivot->id;
                 $sf_currency = $forecastValues->get($key.'_1')->sales_forecast_currency ?? 'N/A';
                 $iMonth = 0;
@@ -456,10 +348,8 @@
                     @endforeach
                     
                     {{-- Q Total for the current Company Row --}}
-                    @if($idxCompany==1)
-                        <td data-quarter-total="{{ $qName }}" style="text-align: right; padding-right: 5px;" rowspan="{{ $sfIndividualValues->count()  }}"><strong style="color: #f51313ff;">{{-- number_format($quarterTotal, 2) --}}{{ number_format($totalQuarter[$individualName][$qName],2) }}</strong></td>
-                    @endif
-
+                    <td data-quarter-total="{{ $qName }}" style="text-align: right; padding-right: 5px;"><strong style="color: #f51313ff;">{{ number_format($quarterTotal, 2) }}</strong></td>
+                    
                     @php 
                         // 💡 ACCUMULATION SPLIT BY CURRENCY for Quarters
                         if ($sf_currency == 'SGD') {
@@ -473,23 +363,9 @@
                 @endforeach
                 
                 {{-- Grand Total for the current Company Row --}}
-                @if($idxCompany==1)
-                    <td data-grand-total style="text-align: right; padding-right: 5px;" rowspan="{{ $sfIndividualValues->count()  }}"><strong style="color: #480ee8ff;">{{-- number_format($individualRowTotal, 2) --}} {{ number_format($totalGrand[$individualName],2) }}</strong></td>
-                @endif
+                <td data-grand-total style="text-align: right; padding-right: 5px;"><strong style="color: #480ee8ff;">{{ number_format($individualRowTotal, 2) }}</strong></td>
             </tr>
         @endforeach
-        <!--
-        <tr style="background-color:#f8f8f8; font-weight:bold; text-align: right; padding-right: 5px;">
-            <td colspan="2">Quarter Totals ({{ $individualName }})</td>
-            @foreach ($quarters as $qName => $months)
-                @foreach ($months as $month)
-                    <td></td>
-                @endforeach
-                <td data-grand-total style="text-align: right; padding-right: 5px;">{{ number_format($variableQuarterTotals_SGD[$qName] + $variableQuarterTotals_MYR[$qName], 2) }}</td>
-            @endforeach
-            <td>{{ number_format(array_sum($variableQuarterTotals_SGD) + array_sum($variableQuarterTotals_MYR), 2) }}</td>
-        </tr>
-                    -->
         
         {{-----------------------------------------------------------}}
         {{-- VARIABLE GROUP SUMMARY ROW (SPLIT BY CURRENCY) --}}
@@ -501,7 +377,36 @@
             $iMonthCounter = 0; // Reset counter
         @endphp
         
-        
+        @if ($variableGrandTotal_SGD > 0 || $variableGrandTotal_MYR > 0)
+            <tr style="background-color: #e6e6fa; font-weight: bold;">
+                <td rowspan="2">Total {{ $individualName }}</td>
+                
+                {{-- SGD Row --}}
+                <td>SGD</td>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <td style="text-align: right; padding-right: 5px;">{{ number_format($variableMonthTotals_SGD[$iMonthCounter++], 2) }}</td>
+                    @endforeach
+                    <td style="text-align: right; padding-right: 5px;">{{ number_format($variableQuarterTotals_SGD[$qName], 2) }}</td>
+                @endforeach
+                <td style="text-align: right; padding-right: 5px;">{{ number_format($variableGrandTotal_SGD, 2) }}</td>
+            </tr>
+            
+            {{-- Reset month counter for MYR row --}}
+            @php $iMonthCounter = 0; @endphp 
+            
+            <tr style="background-color: #e6e6fa; font-weight: bold;">
+                {{-- Variable Name column is merged above, only need Company column --}}
+                <td>MYR</td>
+                @foreach ($quarters as $qName => $months)
+                    @foreach ($months as $monthName)
+                        <td style="text-align: right; padding-right: 5px;">{{ number_format($variableMonthTotals_MYR[$iMonthCounter++], 2) }}</td>
+                    @endforeach
+                    <td style="text-align: right; padding-right: 5px;">{{ number_format($variableQuarterTotals_MYR[$qName], 2) }}</td>
+                @endforeach
+                <td style="text-align: right; padding-right: 5px;">{{ number_format($variableGrandTotal_MYR, 2) }}</td>
+            </tr>
+        @endif
       @endforeach
     @endforeach
 
@@ -511,7 +416,7 @@
     @php
         $iMonthCounter = 0; // Reset counter
     @endphp
-    <!--
+    
     <tr style="background-color: #dcdcdc; font-weight: bold; border-top: 3px double #333;">
         <td  rowspan="2">GRAND TOTAL</td>
         <td  >SGD</td>      
@@ -526,12 +431,11 @@
         
         <td style="text-align: right; padding-right: 5px;">{{ number_format($tableGrandTotal_SGD = array_sum($tableMonthTotals_SGD), 2) }}</td>
     </tr>
-                    -->
     
     {{-- Reset month counter for MYR row --}}
     @php $iMonthCounter = 0; @endphp 
     
-    <!-- <tr style="background-color: #dcdcdc; font-weight: bold;">
+    <tr style="background-color: #dcdcdc; font-weight: bold;">
         <td  >MYR</td> 
         {{-- The first two columns are merged, only need the remaining cells --}}
         @foreach ($quarters as $qName => $months)
@@ -542,7 +446,7 @@
         @endforeach
         
         <td style="text-align: right; padding-right: 5px;">{{ number_format($tableGrandTotal_MYR = array_sum($tableMonthTotals_MYR), 2) }}</td>
-    </tr> -->
+    </tr>
 </tbody>
     </table>
     </div>
@@ -933,5 +837,7 @@ $chartDataMYRJson = json_encode($chartDataMYR);
         </div>
     </div>
 </div>
+
+
    
 @endsection

@@ -51,7 +51,112 @@
 
         <h3>{{ $title }}</h3>
 
-        <div class="px-6 pb-2">
+
+        <!-- Vehicle Booking Modal -->
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Vehicle Image -->
+
+                            <!-- Booking Details -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Vehicle</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingVehicle"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Start Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingStart"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>End Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingEnd"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Purposes</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingPurpose"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingJob"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Created By</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingCreator"></span></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
+                                    style="max-width: 300px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center">
+            <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
+            <div><small>Vehicle Booking</small></div>
+        </div>
+
+        <div class="d-flex align-items-center mt-2 mb-2">
+            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
+            <div><small>Job Requisition Form</small></div>
+        </div>
+        <div class="card app-calendar-wrapper ">
+            <div class="row g-0">
+                <!-- Calendar & Modal -->
+                <div class="col app-calendar-content">
+                    <div class="card shadow-none border-0">
+                        <div class="card-body pb-0">
+                            <!-- FullCalendar -->
+                            <div id="calendar"></div>
+                        </div>
+                    </div>
+                    <div class="app-overlay"></div>
+                    <!-- FullCalendar Offcanvas -->
+                    <div class="offcanvas offcanvas-end event-sidebar" tabindex="-1" id="addEventSidebar"
+                        aria-labelledby="addEventSidebarLabel">
+                        <div class="offcanvas-header border-bottom">
+                            <h5 class="offcanvas-title" id="addEventSidebarLabel">Detail</h5>
+                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body" >
+                            <form class="event-form pt-0" id="eventForm" onsubmit="return false">
+                                <div class="mb-6 form-control-validation">
+                                    <label class="form-label" for="eventTitle">Date Selected</label>
+                                    <input type="text" class="form-control" id="eventDate1" name="eventDate" readonly />
+                                </div>
+                                <h4>Activities</h4>
+                                <div id="eventList1"></div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Calendar Sidebar -->
+                 <div class="col app-calendar-sidebar border-end "  id="app-calendar-sidebar">
+                    
+                    <div class="px-6 pb-2">
                                 <div id="notification-alerts-container" class="mt-3 mx-auto" >
             {{-- Alerts will be injected here by JavaScript --}}
                     </div>
@@ -307,109 +412,7 @@
             });
             </script>
                     </div>
-        <!-- Vehicle Booking Modal -->
-        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <!-- Vehicle Image -->
-
-                            <!-- Booking Details -->
-                            <div class="col-md-6">
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Vehicle</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingVehicle"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Start Date</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingStart"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>End Date</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingEnd"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Purposes</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingPurpose"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Job Assignment</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingJob"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Created By</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingCreator"></span></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
-                                    style="max-width: 300px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="d-flex align-items-center">
-            <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
-            <div><small>Vehicle Booking</small></div>
-        </div>
-
-        <div class="d-flex align-items-center mt-2 mb-2">
-            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
-            <div><small>Job Requisition Form</small></div>
-        </div>
-        <div class="card app-calendar-wrapper ">
-            <div class="row g-0">
-                <!-- Calendar & Modal -->
-                <div class="col app-calendar-content">
-                    <div class="card shadow-none border-0">
-                        <div class="card-body pb-0">
-                            <!-- FullCalendar -->
-                            <div id="calendar"></div>
-                        </div>
-                    </div>
-                    <div class="app-overlay"></div>
-                    <!-- FullCalendar Offcanvas -->
-                    <div class="offcanvas offcanvas-end event-sidebar" tabindex="-1" id="addEventSidebar"
-                        aria-labelledby="addEventSidebarLabel">
-                        <div class="offcanvas-header border-bottom">
-                            <h5 class="offcanvas-title" id="addEventSidebarLabel">Detail</h5>
-                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
-                                aria-label="Close"></button>
-                        </div>
-                        <div class="offcanvas-body" >
-                            <form class="event-form pt-0" id="eventForm" onsubmit="return false">
-                                <div class="mb-6 form-control-validation">
-                                    <label class="form-label" for="eventTitle">Date Selected</label>
-                                    <input type="text" class="form-control" id="eventDate1" name="eventDate" readonly />
-                                </div>
-                                <h4>Activities</h4>
-                                <div id="eventList1"></div>
-
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <!-- Calendar Sidebar -->
-                 
                 <div class="col app-calendar-sidebar border-end " style="display: none;" id="app-calendar-sidebar">
                     <div class="border-bottom p-6 my-sm-0 mb-4">
                         <p>Date Selected :<strong id="eventDate"></strong></p>
