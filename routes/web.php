@@ -96,6 +96,7 @@ Route::get('/clear-cache', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
+    Route::get('/notifications/groups', [NotificationController::class, 'getGroupedNotifications'])->name('notifications.groups');
     Route::get('/notifications/specifically', [NotificationController::class, 'getSpecificallyNotifications'])->name('notifications.get-specifically');
     Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
 

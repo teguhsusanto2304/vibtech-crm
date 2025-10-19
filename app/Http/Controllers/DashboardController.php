@@ -7,6 +7,7 @@ use App\Models\JobAssignmentPersonnel;
 use App\Models\VehicleBooking;
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Notifications\DatabaseNotification;
 use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use DateTime;
@@ -61,7 +62,62 @@ class DashboardController extends Controller
         ];
     }))->all();
 
-    return view('dashboard.dashboard', compact('events'))->with('title', 'Staff Calendar')->with('breadcrumb', ['Home', 'Dashboard']);
+    $databaseNotifications = DatabaseNotification::where('notifiable_id', Auth::id())
+            // Filter notifications that match specific group message types
+            ->where(function ($query) {
+                // IMPORTANT: The data column is a JSON string, so we search for substrings.
+                // It's better to store a 'type' column, but this adheres to the current structure.
+                $query->where('data', 'LIKE', '%management-memo%')
+                      ->orWhere('data', 'LIKE', '%employee-handbook%')
+                      ->orWhere('data', 'LIKE', '%job-assignment-form%')
+                      ->orWhere('data', 'LIKE', '%submit-claim%');
+            })
+            ->whereNull('read_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // --- 2. Configuration Maps ---
+        
+        // This map is used to determine the group name and color based on the URL/keyword.
+        // The key is a unique identifier (like a segment of the notification URL or a type identifier).
+        $notificationGroupMap = [
+            'management-memo'       => ['group_name' => 'Management Memo', 'bgcolor' => 'bg-warning'],
+            'employee-handbook'     => ['group_name' => 'Employee Handbook', 'bgcolor' => 'bg-secondary'],
+            'success'   => ['group_name' => 'Job Requisition', 'bgcolor' => 'bg-primary'],
+            'submit-claim'         => ['group_name' => 'Submit Claim', 'bgcolor' => 'bg-info'],
+        ];
+
+        // --- 3. Process Notifications to extract data and assign properties ---
+        $groupNotifications = $databaseNotifications->map(function ($notification) use ($notificationGroupMap) {
+            
+            // a. Parse the JSON data from the 'data' column
+            $data = (array) $notification->data; 
+            
+            // b. Attempt to find the correct group based on the message content (or type)
+            $groupType = 'default';
+            foreach ($notificationGroupMap as $keyword => $map) {
+                // Assuming the unique keyword (e.g., 'management-memo') exists in the message/data
+                if (str_contains($data['type'] ?? '', $keyword)) {
+                    $groupType = $keyword;
+                    break;
+                }
+            }
+            
+            $groupConfig = $notificationGroupMap[$groupType] ?? ['group_name' => 'General', 'bgcolor' => 'bg-info'];
+
+            // c. Construct the final object structure required by the JavaScript
+            return [
+                'id'         => $notification->id,
+                'group_name' => $groupConfig['group_name'], // e.g., "Job Requisition"
+                'message'    => $data['message'] ?? 'Notification details missing.', // The actual content of the notification
+                'time'       => $notification->created_at->diffForHumans(), // Time elapsed since creation
+                'url'        => $data['url'] ?? '#', // The destination URL
+                'bgcolor'    => $groupConfig['bgcolor'], // e.g., "bg-primary"
+            ];
+
+        })->values()->toArray();
+
+    return view('dashboard.dashboard', compact('events','groupNotifications'))->with('title', 'Staff Calendar')->with('breadcrumb', ['Home', 'Dashboard']);
 }
     public function index1()
     {

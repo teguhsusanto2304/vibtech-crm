@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <link rel="stylesheet" href="../assets/vendor/libs/fullcalendar/fullcalendar.css" />
+    <link rel="stylesheet" href="../assets/vendor/libs/fullcalendar/fullcalendar.css" />   
 
     <link rel="stylesheet" href="../assets/vendor/css/pages/app-calendar.css" />
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -50,263 +50,166 @@
         </nav>
 
         <h3>{{ $title }}</h3>
+        
+        <main>
+    <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="row mb-4" id="groupCardsContainer">
+        <!-- Cards will be dynamically inserted here -->
+    </div>
+</div>
 
-        <div class="px-6 pb-2">
-                                <div id="notification-alerts-container" class="mt-3 mx-auto" >
-            {{-- Alerts will be injected here by JavaScript --}}
+<!-- MODAL (reused for all groups) -->
+<div class="modal fade" id="groupNotificationModal" tabindex="-1" aria-labelledby="groupNotificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="groupNotificationModalLabel">
+                    Unread <span id="modal-group-name"></span> (<span id="modal-notification-count">0</span>)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-group list-group-flush" id="modal-notification-list"></ul>
+                <div id="no-notifications-message" class="text-center py-4 text-muted" style="display: none;">
+                    No new group notifications.
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="mark-group-all-read">Mark All as Read</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    // --- SIMULATED DATA ---
+    let groupNotifications = @json($groupNotifications); 
+    let groupNotifications1 = [
+        { id: 1, group_name: "Job Requisition", message: "New policy update on WFH hours.", time: "1 hour ago", url: "/v1/management-memo/detail/10",bgcolor:"bg-primary" },
+        { id: 2, group_name: "Job Requisition", message: "Reminder: Townhall meeting tomorrow.", time: "45 minutes ago", url: "/v1/management-memo/detail/11",bgcolor:"bg-primary" },
+        { id: 3, group_name: "Submit Claim", message: "Holiday schedule draft released.", time: "15 minutes ago", url: "/v1/management-memo/detail/12",bgcolor:"bg-info" },
+        { id: 4, group_name: "Management Memo", message: "New policy update on WFH hours.", time: "1 hour ago", url: "/v1/management-memo/detail/10",bgcolor:"bg-warning" },
+        { id: 5, group_name: "Employee Handbook", message: "Reminder: Townhall meeting tomorrow.", time: "45 minutes ago", url: "/v1/management-memo/detail/11",bgcolor:"bg-secondary" },
+    ];
+    // --- END SIMULATED DATA ---
+
+    const $container = $("#groupCardsContainer");
+    const $modalList = $("#modal-notification-list");
+    const $modalGroupName = $("#modal-group-name");
+    const $modalCount = $("#modal-notification-count");
+    const $noNotifMsg = $("#no-notifications-message");
+
+    // --- 1. Group notifications by group_name ---
+
+const grouped = {};
+const colorgrouped = {}; // This object is no longer strictly necessary for card rendering but kept for completeness.
+//const $container = $('#notification-cards-container'); // Assuming you have a container element to append cards to
+const ICON_MAP = {
+    "Management Memo": 'bx-home',
+    "Employee Handbook": 'bx-users',
+    "Submit Claim":'bx-gift',
+    "Job Requisition": 'bx-briefcase'
+};
+
+groupNotifications.forEach(n => {
+    // 1. Group by group_name
+    if (!grouped[n.group_name]) {
+        grouped[n.group_name] = []; // Initialize array if not exists
+    }
+    grouped[n.group_name].push(n);
+
+    // 2. Group by bgcolor (Corrected and optional for this specific task)
+    if (!colorgrouped[n.bgcolor]) {
+        colorgrouped[n.bgcolor] = []; // Initialize array if not exists
+    }
+    colorgrouped[n.bgcolor].push(n);
+});
+
+// Clear the container before rendering new cards
+$container.empty();
+
+
+// --- 2. Render a card for each group ---
+Object.keys(grouped).forEach(groupName => {
+    const notifications = grouped[groupName];
+    const count = notifications.length;
+    const iconClass = ICON_MAP[groupName] || 'bx-bell';
+
+    // FIX 1: Retrieve the bgcolor class from the first notification in the group.
+    // We assume the first notification represents the color for the entire group.
+    // If n.bgcolor is undefined, it defaults to 'bg-secondary' (a safe Bootstrap class).
+    const cardBgColorClass = (notifications[0] && notifications[0].bgcolor) || 'bg-secondary';
+    
+    // FIX 2: Check if count is 0. If so, apply a different style (e.g., light background)
+    // and prevent the modal from opening by removing data attributes.
+    const cardClass = (count > 0) 
+        ? `${cardBgColorClass} text-white cursor-pointer group-card` 
+        : `bg-light text-muted group-card`;
+    
+    const dataAttributes = (count > 0) 
+        ? `data-group="${groupName}" data-bs-toggle="modal" data-bs-target="#groupNotificationModal"`
+        : `data-group="${groupName}"`; // Only data-group remains if count is 0
+
+    $container.append(`
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card ${cardClass}" ${dataAttributes}>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bx ${iconClass} me-2" style="font-size: 24px;"></i>
+                            <h5 class="fw-bold d-inline-block mb-0 text-white">${groupName}</h5>
+                        </div>
+                        <div class="text-end">
+                            <h2 class="mb-0 text-white">${count}</h2>
+                            <small>Unread</small>
+                        </div>
                     </div>
-                    <script>
-                    $(document).ready(function () {
-                        const notificationAlertsContainer = $("#notification-alerts-container");
+                </div>
+            </div>
+        </div>
+    `);
+});
+    // --- 3. Handle click on group card to populate modal ---
+    $(document).on("click", ".group-card", function() {
+        const groupName = $(this).data("group");
+        const notifications = grouped[groupName] || [];
 
-                function fetchNotifications() {
-                    $.ajax({
-                        url: "{{ route('notifications.get-specifically') }}",
-                        method: "GET",
-                        success: function (data) {
-                            notificationAlertsContainer.empty();
+        $modalGroupName.text(groupName);
+        $modalCount.text(notifications.length);
+        $modalList.empty();
 
-                            if (data.length > 0) {
-                                $("#notification-count").text(data.length).show();
-
-                                let username = @json(auth()->user()->name);
-
-                                // Group notifications by category
-                                let grouped = {
-                                    "employee-handbooks": [],
-                                    "management-memo": [],
-                                    "submit-claims": [],
-                                    "job-assignment-form": [],
-                                    "general": []
-                                };
-
-                                data.forEach(function (notif) {
-                                    let link = notif.data.url ? notif.data.url : "#";
-                                    let notifUrl = notif.data.url?.toLowerCase() || "";
-
-                                    if (notifUrl.includes('/employee-handbooks')) {
-                                        grouped["employee-handbooks"].push(
-                                            `${username}, a new employee handbook was uploaded. 
-                                            <a href="${link}?notif=${notif.id}" class="alert-link">Read here</a>
-                                            <br><small class="text-muted">(${notif.data.time})</small>`
-                                        );
-                                    } else if (notifUrl.includes('/management-memo')) {
-                                        grouped["management-memo"].push(
-                                            `${username}, a new management memo was issued. 
-                                            <a href="${link}?notif=${notif.id}" class="alert-link">Read here</a>
-                                            <br><small class="text-muted">(${notif.data.time})</small>`
-                                        );
-                                    } else if (notifUrl.includes('/submit-claims')) {
-                                        grouped["submit-claims"].push(
-                                            `${username}, ${notif.data.message}.
-                                            <a href="${link}?notif=${notif.id}" class="alert-link">Read here</a>
-                                            <br><small class="text-muted">(${notif.data.time})</small>`
-                                        );
-                                        
-                                    } else if (notifUrl.includes('/job-assignment-form')) {
-                                        grouped["job-assignment-form"].push(
-                                            `${username}, ${notif.data.message}.
-                                            <a href="${link}?notif=${notif.id}" class="alert-link">Read here</a>
-                                            <br><small class="text-muted">(${notif.data.time})</small>`
-                                        );
-                                    } else {
-                                        grouped["general"].push(
-                                            `${username}, ${notif.data.message}.
-                                            <br><small class="text-muted">(${notif.data.time})</small>`
-                                        );
-                                    }
-                                });
-
-                                // Accordion wrapper
-                                let accordionHtml = `<div class="accordion" id="notificationsAccordion">`;
-
-                                // Employee Handbooks
-                                if (grouped["employee-handbooks"].length > 0) {
-                                    accordionHtml += `
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading-handbook">
-                                                <button class="accordion-button collapsed bg-success text-white" 
-                                                    type="button" data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse-handbook" 
-                                                    aria-expanded="false" aria-controls="collapse-handbook">
-                                                    <i class="fas fa-book me-2"></i> Employee Handbooks
-                                                </button>
-                                            </h2>
-                                            <div id="collapse-handbook" class="accordion-collapse collapse" 
-                                                aria-labelledby="heading-handbook" data-bs-parent="#notificationsAccordion">
-                                                <div class="accordion-body">
-                                                    <ul class="list-group list-group-flush">
-                                                        ${grouped["employee-handbooks"].map(item => `<li class="list-group-item">${item}</li>`).join("")}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-
-                                // Management Memo
-                                if (grouped["management-memo"].length > 0) {
-                                    accordionHtml += `
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading-memo">
-                                                <button class="accordion-button collapsed bg-warning text-dark" 
-                                                    type="button" data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse-memo" 
-                                                    aria-expanded="false" aria-controls="collapse-memo">
-                                                    <i class="fas fa-exclamation-triangle me-2"></i> Management Memo
-                                                </button>
-                                            </h2>
-                                            <div id="collapse-memo" class="accordion-collapse collapse" 
-                                                aria-labelledby="heading-memo" data-bs-parent="#notificationsAccordion">
-                                                <div class="accordion-body">
-                                                    <ul class="list-group list-group-flush">
-                                                        ${grouped["management-memo"].map(item => `<li class="list-group-item">${item}</li>`).join("")}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-                                //submit-claims
-                                if (grouped["submit-claims"].length > 0) {
-                                    accordionHtml += `
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading-general">
-                                                <button class="accordion-button collapsed bg-info text-white" 
-                                                    type="button" data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse-general" 
-                                                    aria-expanded="false" aria-controls="collapse-general">
-                                                    <i class="fas fa-bell me-2"></i> Submit Claim
-                                                </button>
-                                            </h2>
-                                            <div id="collapse-general" class="accordion-collapse collapse" 
-                                                aria-labelledby="heading-general" data-bs-parent="#notificationsAccordion">
-                                                <div class="accordion-body">
-                                                    <ul class="list-group list-group-flush">
-                                                        ${grouped["submit-claims"].map(item => `<li class="list-group-item">${item}</li>`).join("")}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-                                //job-assignment-form
-                                if (grouped["job-assignment-form"].length > 0) {
-                                    accordionHtml += `
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading-general">
-                                                <button class="accordion-button collapsed bg-info text-white" 
-                                                    type="button" data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse-general" 
-                                                    aria-expanded="false" aria-controls="collapse-general">
-                                                    <i class="fas fa-bell me-2"></i> Job Requisition
-                                                </button>
-                                            </h2>
-                                            <div id="collapse-general" class="accordion-collapse collapse" 
-                                                aria-labelledby="heading-general" data-bs-parent="#notificationsAccordion">
-                                                <div class="accordion-body">
-                                                    <ul class="list-group list-group-flush">
-                                                        ${grouped["job-assignment-form"].map(item => `<li class="list-group-item">${item}</li>`).join("")}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-
-                                // General
-                                if (grouped["general"].length > 0) {
-                                    accordionHtml += `
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header" id="heading-general">
-                                                <button class="accordion-button collapsed bg-info text-white" 
-                                                    type="button" data-bs-toggle="collapse" 
-                                                    data-bs-target="#collapse-general" 
-                                                    aria-expanded="false" aria-controls="collapse-general">
-                                                    <i class="fas fa-bell me-2"></i> General Notifications
-                                                </button>
-                                            </h2>
-                                            <div id="collapse-general" class="accordion-collapse collapse" 
-                                                aria-labelledby="heading-general" data-bs-parent="#notificationsAccordion">
-                                                <div class="accordion-body">
-                                                    <ul class="list-group list-group-flush">
-                                                        ${grouped["general"].map(item => `<li class="list-group-item">${item}</li>`).join("")}
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-
-                                accordionHtml += `</div>`; // close accordion
-                                notificationAlertsContainer.append(accordionHtml);
-
-                            } else {
-                                $("#notification-count").hide();
-                                notificationAlertsContainer.html(`
-                                    <div class="alert alert-info" role="alert">
-                                        <i class="fas fa-info-circle me-2"></i> No new notifications at this time.
-                                    </div>
-                                `);
-                            }
-                        },
-                        error: function (xhr) {
-                            console.error("Error fetching notifications:", xhr.responseText);
-                            notificationAlertsContainer.empty().html(`
-                                <div class="alert alert-danger" role="alert">
-                                    <i class="fas fa-exclamation-circle me-2"></i> Failed to load notifications.
-                                </div>
-                            `);
-                            $("#notification-count").hide();
-                        }
-                    });
-                }
-
-
-                
-
-                fetchNotifications(); // Fetch notifications on page load
-
-                // You might want to automatically refresh notifications periodically
-                // setInterval(fetchNotifications, 60000); // Fetch every 60 seconds
-
-                // Assuming you have a "Mark all as read" button/link with this ID/class
-                $(document).on('click', '.dropdown-notifications-all', function () { // Use event delegation if element is dynamic
-                    $.ajax({
-                        url: "{{ route('notifications.read') }}",
-                        method: "POST",
-                        data: { _token: "{{ csrf_token() }}" },
-                        success: function () {
-                            fetchNotifications(); // Re-fetch to update display
-                            // Optionally hide the dropdown menu if it's open
-                            // $('.dropdown-toggle').dropdown('hide');
-                        },
-                        error: function(xhr) {
-                            console.error("Error marking notifications as read:", xhr.responseText);
-                            // Display error in a temporary alert or console
-                        }
-                    });
-                });
-
-                // Optional: Function to mark a single notification as read (e.g., when clicked)
-                // You'd need to add a click listener to the alert itself or its "View Details" link
-                function markNotificationAsRead(notificationId) {
-                    $.ajax({
-                        url: `/notifications/${notificationId}/read`, // Example route
-                        method: 'POST',
-                        data: { _token: "{{ csrf_token() }}" },
-                        success: function() {
-                            // No need to re-fetch all, just remove the specific alert if desired
-                            $(`#notification-alert-${notificationId}`).remove(); // If you give alerts unique IDs
-                        },
-                        error: function(xhr) {
-                            console.error(`Error marking notification ${notificationId} as read:`, xhr.responseText);
-                        }
-                    });
-                }
+        if (notifications.length === 0) {
+            $noNotifMsg.show();
+        } else {
+            $noNotifMsg.hide();
+            notifications.forEach(notif => {
+                $modalList.append(`
+                    <li class="list-group-item list-group-item-action d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <a href="${notif.url}?notif=${notif.id}" class="text-dark d-block">
+                                <strong>${notif.message}</strong><br>
+                                <small class="text-muted">${notif.time}</small>
+                            </a>
+                        </div>
+                        <i class="bx bx-message-dots text-warning ms-3" style="font-size: 20px;"></i>
+                    </li>
+                `);
             });
-            </script>
-                    </div>
+        }
+
+        // Attach handler for "Mark All as Read"
+        $("#mark-group-all-read").off("click").on("click", function() {
+            grouped[groupName] = [];
+            $("#groupNotificationModal").modal("hide");
+            $container.find(`[data-group="${groupName}"] h2`).text(0);
+        });
+    });
+});
+</script>  
+
+        <!-- <x-AccordionNotification /> -->
         <!-- Vehicle Booking Modal -->
         <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -1013,4 +916,5 @@
 </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 @endsection

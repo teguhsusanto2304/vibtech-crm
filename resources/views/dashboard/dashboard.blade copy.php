@@ -50,113 +50,254 @@
         </nav>
 
         <h3>{{ $title }}</h3>
+        
+<!-- Load Bootstrap 5 JS Bundle (includes Popper and jQuery is no longer required for basic components) 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 shadow-lg">
+          
+
+          <div class="modal-header border-bottom-0">
+            <h5 class="modal-title fw-bold" id="modal-title"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
 
 
-        <!-- Vehicle Booking Modal -->
-        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <!-- Vehicle Image -->
+          <div class="modal-body p-0" id="modal-body">
+          </div>
 
-                            <!-- Booking Details -->
-                            <div class="col-md-6">
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Vehicle</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingVehicle"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Start Date</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingStart"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>End Date</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingEnd"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Purposes</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingPurpose"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Job Assignment</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingJob"></span></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-5"><strong>Created By</strong></div>
-                                    <div class="col-md-1">:</div>
-                                    <div class="col-md-6"><span id="bookingCreator"></span></div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
-                                    style="max-width: 300px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
+          <div class="modal-footer border-top-0 d-block" id="modal-footer">
+          </div>
         </div>
+      </div>
+    </div>
 
-        <div class="d-flex align-items-center">
-            <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
-            <div><small>Vehicle Booking</small></div>
+    <div class="container-fluid max-w-7xl">
+        <div id="summary-cards" class="row g-4 mb-5">
         </div>
+        
+        
+    </div>
+    <script>
+        // --- DATA ---
+        const notificationsData = [
+            {
+                group: 'JOb Requisition',
+                colorClass: 'border-start-primary', // Custom class for card border
+                bgClass: 'bg-primary-subtle', // Bootstrap background color
+                items: [
+                    { id: 101, title: 'Ticket #403: Urgent server capacity request', isRead: false, time: '2 mins ago' },
+                    { id: 102, title: 'Ticket #402: User login issue reported', isRead: false, time: '1 hour ago' },
+                    { id: 103, title: 'Ticket #401: Documentation update needed', isRead: true, time: '3 hours ago' },
+                    { id: 104, title: 'Ticket #404: Test', isRead: false, time: '4 hours ago' },
+                ]
+            },
+            {
+                group: 'Mng Memo',
+                colorClass: 'border-start-success',
+                bgClass: 'bg-success-subtle',
+                items: [
+                    { id: 201, title: 'Task completed: Database schema review', isRead: false, time: '30 mins ago' },
+                    { id: 202, title: 'New comment on roadmap document', isRead: false, time: '45 mins ago' },
+                ]
+            },
+            {
+                group: 'Emp Handbook',
+                colorClass: 'border-start-danger',
+                bgClass: 'bg-danger-subtle',
+                items: [
+                    { id: 301, title: 'Authentication service temporarily degraded', isRead: false, time: '1 day ago' },
+                ]
+            },
+            {
+                group: 'Submit Claim',
+                colorClass: 'border-start-warning',
+                bgClass: 'bg-warning-subtle',
+                items: [
+                    { id: 401, title: 'Lead converted: Acme Corp signed up', isRead: true, time: '1 week ago' },
+                ]
+            },
+            {
+                group: 'Others',
+                colorClass: 'border-start-warning',
+                bgClass: 'bg-warning-subtle',
+                items: [
+                    { id: 401, title: 'Lead converted: Acme Corp signed up', isRead: true, time: '1 week ago' },
+                ]
+            }
+        ];
 
-        <div class="d-flex align-items-center mt-2 mb-2">
-            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
-            <div><small>Job Requisition Form</small></div>
-        </div>
-        <div class="card app-calendar-wrapper ">
-            <div class="row g-0">
-                <!-- Calendar & Modal -->
-                <div class="col app-calendar-content">
-                    <div class="card shadow-none border-0">
-                        <div class="card-body pb-0">
-                            <!-- FullCalendar -->
-                            <div id="calendar"></div>
+        let totalUnreadCount = 0;
+        let activeGroupIndex = -1; 
+        const notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
+
+
+        // --- RENDERING & INTERACTION ---
+
+        function renderNotifications() {
+            renderSummaryCards();
+            updateTotalCountBadge();
+        }
+
+        function renderSummaryCards() {
+            const summaryPanel = document.getElementById('summary-cards');
+            summaryPanel.innerHTML = '';
+            
+            // Custom CSS for colored borders based on Bootstrap colors
+            if (!document.getElementById('custom-color-styles')) {
+                const style = document.createElement('style');
+                style.id = 'custom-color-styles';
+                style.innerHTML = `
+                    .border-start-primary { border-left-color: #7513edff !important; }
+                    .border-start-success { border-left-color: #16e843ff !important; }
+                    .border-start-danger { border-left-color: #f58d8dff !important; }
+                    .border-start-warning { border-left-color: #cff596ff !important; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            notificationsData.forEach((groupData, index) => {
+                const unreadCount = groupData.items.filter(item => !item.isRead).length;
+                
+                const col = document.createElement('div');
+                col.className = 'col-12 col-sm-6 col-lg-2';
+                
+                const card = document.createElement('div');
+                
+                // Determine card classes based on unread status
+                const borderColor = unreadCount > 0 ? groupData.colorClass : 'border-start-secondary';
+                const cardClasses = `card rounded-3 shadow-sm summary-card border-0 ${borderColor}`;
+                
+                card.className = cardClasses;
+                card.onclick = () => openGroupModal(index); 
+
+                card.innerHTML = `
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="text-sm text-uppercase fw-semibold ${unreadCount > 0 ? 'text-dark' : 'text-muted'}">${groupData.group}</span>
+                            <svg class="text-muted opacity-50" width="24" height="24" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                        </div>
+                        <div class="mt-2 d-flex align-items-baseline">
+                            <span class="display-4 fw-bolder ${unreadCount > 0 ? 'text-dark' : 'text-muted'}">${unreadCount}</span>
+                            <span class="ms-2 text-muted fw-medium">New</span>
                         </div>
                     </div>
-                    <div class="app-overlay"></div>
-                    <!-- FullCalendar Offcanvas -->
-                    <div class="offcanvas offcanvas-end event-sidebar" tabindex="-1" id="addEventSidebar"
-                        aria-labelledby="addEventSidebarLabel">
-                        <div class="offcanvas-header border-bottom">
-                            <h5 class="offcanvas-title" id="addEventSidebarLabel">Detail</h5>
-                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
-                                aria-label="Close"></button>
-                        </div>
-                        <div class="offcanvas-body" >
-                            <form class="event-form pt-0" id="eventForm" onsubmit="return false">
-                                <div class="mb-6 form-control-validation">
-                                    <label class="form-label" for="eventTitle">Date Selected</label>
-                                    <input type="text" class="form-control" id="eventDate1" name="eventDate" readonly />
-                                </div>
-                                <h4>Activities</h4>
-                                <div id="eventList1"></div>
+                `;
+                col.appendChild(card);
+                summaryPanel.appendChild(col);
+            });
+        }
 
-                            </form>
-                        </div>
+        function openGroupModal(groupIndex) {
+            activeGroupIndex = groupIndex;
+            const groupData = notificationsData[groupIndex];
+            const unreadItems = groupData.items.filter(item => !item.isRead);
+            const totalUnread = unreadItems.length;
+
+            // 1. Populate Header
+            document.getElementById('modal-title').textContent = `${groupData.group} (${totalUnread} New)`;
+
+            // 2. Populate Body (List)
+            const listContainer = document.getElementById('modal-body');
+            listContainer.innerHTML = '';
+            
+            const list = document.createElement('ul');
+            list.className = 'list-group list-group-flush'; // Bootstrap list group
+
+            groupData.items.forEach(item => {
+                const listItem = document.createElement('li');
+                
+                const isUnread = !item.isRead;
+                const itemClasses = isUnread 
+                    ? 'list-group-item list-group-item-action unread position-relative' 
+                    : 'list-group-item list-group-item-action text-muted';
+
+                listItem.className = itemClasses;
+                listItem.onclick = () => viewNotification(groupIndex, item.id);
+
+                let contentHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        ${isUnread ? '<span class="unread-indicator bg-primary"></span>' : ''}
+                        <span class="text-truncate">${item.title}</span>
+                        <small class="text-muted ms-3">${item.time}</small>
                     </div>
-                </div>
-                <!-- Calendar Sidebar -->
-                 <div class="col app-calendar-sidebar border-end "  id="app-calendar-sidebar">
-                    
-                    <div class="px-6 pb-2">
+                `;
+                
+                listItem.innerHTML = contentHTML;
+                list.appendChild(listItem);
+            });
+            listContainer.appendChild(list);
+
+            // 3. Populate Footer (Action Button)
+            const footerContainer = document.getElementById('modal-footer');
+            footerContainer.innerHTML = '';
+
+            if (totalUnread > 0) {
+                const markAllButton = document.createElement('button');
+                markAllButton.type = 'button';
+                markAllButton.className = `btn btn-primary w-100 fw-bold`;
+                markAllButton.textContent = `Mark All ${totalUnread} Items as Read`;
+                // Use a separate handler for modal action
+                markAllButton.onclick = () => markGroupAsReadInModal(groupIndex); 
+                footerContainer.appendChild(markAllButton);
+            } else {
+                footerContainer.innerHTML = '<p class="text-center text-muted mb-0">All caught up!</p>';
+            }
+
+            // 4. Show Modal
+            notificationModal.show();
+        }
+
+        function markGroupAsReadInModal(groupIndex) {
+            notificationsData[groupIndex].items.forEach(item => {
+                item.isRead = true;
+            });
+            // Close the modal, then re-render the summary cards
+            notificationModal.hide();
+            renderNotifications(); 
+        }
+        
+        function viewNotification(groupIndex, itemId) {
+            const item = notificationsData[groupIndex].items.find(i => i.id === itemId);
+            if (item && !item.isRead) {
+                item.isRead = true;
+                // Re-populate the modal to update the list and button count instantly
+                if (groupIndex === activeGroupIndex) {
+                    openGroupModal(groupIndex); 
+                }
+                renderNotifications(); // Always update the summary cards
+            }
+        }
+
+        function updateTotalCountBadge() {
+            totalUnreadCount = notificationsData.reduce((sum, group) => {
+                return sum + group.items.filter(item => !item.isRead).length;
+            }, 0);
+
+            const badge = document.getElementById('total-count-badge');
+            document.getElementById('total-unread-count').textContent = totalUnreadCount;
+            
+            if (totalUnreadCount > 0) {
+                badge.classList.remove('d-none');
+            } else {
+                badge.classList.add('d-none');
+            }
+        }
+
+        // Initial render when the page loads
+        document.addEventListener('DOMContentLoaded', renderNotifications);
+
+    </script>
+    -->
+
+    
+
+        <div class="px-6 pb-2">
                                 <div id="notification-alerts-container" class="mt-3 mx-auto" >
             {{-- Alerts will be injected here by JavaScript --}}
                     </div>
@@ -412,7 +553,109 @@
             });
             </script>
                     </div>
+        <!-- Vehicle Booking Modal -->
+        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookingModalLabel">Vehicle Booking Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Vehicle Image -->
+
+                            <!-- Booking Details -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Vehicle</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingVehicle"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Start Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingStart"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>End Date</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingEnd"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Purposes</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingPurpose"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingJob"></span></div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5"><strong>Created By</strong></div>
+                                    <div class="col-md-1">:</div>
+                                    <div class="col-md-6"><span id="bookingCreator"></span></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
+                                    style="max-width: 300px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center">
+            <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
+            <div><small>Vehicle Booking</small></div>
+        </div>
+
+        <div class="d-flex align-items-center mt-2 mb-2">
+            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
+            <div><small>Job Requisition Form</small></div>
+        </div>
+        <div class="card app-calendar-wrapper ">
+            <div class="row g-0">
+                <!-- Calendar & Modal -->
+                <div class="col app-calendar-content">
+                    <div class="card shadow-none border-0">
+                        <div class="card-body pb-0">
+                            <!-- FullCalendar -->
+                            <div id="calendar"></div>
+                        </div>
+                    </div>
+                    <div class="app-overlay"></div>
+                    <!-- FullCalendar Offcanvas -->
+                    <div class="offcanvas offcanvas-end event-sidebar" tabindex="-1" id="addEventSidebar"
+                        aria-labelledby="addEventSidebarLabel">
+                        <div class="offcanvas-header border-bottom">
+                            <h5 class="offcanvas-title" id="addEventSidebarLabel">Detail</h5>
+                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body" >
+                            <form class="event-form pt-0" id="eventForm" onsubmit="return false">
+                                <div class="mb-6 form-control-validation">
+                                    <label class="form-label" for="eventTitle">Date Selected</label>
+                                    <input type="text" class="form-control" id="eventDate1" name="eventDate" readonly />
+                                </div>
+                                <h4>Activities</h4>
+                                <div id="eventList1"></div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!-- Calendar Sidebar -->
+                 
                 <div class="col app-calendar-sidebar border-end " style="display: none;" id="app-calendar-sidebar">
                     <div class="border-bottom p-6 my-sm-0 mb-4">
                         <p>Date Selected :<strong id="eventDate"></strong></p>
