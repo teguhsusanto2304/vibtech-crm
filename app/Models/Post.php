@@ -78,13 +78,13 @@ class Post extends Model
                 if ($post->post_type == MEMO) {
                     $user->notify(new UserNotification(
                         'An existing management memo has been updated. Click to read updated memo. '.$post->title,
-                        'accept',
+                        'management-memo',
                         route('v1.management-memo.read', ['id' => $post->id])
                     ));
                 } elseif ($post->post_type == HANDBOOK) {
                     $user->notify(new UserNotification(
                         'Employee Handbook - An existing employee handbook has been updated. Click to read updated handbook. ',
-                        'accept',
+                        'employee-handbook',
                         route('v1.employee-handbooks.read', ['id' => $post->id])
                     ));
                 }

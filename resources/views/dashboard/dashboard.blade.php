@@ -208,8 +208,6 @@ Object.keys(grouped).forEach(groupName => {
     });
 });
 </script>  
-
-        <!-- <x-AccordionNotification /> -->
         <!-- Vehicle Booking Modal -->
         <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
