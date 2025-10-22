@@ -72,10 +72,10 @@
                         <div class="col-md-6">
                             <label class="form-label mb-3">Individually Type:</label>
                             {{-- Global Select All Checkbox --}}
-                            <div class="form-check mb-3">
+                            <div class="form-check mb-3" >
                                 <input class="form-check-input" type="checkbox" id="selectAllIndividually">
                                 <label class="form-check-label fw-bold" for="selectAllIndividually">
-                                    Select All Individually
+                                    Select All Variables
                                 </label>
                             </div>
 
@@ -141,7 +141,7 @@
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="selectAllUsers">
                                 <label class="form-check-label fw-bold" for="selectAllUsers">
-                                    Select All Users
+                                    Select All Viewers
                                 </label>
                             </div>
 
@@ -239,7 +239,7 @@
                     <!-- Project Start Date & End Date -->
                     <div class="row mb-3">
                         <div class="col-md-2">
-                            <label for="projectStartDate" class="form-label">Forecast Year</label>
+                            <label for="projectStartDate" class="form-label">Select Forecast Year</label>
                             <input type="number" name="year" id="year" class="form-control" min="{{ date('Y') }}" max="{{ date('Y')+5 }}" value="{{ date('Y') }}">
                         </div>
                                                 
