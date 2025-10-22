@@ -70,12 +70,12 @@
                     <div class="row mb-3">
                         <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label mb-3">Individually Type:</label>
+                            <label class="form-label mb-3" style="display: none;">Individually Type:</label>
                             {{-- Global Select All Checkbox --}}
                             <div class="form-check mb-3" >
                                 <input class="form-check-input" type="checkbox" id="selectAllIndividually">
                                 <label class="form-check-label fw-bold" for="selectAllIndividually">
-                                    Select All Variables
+                                    Select Variable
                                 </label>
                             </div>
 
@@ -136,12 +136,12 @@
                         </script>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Sent To</label>
+                            <label class="form-label" style="display: none;">Sent To</label>
                             {{-- Global Select All Checkbox --}}
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" id="selectAllUsers">
                                 <label class="form-check-label fw-bold" for="selectAllUsers">
-                                    Select All Viewers
+                                    Select Viewer
                                 </label>
                             </div>
 
