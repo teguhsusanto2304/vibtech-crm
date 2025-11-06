@@ -19,7 +19,7 @@ class DashboardController extends Controller
     public function index()
 {
     // Define the start and end dates for the three months
-    $lastMonthStart = now()->subMonth()->startOfMonth();
+    $lastMonthStart = now()->subMonth(6)->startOfMonth();
     $nextMonthEnd = now()->addMonth()->endOfMonth();
 
     // Use a single query for JobAssignments, filtering by the date range
