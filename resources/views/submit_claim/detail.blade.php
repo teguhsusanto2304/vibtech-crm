@@ -108,7 +108,7 @@
                        
                         @endif
                         @endcan
-                        <a target="_blank" class="btn btn-info print-page-btn" href="{{ route('v1.submit-claim.print',['id'=>$claim->obfuscated_id]) }}">
+                        <a target="_blank" class="btn btn-info" href="{{ route('v1.submit-claim.print',['id'=>$claim->obfuscated_id]) }}">
                             <i class="fas fa-print"></i> Print Page
                         </a>
                         
@@ -536,12 +536,7 @@
         }
     </style>
             <script>
-        $(document).ready(function() {
-
-            $('.print-page-btn').on('click', function() {
-                window.print(); // Triggers the browser's print dialog
-            });
-            
+        $(document).ready(function() {            
 
             $('.submit-claim-status-btn').on('click', function(e) {
                 e.preventDefault(); // Prevent default link behavior
