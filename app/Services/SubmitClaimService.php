@@ -572,7 +572,7 @@ class SubmitClaimService {
         $decodedId = IdObfuscator::decode($id);
         $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
         $submitClaimItems = SubmitClaimItem::query()
-                ->where('data_status', '!=', SubmitClaim::STATUS_DELETED)
+                ->where('data_status', '=', SubmitClaim::STATUS_APPROVED)
                 ->where('submit_claim_id', $decodedId)
                 ->orderBy('created_at', 'DESC')
                 ->get(); 
