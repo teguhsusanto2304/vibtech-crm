@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/list', 'list')->name('v1.submit-claim.list');
             Route::get('/all', 'all')->name('v1.submit-claim.all');
             Route::get('/{id}/detail', 'detail')->name('v1.submit-claim.detail');
+            Route::get('/{id}/print', 'print')->name('v1.submit-claim.print');
             Route::get('/create', 'create')->name('v1.submit-claim.create');
             Route::get('/{id}/edit', 'edit')->name('v1.submit-claim.edit');
             Route::post('/store', 'store')->name('v1.submit-claim.store');

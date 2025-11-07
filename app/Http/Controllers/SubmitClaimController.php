@@ -91,6 +91,11 @@ class SubmitClaimController extends Controller
         return $this->submitClaimService->show($id);
     }
 
+    public function print($id)
+    {
+        return $this->submitClaimService->print($id);
+    }
+
     public function getSubmitClaimItemDetails($id)
     {
         return $this->submitClaimService->getSubmitClaimItemDetails($id);

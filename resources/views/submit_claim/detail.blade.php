@@ -108,9 +108,9 @@
                        
                         @endif
                         @endcan
-                        <button type="button" class="btn btn-info print-page-btn">
+                        <a target="_blank" class="btn btn-info print-page-btn" href="{{ route('v1.submit-claim.print',['id'=>$claim->obfuscated_id]) }}">
                             <i class="fas fa-print"></i> Print Page
-                        </button>
+                        </a>
                         
                     </div>
                 </div>
