@@ -38,13 +38,13 @@ class Post extends Model
             // Choose the users to notify (e.g., all admins or all users)
             $users = \App\Models\User::whereNot('id', $post->created_by)->get(); // example
             foreach ($users as $user) {
-                if ($post->post_type == MEMO) {
+                if ($post->post_type == self::TYPE_MEMO) {
                     $user->notify(new UserNotification(
                         'There is a new management memo. Click to read memo. '.$post->title,
                         'accept',
                         route('v1.management-memo.read', ['id' => $post->id])
                     ));
-                } elseif ($post->post_type == HANDBOOK) {
+                } elseif ($post->post_type == self::TYPE_HANDBOOK) {
                     $user->notify(new UserNotification(
                         'A new Employee Handbook has been uploaded. Click to read handbook. '.$post->title,
                         'accept',
@@ -58,7 +58,7 @@ class Post extends Model
 
         static::updated(function ($post) {
 
-            if ($post->post_type == MEMO) {
+            if ($post->post_type == self::TYPE_MEMO) {
                 $changes = $post->getChanges();
                 unset($changes['updated_at']); // ignore updated_at if not needed
 
@@ -75,13 +75,13 @@ class Post extends Model
             // Choose the users to notify (e.g., all admins or all users)
             $users = \App\Models\User::whereNot('id', $post->created_by)->get(); // example
             foreach ($users as $user) {
-                if ($post->post_type == MEMO) {
+                if ($post->post_type == self::TYPE_MEMO) {
                     $user->notify(new UserNotification(
                         'An existing management memo has been updated. Click to read updated memo. '.$post->title,
                         'management-memo',
                         route('v1.management-memo.read', ['id' => $post->id])
                     ));
-                } elseif ($post->post_type == HANDBOOK) {
+                } elseif ($post->post_type == self::TYPE_HANDBOOK) {
                     $user->notify(new UserNotification(
                         'Employee Handbook - An existing employee handbook has been updated. Click to read updated handbook. ',
                         'employee-handbook',
