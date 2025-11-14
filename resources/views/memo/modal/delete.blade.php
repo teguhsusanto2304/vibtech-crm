@@ -1,8 +1,6 @@
 @if($post->data_status == 1)
-    @can('edit-getting-started')
 
-    @endcan
-    @can('destroy-getting-started')
+    @can('delete-management-memo')
         <form class="row g-3" id="deleteForm{{ $post->id }}"
             action="{{ route('v1.management-memo.destroy', ['id' => $post->id, 'status' => 0]) }}" method="post">
             @csrf

@@ -1,5 +1,5 @@
 @if($post->data_status == 0)
-    @can('destroy-getting-started')
+    @can('delete-management-memo')
         <form class="row g-3" id="restoreForm{{ $post->id }}"
             action="{{ route('v1.management-memo.destroy', ['id' => $post->id, 'status' => 1]) }}" method="post">
             @csrf
