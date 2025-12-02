@@ -563,28 +563,27 @@ class SubmitClaimService {
     {
         $notif = request('notif');
 
-        if ($id) {
+        /**if ($id) {
             Auth::user()->notifications()
                 ->where('id', $notif)
                 ->update(['read_at' => now()]);
-        }
+        }**/
 
         $decodedId = IdObfuscator::decode($id);
         $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
         $submitClaimItems = SubmitClaimItem::query()
-                ->where('data_status', '=', SubmitClaim::STATUS_APPROVED)
+                //->where('data_status', '=', SubmitClaim::STATUS_APPROVED)
                 ->where('submit_claim_id', $decodedId)
                 ->orderBy('created_at', 'DESC')
                 ->get(); 
         $groupedItems = $submitClaimItems->groupBy('currency');
-        //return view('submit_claim.print',compact('claim','groupedItems'))->with('title', 'Submit Claim Detail')->with('breadcrumb', ['Home', 'Staff Task','Submit Claim Detail']);
         $pdf = Pdf::loadView('submit_claim.print', compact('claim', 'groupedItems'));
 
     // 4. Return the PDF
     // You can choose to stream it (show in browser) or download it.
 
     // Option A: Stream (show in browser)
-    return $pdf->stream('expense_claim_' . $claim->serial_number . '.pdf');
+        return $pdf->stream('expense_claim_' . $claim->serial_number . '.pdf');
     }
 
     public function getSubmitClaimItemDetails($id)
