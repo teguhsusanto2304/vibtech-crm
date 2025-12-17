@@ -48,6 +48,8 @@ class RouteServiceProvider extends ServiceProvider
                   ->group(base_path('routes/sales.php'));
             Route::middleware('web')
                   ->group(base_path('routes/inventory.php'));
+            Route::middleware('web')
+                  ->group(base_path('routes/leaveapplication.php'));
         });
     }
 }

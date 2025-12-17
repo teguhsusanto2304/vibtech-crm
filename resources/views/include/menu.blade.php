@@ -113,7 +113,7 @@
                         @endcan
                         @can('view-leave-application')
                             <li class="no-bullet">
-                                <a href="{{ route('leave-application') }}"
+                                <a href="{{ route('v1.leave-application') }}"
                                     class="menu-link  {{ request()->routeIs('leave-application') ? 'active' : '' }}">
                                     <div class="text-truncate" data-i18n="Analytics">Leave Application</div>
                                 </a>

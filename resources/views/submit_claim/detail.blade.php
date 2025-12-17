@@ -418,6 +418,34 @@
             </div>
         </div>
 
+        <!-- adjust modal -->
+<div class="modal fade" id="adjustModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adjust Claim</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Claim ID: <span id="modal-claim-id"></span></p>
+
+                <div class="mb-3">
+                    <label class="form-label">Current Amount</label>
+                    <input type="number" class="form-control" id="modal-amount" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" id="save-adjustment">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
             <!-- Submit Claim Item Details Modal -->
             <div class="modal fade" id="submitClaimItemDetailModal" tabindex="-1" aria-labelledby="submitClaimItemDetailModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
@@ -632,6 +660,37 @@
                         }
                     });
                 }
+            });
+
+            $(document).on('click', '.adjust-item-btn', function (e) {
+                e.preventDefault();
+
+                let claimId = $(this).data('id');
+                let amount  = $(this).data('amount');
+
+                $("#modal-claim-id").text(claimId);
+                $("#modal-amount").val(amount);
+
+                $("#adjustModal").modal('show');
+            });
+
+            $('#save-adjustment').on('click', function() {
+                let claimId = $("#modal-claim-id").text();
+                let newAmount = $("#modal-amount").val();
+                $.ajax({
+                    url: "{{ route('v1.submit-claim.adjust-claim-item') }}",   // your route
+                    type: "POST",
+                    data: {
+                        id: claimId,
+                        amount: newAmount,
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(res) {
+                        alert("Amount updated successfully!");
+                        $("#adjustModal").modal('hide');
+                        location.reload();
+                    }
+                });
             });
 
             // Event listener for the "View" button in the DataTables action column

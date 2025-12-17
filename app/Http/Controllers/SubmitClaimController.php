@@ -135,4 +135,9 @@ class SubmitClaimController extends Controller
     {
         return $this->submitClaimService->getRates($request);
     }
+
+    public function adjustClaimItem(Request $request)
+    {
+        return $this->submitClaimService->adjustClaimItem($request);
+    }
 }

@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/action-claim-item', 'handleRejectedAction')->name('v1.submit-claim.action-claim-item');
             Route::get('/exchange-rates', 'exchange')->name('v1.submit-claim.exchange-rates');
             Route::get('/exchange-rates/data', 'getRates')->name('v1.submit-claim.exchange-rates.data');
+            Route::post('/adjust-claim-item', 'adjustClaimItem')->name('v1.submit-claim.adjust-claim-item');
             //->middleware('can:approve-claims');
         });
     });

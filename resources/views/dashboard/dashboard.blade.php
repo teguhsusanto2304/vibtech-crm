@@ -269,11 +269,22 @@ Object.keys(grouped).forEach(groupName => {
         </div>
 
         <div class="d-flex align-items-center">
+            <div class="me-2" style="width: 20px; height: 20px; background-color: #045eb8ff;"></div>
+            <div><small>Singapore Public Holiday</small></div>
+        </div>
+
+
+        <div class="d-flex align-items-center mt-1">
+            <div class="me-2" style="width: 20px; height: 20px; background-color: #757373ff;"></div>
+            <div><small>Malaysia Public Holiday</small></div>
+        </div>
+
+        <div class="d-flex align-items-center mt-2">
             <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
             <div><small>Vehicle Booking</small></div>
         </div>
 
-        <div class="d-flex align-items-center mt-2 mb-2">
+        <div class="d-flex align-items-center mt-1 mb-2">
             <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
             <div><small>Job Requisition Form</small></div>
         </div>
@@ -359,6 +370,19 @@ Object.keys(grouped).forEach(groupName => {
                 </div>
                 <!-- /Calendar Sidebar -->
                 <style>
+                    .phsingapore {
+                        background-color: #dc3545 !important; /* Bootstrap danger */
+                        border-color: #dc3545 !important;
+                        color: #ffffff !important;
+                    }
+
+                    /* Public Holiday – Malaysia (Navy Blue) */
+                    .phmalaysia {
+                        background-color: #0b3c5d !important; /* Navy blue */
+                        border-color: #0b3c5d !important;
+                        color: #ffffff !important;
+                    }
+
                     .bg-label-success {
                         height: 30px;
                     }
@@ -441,6 +465,8 @@ Object.keys(grouped).forEach(groupName => {
                                 Personal: "danger",
                                 Family: "warning",
                                 ETC: "info",
+                                PHSingapore: "danger",
+                                PHMalaysia: "danger"
                             },
                                 f = $("#eventLabel"),
                                 h = $("#eventGuests"),
@@ -489,6 +515,20 @@ Object.keys(grouped).forEach(groupName => {
                             let S = new Calendar(w, {
                                 initialView: "dayGridMonth",
                                 eventContent: function (arg) {
+
+                                    // public holiday
+                                    if (arg.event.extendedProps.type === 'public_holiday') {
+        let label = document.createElement('div');
+        label.style.fontSize = '11px';
+        label.style.padding = '2px 4px';
+        label.style.color = '#fff';
+        label.style.backgroundColor = arg.event.backgroundColor;
+        label.style.borderRadius = '4px';
+        label.innerText = arg.event.title;
+
+        return { domNodes: [label] };
+    }
+                                    // end public holiday
 
                                     let dot = document.createElement('span');
                                      if (arg.event.extendedProps.event_status == 'JR') {

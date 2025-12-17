@@ -7,12 +7,14 @@ use App\Models\JobAssignmentPersonnel;
 use App\Models\VehicleBooking;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\LeaveApplication;
 use Illuminate\Notifications\DatabaseNotification;
 use App\Models\ProjectStageTask;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -61,6 +63,93 @@ class DashboardController extends Controller
             'color' => 'success',
         ];
     }))->all();
+
+    $currentYear = now()->year;
+$nextYear = $currentYear + 1;
+
+$publicHolidays = LeaveApplication::whereIn(
+        DB::raw('YEAR(leave_date)'),
+        [$currentYear, $nextYear]
+    )
+    ->select(
+        'leave_date as date',
+        'title as name',
+        'country_code as country'
+    )
+    ->orderBy('leave_date')
+    ->get()
+    ->toArray();
+
+    $publicHolidaysxx = [
+        [
+            'date' => '2025-12-01',
+            'name' => 'New Year Holiday',
+            'country' => 'SG',
+        ],
+        [
+            'date' => '2025-12-10',
+            'name' => 'Federal Territory Day',
+            'country' => 'MY',
+        ],
+    ];
+
+    $holidayEvents = collect($publicHolidays)->map(function ($holiday) {
+    return [
+        'id' => 'PH-' . md5($holiday['date'] . $holiday['country']),
+        'title' => $holiday['name'],
+        'start' => $holiday['date'],
+        'end' => \Carbon\Carbon::parse($holiday['date'])->addDay()->toDateString(),
+        'allDay' => true,
+
+        'allDay' => true,
+        'extendedProps' => ['calendar' => $holiday['country'] === 'SG' ? 'Personal' : 'Family'],
+        'event_status' => 'PH',
+        'color' => 'success',
+    ];
+});
+
+$jobEvents = $jobAssignments->map(function ($job) {
+    return [
+        'id' => $job->id,
+        'url' => '',
+        'title' => $job->job_type,
+        'start' => $job->start_at->toDateString(),
+        'end' => $job->end_at->addDay()->toDateString(),
+        'allDay' => true,
+        'event_status' => 'JR',
+        'color' => '#0d6efd',
+        'extendedProps' => [
+            'calendar' => 'Holiday',
+            'type' => 'job',
+        ],
+    ];
+});
+$vehicleEvents = $vehicleBookings->map(function ($booking) {
+    return [
+        'id' => $booking->id,
+        'url' => '',
+        'title' => $booking->vehicle->name,
+        'start' => $booking->start_at->toDateString(),
+        'end' => $booking->end_at->addDay()->toDateString(),
+        'allDay' => true,
+        'event_status' => 'VB',
+        'color' => '#198754',
+        'extendedProps' => [
+            'calendar' => 'Business',
+            'type' => 'vehicle',
+        ],
+    ];
+});
+
+$events = $jobEvents
+    ->concat($vehicleEvents)
+    ->concat($holidayEvents)
+    ->values()
+    ->all();
+
+
+
+
 
     $databaseNotifications = DatabaseNotification::where('notifiable_id', Auth::id())
             // Filter notifications that match specific group message types

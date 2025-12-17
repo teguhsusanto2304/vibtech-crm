@@ -18,6 +18,7 @@ use Auth;
 use Illuminate\Validation\Rule;
 use App\Notifications\UserNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Validation\Rules\Can;
 
 class SubmitClaimService {
 
@@ -504,6 +505,13 @@ class SubmitClaimService {
             ->addColumn('action', function ($claim) {
                 $btn = '<div class="btn-group btn-group" role="group" aria-label="Claim Actions">';
                 $btn .= '<a class="btn btn-info btn-sm view-item-btn" href="#" data-id="' . $claim->obfuscated_id . '">View</a>'; // Changed href to # and added class/data-id
+                
+                if (auth()->user()->can('adjust-claim')) {
+                    $btn .= '<a class="btn btn-warning btn-sm adjust-item-btn"
+                                href="#"
+                                data-id="'.$claim->obfuscated_id.'"
+                                data-amount="'.$claim->amount.'">Adjust</a>';
+                }
                 if($claim->submitClaim->data_status==1){
                     $btn .= '<a class="btn btn-warning btn-sm" href="'.route('v1.submit-claim.edit',['id'=>$claim->obfuscated_id]).'" disabled>Edit</a>';
                     $btn .= '<a class="btn btn-danger btn-sm delete-item-btn" href="#" data-id="' . $claim->obfuscated_id . '">Delete</a>';
@@ -557,6 +565,36 @@ class SubmitClaimService {
         $decodedId = IdObfuscator::decode($id);
         $claim = SubmitClaim::with(['staff', 'submitClaimItems'])->find($decodedId);
         return view('submit_claim.detail',compact('claim'))->with('title', 'Submit Claim Detail')->with('breadcrumb', ['Home', 'Staff Task','Submit Claim Detail']);
+    }
+
+    public function adjustClaimItem(Request $request)
+    {
+        // Validate input
+        $request->validate([
+            'id'     => 'required',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        // Find claim
+        $decodedId = IdObfuscator::decode($request->id);
+        $claim = SubmitClaimItem::where('id', $decodedId)->first();
+
+        if (!$claim) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Claim not found'
+            ], 404);
+        }
+
+        // Update amount
+        $claim->amount = $request->amount;
+        $claim->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Claim updated successfully.',
+            'new_amount' => $claim->amount
+        ]);
     }
 
     public function print($id)
