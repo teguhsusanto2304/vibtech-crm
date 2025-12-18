@@ -19,20 +19,20 @@ class LeaveApplicationController extends Controller
 
     public function create()
     {
-        return view('leave_application.form')->with('title', 'Create Leave Application')->with('breadcrumb', ['Home', 'Staff Task', 'Create Leave Application']);
+        return view('leave_application.form')->with('title', 'Create Public Holiday')->with('breadcrumb', ['Home', 'Staff Task', 'Create Public Holiday']);
     }
 
     public function edit($id)
     {
         $leaveApplication = LeaveApplication::findorFail($id);
-        return view('leave_application.edit',compact('leaveApplication'))->with('title','Edit Leave Application')->with('breadcrumb', ['Home', 'Staff Task', 'Edit Leave Application']);
+        return view('leave_application.edit',compact('leaveApplication'))->with('title','Edit Public Holiday')->with('breadcrumb', ['Home', 'Staff Task', 'Edit Public Holiday']);
     }
 
     public function list()
     {
         
         $defaultCountry = session('defaultCountry') ?? 'SG';
-        return view('leave_application.list',compact('defaultCountry'))->with('title', 'Leave Application')->with('breadcrumb', ['Home', 'Staff Task','Leave Application']);
+        return view('leave_application.list',compact('defaultCountry'))->with('title', 'Public Holiday List')->with('breadcrumb', ['Home', 'Staff Task','Public Holiday List']);
     }
 
     public function store(Request $request)
@@ -226,7 +226,9 @@ class LeaveApplicationController extends Controller
                 if (date('Y', strtotime($leaveDate)) != $year) {
                     continue; // skip invalid year rows
                 }
-
+                LeaveApplication::where('country_code', $countryCode)
+                    ->where('leave_date', $leaveDate)
+                    ->delete();
                 LeaveApplication::updateOrCreate(
                     [
                         'country_code' => $countryCode,

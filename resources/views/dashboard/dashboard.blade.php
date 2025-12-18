@@ -608,7 +608,7 @@ Object.keys(grouped).forEach(groupName => {
 
                                             // Redirect to the new page
                                             window.location.href = url;
-                                        } else {
+                                        } else if (eventStatus === "VB") {
 
                                             let eventId = arg.event.id;
                                             let modal = document.getElementById('bookingModal');

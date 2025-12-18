@@ -39,7 +39,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Create Leave Application</h5>
+                                <h5 class="card-title">Create Public Holiday</h5>
                                 @can('create-leave-application')
                                 <a href="{{ route('v1.leave-application.create') }}" class="btn btn_primary">Create</a>
                                 @else
@@ -51,7 +51,7 @@
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">Leave Management</h5>
+                                <h5 class="card-title">Public Holiday List</h5>
                                 <a href="{{ route('v1.leave-application.list') }}" class="btn btn_primary">View</a>
                             </div>
                         </div>
