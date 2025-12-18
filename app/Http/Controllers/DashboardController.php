@@ -102,7 +102,8 @@ $publicHolidays = LeaveApplication::whereIn(
         'allDay' => true,
 
         'allDay' => true,
-        'extendedProps' => ['calendar' => $holiday['country'] === 'SG' ? 'Personal' : 'Family'],
+        'extendedProps' => ['calendar' => $holiday['country'] === 'SG' ? 'Personal' : 'Family',"category"=>$holiday['country'] === 'SG' ? 'Personal' : 'Family'],
+        
         'event_status' => 'PH',
         'color' => 'success',
     ];

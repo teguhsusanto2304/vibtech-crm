@@ -9,6 +9,48 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <style>
+/* Gunakan selector yang lebih spesifik agar mengalahkan style bawaan FullCalendar */
+.fc-event.bg-custom-danger, 
+.bg-custom-danger {
+    background-color: #045eb8ff !important;
+    border-color: #045eb8ff !important;
+    color: white !important;
+}
+
+.fc-event.bg-custom-warning, 
+.bg-custom-warning {
+    background-color: #ffbe4d !important;
+    border-color: #ffbe4d !important;
+    color: white !important;
+}
+
+.custom-danger {
+  background-color: #8bc2f9ff !important; /* red shade */
+  color: #fff !important;              /* text color */
+}
+
+.custom-warning {
+  background-color: #b1b0b0ff !important; /* red shade */
+  color: #fff !important;              /* text color */
+}
+
+
+
+
+        /* Singapore Public Holiday */
+.phsingapore {
+    background-color: #045eb8 !important;
+    border-color: #045eb8 !important;
+    color: #ffffff !important;
+}
+
+/* Malaysia Public Holiday */
+.phmalaysia {
+    background-color: #757373 !important;
+    border-color: #757373 !important;
+    color: #ffffff !important;
+}
+
         .callout {
             padding: 15px;
             border-left: 5px solid #80e491;
@@ -114,6 +156,9 @@ const ICON_MAP = {
 };
 
 groupNotifications.forEach(n => {
+    if (n.group_name.toLowerCase() === 'personal') {
+        n.bgcolor = 'bg-custom-danger';
+    }
     // 1. Group by group_name
     if (!grouped[n.group_name]) {
         grouped[n.group_name] = []; // Initialize array if not exists
@@ -136,6 +181,11 @@ Object.keys(grouped).forEach(groupName => {
     const notifications = grouped[groupName];
     const count = notifications.length;
     const iconClass = ICON_MAP[groupName] || 'bx-bell';
+
+    // Ambil bgcolor, jika tidak ada (untuk 'Personal' yang dipaksa di atas), 
+    // kita beri default sesuai groupName
+    // Gabungkan logika penentuan warna di sini (HAPUS DUPLIKASI)
+    
 
     // FIX 1: Retrieve the bgcolor class from the first notification in the group.
     // We assume the first notification represents the color for the entire group.
@@ -369,20 +419,11 @@ Object.keys(grouped).forEach(groupName => {
                     </div>
                 </div>
                 <!-- /Calendar Sidebar -->
-                <style>
-                    .phsingapore {
-                        background-color: #dc3545 !important; /* Bootstrap danger */
-                        border-color: #dc3545 !important;
-                        color: #ffffff !important;
-                    }
+                <style>                    
 
-                    /* Public Holiday – Malaysia (Navy Blue) */
-                    .phmalaysia {
-                        background-color: #0b3c5d !important; /* Navy blue */
-                        border-color: #0b3c5d !important;
-                        color: #ffffff !important;
+                    .bg-label-danger {
+                        height: 40px;
                     }
-
                     .bg-label-success {
                         height: 30px;
                     }
@@ -394,6 +435,9 @@ Object.keys(grouped).forEach(groupName => {
                         /* Unicode dot character */
                         margin-right: 5px;
                         font-size: 12px;
+                    }
+                    .dot-Personal::before {
+                        color: red;
                     }
 
                     .dot-Holiday::before {
@@ -462,8 +506,8 @@ Object.keys(grouped).forEach(groupName => {
                             let g = {
                                 Business: "primary",
                                 Holiday: "success",
-                                Personal: "danger",
-                                Family: "warning",
+                                Personal: "custom-danger",
+                                Family: "custom-warning",
                                 ETC: "info",
                                 PHSingapore: "danger",
                                 PHMalaysia: "danger"
@@ -680,7 +724,13 @@ Object.keys(grouped).forEach(groupName => {
                                 initialDate: new Date(),
                                 navLinks: !0,
                                 eventClassNames: function ({ event: e }) {
-                                    return ["bg-label-" + g[e._def.extendedProps.calendar]];
+                                    if (e._def.extendedProps.calendar !== 'Personal' && e._def.extendedProps.calendar !== 'Family') {
+                                        return ['bg-label-' + g[e._def.extendedProps.calendar]];
+                                    } else {
+                                        return g[e._def.extendedProps.category];
+                                    }
+
+                                    //return ["bg-label-" + g[e._def.extendedProps.calendar]];
                                     //return ["event-dot", "dot-" + e._def.extendedProps.calendar];
                                 },
                                 datesSet: function () {
