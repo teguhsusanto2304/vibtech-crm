@@ -177,17 +177,15 @@ class LeaveApplicationController extends Controller
 
             // Header row
             fputcsv($file, [
-                'leave_date',
-                'title',
-                'description'
+                'leave_date (YYYY-MM-DD)',
+                'title'
             ]);
             //$year = '2025';
 
             // Example row
             fputcsv($file, [
                 $year . '-01-01',
-                'New Year Holiday',
-                'Public holiday'
+                'New Year Holiday'
             ]);
 
             fclose($file);
@@ -215,12 +213,12 @@ class LeaveApplicationController extends Controller
 
             // Read header
             $header = fgetcsv($handle);
-            if (!$header || $header !== ['leave_date', 'title', 'description']) {
+            if (!$header || $header !== ['leave_date', 'title']) {
                 throw new \Exception('Invalid CSV format.');
             }
 
             while (($row = fgetcsv($handle)) !== false) {
-                [$leaveDate, $title, $description] = $row;
+                [$leaveDate, $title] = $row;
 
                 // Validate year consistency
                 if (date('Y', strtotime($leaveDate)) != $year) {
@@ -235,8 +233,7 @@ class LeaveApplicationController extends Controller
                         'leave_date' => $leaveDate,
                     ],
                     [
-                        'title' => $title,
-                        'description' => $description,
+                        'title' => $title
                     ]
                 );
             }

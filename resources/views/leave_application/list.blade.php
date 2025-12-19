@@ -93,9 +93,8 @@
                         <tr>
                             <th>No</th>
                             <th>Country</th>
-                            <th>Leave Date</th>
+                            <th>Public Holiday Date</th>
                             <th>Title</th>
-                            <th>Description</th>
                             <th>Created At</th>
                             <th>Action</th>
                         </tr>
@@ -146,13 +145,12 @@
                         { data: 'country', name: 'country_code' },
                         { data: 'leave_date_formatted', name: 'leave_date' },
                         { data: 'title', name: 'title' },
-                        { data: 'description', name: 'description', orderable: false },
                         { data: 'created_at_formatted', name: 'created_at' },
                         { data: 'action', orderable: false, searchable: false }
                     ],
                     columnDefs: [
                         {
-                            targets: 6, // 'Items Summary' column (0-indexed)
+                            targets: 5, // 'Items Summary' column (0-indexed)
                             className: 'dt-body-right dt-head-right' 
                         }
                     ],

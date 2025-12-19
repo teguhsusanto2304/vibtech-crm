@@ -110,7 +110,7 @@
                     </div>
 
                     <!-- Description -->
-                    <div class="mb-3">
+                    <div class="mb-3" style="display: none;">
                         <label class="form-label">Description (optional)</label>
                         <textarea name="description"
                                   class="form-control"
@@ -119,7 +119,7 @@
 
                     <div class="text-end">
                         <button class="btn btn-primary">
-                            Save Leave
+                            Save Public Holiday
                         </button>
                     </div>
                 </form>

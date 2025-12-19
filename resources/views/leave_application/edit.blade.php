@@ -65,7 +65,7 @@
 
                     <!-- Leave Date -->
                     <div class="mb-3">
-                        <label class="form-label">Leave Date</label>
+                        <label class="form-label">Public Holiday Date</label>
                         <input type="date"
                             name="leave_date"
                             class="form-control"
@@ -87,7 +87,7 @@
                     </div>
 
                     <!-- Description -->
-                    <div class="mb-3">
+                    <div class="mb-3" style="display: none;">
                         <label class="form-label">Description (optional)</label>
                         <textarea name="description"
           class="form-control"
@@ -97,7 +97,7 @@
 
                     <div class="text-end">
                         <button class="btn btn-primary">
-                            Update Leave
+                            Update Public Holiday
                         </button>
                     </div>
                 </form>
