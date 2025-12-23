@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
@@ -140,5 +141,29 @@ class NotificationController extends Controller
         Auth::user()->unreadNotifications->markAsRead();
 
         return response()->json(['message' => 'All notifications marked as read']);
+    }
+
+    public function markGroupAsRead(Request $request)
+    {
+        $groupName = $request->group_name;
+        $userId = auth()->id();
+
+        // Sesuaikan dengan nama model dan kolom di database Anda
+        if($groupName === 'Job Requisition'){
+            $groupName = 'job-assignment-form';
+        } else if($groupName === 'Submit Claim'){
+            $groupName = 'submit-claim';
+        } else if($groupName === 'Management Memo'){
+            $groupName = 'management-memo';
+        } else if($groupName === 'Employee Handbook'){
+            $groupName = 'employee-handbooks';
+        } else if($groupName === 'Staff Resource'){
+            $groupName = 'staff-resource';
+        }
+        DatabaseNotification::where('notifiable_id', $userId)
+            ->where('data', 'LIKE', '%' . $groupName . '%')
+        ->whereNull('read_at')
+        ->update(['read_at' => now()]);
+        return response()->json(['success' => true]);
     }
 }

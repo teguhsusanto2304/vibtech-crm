@@ -251,9 +251,45 @@ Object.keys(grouped).forEach(groupName => {
 
         // Attach handler for "Mark All as Read"
         $("#mark-group-all-read").off("click").on("click", function() {
-            grouped[groupName] = [];
-            $("#groupNotificationModal").modal("hide");
-            $container.find(`[data-group="${groupName}"] h2`).text(0);
+            //grouped[groupName] = [];
+            //$("#groupNotificationModal").modal("hide");
+            
+            $.ajax({
+        url: "{{ route('notifications.mark-group-read') }}",
+        method: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            group_name: groupName
+        },
+        success: function(response) {
+            if (response.success) {
+                // 1. Kosongkan data di variabel lokal agar saat diklik lagi sudah kosong
+                grouped[groupName] = [];
+                
+                // 2. Tutup modal
+                $("#groupNotificationModal").modal("hide");
+                
+                // 3. Update angka di Card Dashboard menjadi 0
+                const $card = $container.find(`[data-group="${groupName}"]`);
+                $card.find('h2').text(0);
+                
+                // 4. Ubah tampilan Card menjadi "Muted" (opsional, sesuai logika FIX 2 Anda)
+                $card.removeClass('bg-primary bg-success bg-info bg-warning text-white cursor-pointer')
+                     .addClass('bg-light text-muted')
+                     .removeAttr('data-bs-toggle')
+                     .removeAttr('data-bs-target');
+                $container.find(`[data-group="${groupName}"]`).closest('.col-lg-3').hide();
+                
+                // Tampilkan notifikasi sukses (opsional)
+                // alert('All ' + groupName + ' notifications marked as read');
+            }
+        },
+        error: function(err) {
+            console.error("Error marking as read:", err);
+            alert("Failed to mark notifications as read.");
+        }
+    });
+            //$container.find(`[data-group="${groupName}"] h2`).text(0);
         });
     });
 });

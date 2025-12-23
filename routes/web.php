@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/groups', [NotificationController::class, 'getGroupedNotifications'])->name('notifications.groups');
     Route::get('/notifications/specifically', [NotificationController::class, 'getSpecificallyNotifications'])->name('notifications.get-specifically');
     Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
+    Route::post('/notifications/mark-group-read',[NotificationController::class,'markGroupAsRead'])->name('notifications.mark-group-read');
 
     Route::post('/logout', function (Request $request) {
         $request->session()->invalidate();
