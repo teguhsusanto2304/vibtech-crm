@@ -253,7 +253,7 @@ $(document).on('click', '.btn-delete', function () {
         return;
     }
 
-    if (!confirm('Are you sure you want to delete this leave?')) {
+    if (!confirm('Are you sure you want to delete this public holiday?')) {
         return;
     }
 

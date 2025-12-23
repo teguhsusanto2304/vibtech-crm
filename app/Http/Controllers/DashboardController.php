@@ -18,6 +18,12 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    function initials($name)
+    {
+        return collect(explode(' ', trim($name)))
+            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+            ->implode('');
+    }
     public function index()
 {
     // Define the start and end dates for the three months
@@ -25,8 +31,15 @@ class DashboardController extends Controller
     $nextMonthEnd = now()->addMonth()->endOfMonth();
 
     // Use a single query for JobAssignments, filtering by the date range
-    $jobAssignments = JobAssignment::where('is_publish', 1)
-        ->select('id', 'job_type', 'start_at', 'end_at')
+    $jobAssignments = JobAssignment::join('users', 'users.id', '=', 'job_assignments.user_id')
+        ->where('is_publish', 1)
+        ->select(
+        'job_assignments.id',
+        'job_assignments.job_type',
+        'job_assignments.start_at',
+        'job_assignments.end_at',
+        'users.name as user_name'
+    )
         ->whereBetween('start_at', [$lastMonthStart, $nextMonthEnd])
         ->get();
 
@@ -113,7 +126,7 @@ $jobEvents = $jobAssignments->map(function ($job) {
     return [
         'id' => $job->id,
         'url' => '',
-        'title' => $job->job_type,
+        'title' => $this->initials($job->user_name) .' - '. $job->job_type,
         'start' => $job->start_at->toDateString(),
         'end' => $job->end_at->addDay()->toDateString(),
         'allDay' => true,

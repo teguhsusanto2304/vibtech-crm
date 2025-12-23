@@ -41,7 +41,7 @@
                 </div>
             @endif
             <ul class="nav nav-tabs mb-3" id="leaveTabs" role="tablist">
-    <li class="nav-item" role="presentation" style="display: none;">
+    <li class="nav-item" role="presentation">
         <button class="nav-link"
                 id="manual-tab"
                 data-bs-toggle="tab"
@@ -66,7 +66,7 @@
 <div class="tab-content" id="leaveTabsContent">
 
     <!-- ================= TAB 1: MANUAL INPUT ================= -->
-    <div class="tab-pane fade show"
+    <div class="tab-pane fade show active"
          id="manual"
          role="tabpanel"
          aria-labelledby="manual-tab">
@@ -128,7 +128,7 @@
     </div>
 
     <!-- ================= TAB 2: UPLOAD EXCEL ================= -->
-    <div class="tab-pane fade show active"
+    <div class="tab-pane fade"
          id="upload"
          role="tabpanel"
          aria-labelledby="upload-tab">

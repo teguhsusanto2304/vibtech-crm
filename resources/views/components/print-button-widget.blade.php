@@ -8,7 +8,9 @@
         let fromDashboard = new URLSearchParams(window.location.search).get("fr");
         function goBack() {
             if (fromDashboard === "main") {
-                window.location.href = "{{ route('v1.dashboard' )}}"; // Go back to the previous page
+                window.history.back();
+                //localStorage.removeItem('calendarDefaultDate');
+                //window.location.href = "{{ route('v1.dashboard' )}}"; // Go back to the previous page
             } else {
                 window.location.href = "{{ route('v1.job-assignment-form.list' )}}";
             }

@@ -318,26 +318,38 @@ Object.keys(grouped).forEach(groupName => {
             </div>
         </div>
 
-        <div class="d-flex align-items-center">
-            <div class="me-2" style="width: 20px; height: 20px; background-color: #045eb8ff;"></div>
-            <div><small>Singapore Public Holiday</small></div>
-        </div>
-
-
-        <div class="d-flex align-items-center mt-1">
-            <div class="me-2" style="width: 20px; height: 20px; background-color: #757373ff;"></div>
-            <div><small>Malaysia Public Holiday</small></div>
-        </div>
-
-        <div class="d-flex align-items-center mt-2">
+        <div class="row mb-3">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center mb-2">
             <div class="me-2 bg-primary" style="width: 20px; height: 20px;"></div>
-            <div><small>Vehicle Booking</small></div>
+            <div><small class="fw-bold">Vehicle Booking</small></div>
+        </div>
+        <div class="d-flex align-items-center mb-2">
+            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
+            <div><small class="fw-bold">Job Requisition Form</small></div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+                <div class="me-2" style="width: 20px; height: 20px; background-color: #045eb8ff;"></div>
+                <div><small class="fw-bold">Singapore Public Holiday</small></div>
+            </div>
+            <a href="#" class="btn btn-outline-primary btn-sm py-0" style="font-size: 0.75rem;">
+                <i class="bx bx-history me-1"></i> Event History
+            </a>
         </div>
 
-        <div class="d-flex align-items-center mt-1 mb-2">
-            <div class="me-2 bg-success" style="width: 20px; height: 20px;"></div>
-            <div><small>Job Requisition Form</small></div>
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+                <div class="me-2" style="width: 20px; height: 20px; background-color: #757373ff;"></div>
+                <div><small class="fw-bold">Malaysia Public Holiday</small></div>
+            </div>
+            
         </div>
+    </div>
+</div>
         <div class="card app-calendar-wrapper ">
             <div class="row g-0">
                 <!-- Calendar & Modal -->
@@ -556,7 +568,10 @@ Object.keys(grouped).forEach(groupName => {
                                         '<i class="icon-base bx bx-menu icon-lg text-heading"></i>'
                                     );
                             }
+                            let storedDate = localStorage.getItem('calendarDefaultDate');
+                            
                             let S = new Calendar(w, {
+                                initialDate: storedDate ? storedDate : new Date(),
                                 initialView: "dayGridMonth",
                                 eventContent: function (arg) {
 
@@ -676,6 +691,73 @@ Object.keys(grouped).forEach(groupName => {
                                                     modalBody.innerHTML = `<p style="color: red;">Error fetching details. Please try again.</p>`;
                                                     console.error("Error fetching event data:", error);
                                                 });
+                                        } else if (eventStatus === "PH") {
+                                            let eventId = arg.event.id;
+                                            let modal = document.getElementById('publicholidayModal');
+                                            let modalTitle = modal.querySelector('.modal-title');
+                                            let modalBody = modal.querySelector('.modal-body');
+
+                                            // Update modal title with the event ID
+                                            modalTitle.innerText = `Public Holiday Details`;
+
+                                            // Show loading text while fetching data
+                                            modalBody.innerHTML = `<p>Loading details...</p>`;
+
+                                            // Show the modal
+                                            var myModal = new bootstrap.Modal(modal);
+                                            myModal.show();
+
+                                            // Fetch event details from API
+                                            fetch(`/v1/vehicle-bookings/${eventId}/modal`) // Replace with your API URL
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    // Populate modal with fetched data
+                                                    modalBody.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-5"><strong>Vehicle</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingVehicle">${data.vehicle.name}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Start Date</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingStart">${data.start_at}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>End Date</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingEnd">${data.end_at}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Purposes</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingPurpose">${data.purposes}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingJob">${data.job_assignment ? data.job_assignment.scope_of_work : "N/A"}</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-5"><strong>Created By</strong></div>
+                                <div class="col-md-1">:</div>
+                                <div class="col-md-6"><span id="bookingCreator">${data.creator.name}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <img id="bookingImage" src="/${data.vehicle.path_image}" alt="Vehicle Image" class="img-fluid rounded"
+                                style="max-width: 300px;">
+                        </div>
+                    </div>
+                `;
+                                                })
+                                                .catch(error => {
+                                                    modalBody.innerHTML = `<p style="color: red;">Error fetching details. Please try again.</p>`;
+                                                    console.error("Error fetching event data:", error);
+                                                });
                                         }
 
                                     };
@@ -733,9 +815,14 @@ Object.keys(grouped).forEach(groupName => {
                                     //return ["bg-label-" + g[e._def.extendedProps.calendar]];
                                     //return ["event-dot", "dot-" + e._def.extendedProps.calendar];
                                 },
-                                datesSet: function () {
+                                datesSet: function (info) {
+                                    localStorage.setItem(
+                                        'calendarDefaultDate',
+                                        info.view.currentStart.toISOString()
+                                    );
                                     I();
                                     //highlightCurrentDate();
+                                    
                                 },
                                 viewDidMount: function () {
                                     I();
@@ -964,6 +1051,65 @@ Object.keys(grouped).forEach(groupName => {
                 </div>
                 <x-booking-modal />
                 <!-- /Calendar & Modal -->
+
+                <div class="modal fade" id="publicholidayModal" tabindex="-1" aria-labelledby="publicholidayModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="publicholidayModalLabel">Public Holiday Detail</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Vehicle Image -->
+
+                                    <!-- Booking Details -->
+                                    <div class="col-md-6">
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Public Holiday</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingVehicle"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Start Date</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingStart"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>End Date</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingEnd"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Purposes</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingPurpose"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Job Assignment</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingJob"></span></div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5"><strong>Created By</strong></div>
+                                            <div class="col-md-1">:</div>
+                                            <div class="col-md-6"><span id="bookingCreator"></span></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <img id="bookingImage" src="" alt="Vehicle Image" class="img-fluid rounded"
+                                            style="max-width: 300px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
 
             </div>

@@ -7,7 +7,7 @@ use App\Models\LeaveApplication;
 use Yajra\DataTables\Facades\DataTables;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 
 class LeaveApplicationController extends Controller
@@ -19,7 +19,7 @@ class LeaveApplicationController extends Controller
 
     public function create()
     {
-        return view('leave_application.form')->with('title', 'Create Public Holiday')->with('breadcrumb', ['Home', 'Staff Task', 'Create Public Holiday']);
+        return view('leave_application.form')->with('title', 'Upload Public Holiday')->with('breadcrumb', ['Home', 'Staff Task', 'Upload Public Holiday']);
     }
 
     public function edit($id)
@@ -32,7 +32,7 @@ class LeaveApplicationController extends Controller
     {
         
         $defaultCountry = session('defaultCountry') ?? 'SG';
-        return view('leave_application.list',compact('defaultCountry'))->with('title', 'Public Holiday List')->with('breadcrumb', ['Home', 'Staff Task','Public Holiday List']);
+        return view('leave_application.list',compact('defaultCountry'))->with('title', 'Manage Public Holiday')->with('breadcrumb', ['Home', 'Staff Task','Manage Public Holiday']);
     }
 
     public function store(Request $request)
@@ -92,7 +92,7 @@ class LeaveApplicationController extends Controller
         $leave = LeaveApplication::findOrFail($id);
         $leave->delete();
         return response()->json([
-            'message' => 'Leave deleted successfully'
+            'message' => 'Public Holiday deleted successfully'
         ]);
     }
 
@@ -177,15 +177,19 @@ class LeaveApplicationController extends Controller
 
             // Header row
             fputcsv($file, [
-                'leave_date (YYYY-MM-DD)',
+                'leave_date (MM/DD/YYYY)',
                 'title'
             ]);
             //$year = '2025';
 
             // Example row
             fputcsv($file, [
-                $year . '-01-01',
+                '01/01/'. $year,
                 'New Year Holiday'
+            ]);
+            fputcsv($file, [
+                'MM/DD/YYYY',
+                'Public Holiday Title'
             ]);
 
             fclose($file);
@@ -194,7 +198,7 @@ class LeaveApplicationController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    public function import(Request $request)
+    public function importOld(Request $request)
     {
         $request->validate([
             'year' => 'required|integer',
@@ -213,7 +217,7 @@ class LeaveApplicationController extends Controller
 
             // Read header
             $header = fgetcsv($handle);
-            if (!$header || $header !== ['leave_date', 'title']) {
+            if (!$header || $header !== ['leave_date (MM/DD/YYYY)', 'title']) {
                 throw new \Exception('Invalid CSV format.');
             }
 
@@ -241,12 +245,94 @@ class LeaveApplicationController extends Controller
             fclose($handle);
             DB::commit();
 
-            return redirect('v1/leave-application/list')->with('defaultCountry',$countryCode)->with('success', 'Leave applications imported successfully.');
+            return redirect('v1/leave-application/list')->with('defaultCountry',$countryCode)->with('success', 'Public holiday imported successfully.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'year' => 'required|integer',
+            'country' => 'required|string|size:2',
+            'file' => 'required|file|mimes:csv,txt',
+        ]);
+
+        $year = $request->year;
+        $countryCode = $request->country;
+        $file = $request->file('file');
+
+        DB::beginTransaction();
+
+        try {
+            $handle = fopen($file->getRealPath(), 'r');
+
+            // ✅ Read header
+            $header = fgetcsv($handle);
+            if (!$header || $header !== ['leave_date (MM/DD/YYYY)', 'title']) {
+                throw new \Exception('Invalid CSV format. Expected: leave_date,title');
+            }
+
+            while (($row = fgetcsv($handle)) !== false) {
+                [$leaveDateRaw, $title] = $row;
+
+                $leaveDate = null;
+
+                // ✅ Allow multiple date formats
+                $allowedFormats = [
+                    'm/d/Y', // 04/23/2026
+                    'm/d/y', // 04/23/26
+                ];
+
+                foreach ($allowedFormats as $format) {
+                    try {
+                        $leaveDate = Carbon::createFromFormat($format, trim($leaveDateRaw));
+                        break;
+                    } catch (\Exception $e) {
+                        // try next format
+                    }
+                }
+
+                // ❌ Skip invalid date
+                if (!$leaveDate) {
+                    continue;
+                }
+
+                // ✅ Normalize to Y-m-d
+                $leaveDateFormatted = $leaveDate->format('Y-m-d');
+
+                // ✅ Validate year
+                if ($leaveDate->year != $year) {
+                    continue;
+                }
+
+                // ✅ Save / Update
+                LeaveApplication::updateOrCreate(
+                    [
+                        'country_code' => $countryCode,
+                        'leave_date' => $leaveDateFormatted,
+                    ],
+                    [
+                        'title' => $title,
+                    ]
+                );
+            }
+
+            fclose($handle);
+            DB::commit();
+
+            return redirect('v1/leave-application/list')
+                ->with('defaultCountry', $countryCode)
+                ->with('success', 'Public holiday imported successfully into staff calendar.');
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
 
 }
