@@ -500,7 +500,7 @@ class JobAssignmentController extends Controller
 
         $job = JobAssignment::find($id);
         $staff = User::whereNot('id', auth()->user()->id)
-            ->whereNot('position_level_id', 99)
+            //->whereNot('position_level_id', 99)
             ->where('user_status',1)
             ->whereDoesntHave('jobAssignmentPersonnel', function ($query) use ($id) {
                 $query->where('job_assignment_id', $id);
