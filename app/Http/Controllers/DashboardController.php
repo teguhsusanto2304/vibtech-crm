@@ -656,6 +656,7 @@ $events = $jobEvents
         // 1. Ambil data Job Assignment
         $jobs = JobAssignment::whereMonth('created_at', $month)
             ->whereYear('created_at', $year)
+            ->whereNot('job_status',3)
             ->get()
             ->map(function($item) {
                 return [
