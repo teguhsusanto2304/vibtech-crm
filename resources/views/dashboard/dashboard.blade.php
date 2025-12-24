@@ -372,7 +372,7 @@ Object.keys(grouped).forEach(groupName => {
                 <div class="me-2" style="width: 20px; height: 20px; background-color: #045eb8ff;"></div>
                 <div><small class="fw-bold">Singapore Public Holiday</small></div>
             </div>
-            <a href="#" class="btn btn-outline-primary btn-sm py-0" style="font-size: 0.75rem;">
+            <a href="{{ route('v1.dashboard.event-history') }}?month={{ now()->month }}&year={{ now()->year }}" class="btn btn-outline-primary btn-sm py-0" style="font-size: 0.75rem;">
                 <i class="bx bx-history me-1"></i> Event History
             </a>
         </div>
@@ -744,51 +744,29 @@ Object.keys(grouped).forEach(groupName => {
                                             myModal.show();
 
                                             // Fetch event details from API
-                                            fetch(`/v1/vehicle-bookings/${eventId}/modal`) // Replace with your API URL
+                                            fetch(`/v1/leave-application/public-holiday/${eventId}/modal`) // Replace with your API URL
                                                 .then(response => response.json())
                                                 .then(data => {
                                                     // Populate modal with fetched data
                                                     modalBody.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="row">
-                                <div class="col-md-5"><strong>Vehicle</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingVehicle">${data.vehicle.name}</span></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5"><strong>Start Date</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingStart">${data.start_at}</span></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5"><strong>End Date</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingEnd">${data.end_at}</span></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5"><strong>Purposes</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingPurpose">${data.purposes}</span></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5"><strong>Job Assignment</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingJob">${data.job_assignment ? data.job_assignment.scope_of_work : "N/A"}</span></div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5"><strong>Created By</strong></div>
-                                <div class="col-md-1">:</div>
-                                <div class="col-md-6"><span id="bookingCreator">${data.creator.name}</span></div>
-                            </div>
-                        </div>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-4 fw-bold">Title</div>
+            <div class="col-8">: ${data.title}</div>
+        </div>
 
-                        <div class="col-md-6">
-                            <img id="bookingImage" src="/${data.vehicle.path_image}" alt="Vehicle Image" class="img-fluid rounded"
-                                style="max-width: 300px;">
-                        </div>
-                    </div>
-                `;
+        <div class="row mb-2">
+            <div class="col-4 fw-bold">Public Holiday Date</div>
+            <div class="col-8">: ${data.leave_date}</div>
+        </div>
+
+        <div class="row mb-2">
+            <div class="col-4 fw-bold">Country</div>
+            <div class="col-8">: ${data.country}</div>
+        </div>
+    </div>
+`;
+
                                                 })
                                                 .catch(error => {
                                                     modalBody.innerHTML = `<p style="color: red;">Error fetching details. Please try again.</p>`;

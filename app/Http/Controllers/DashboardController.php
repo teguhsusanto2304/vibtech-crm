@@ -85,6 +85,7 @@ $publicHolidays = LeaveApplication::whereIn(
         [$currentYear, $nextYear]
     )
     ->select(
+        'id',
         'leave_date as date',
         'title as name',
         'country_code as country'
@@ -108,7 +109,8 @@ $publicHolidays = LeaveApplication::whereIn(
 
     $holidayEvents = collect($publicHolidays)->map(function ($holiday) {
     return [
-        'id' => 'PH-' . md5($holiday['date'] . $holiday['country']),
+        //'id' => 'PH-' . md5($holiday['date'] . $holiday['country']),
+        'id' => $holiday['id'],
         'title' => $holiday['name'],
         'start' => $holiday['date'],
         'end' => \Carbon\Carbon::parse($holiday['date'])->addDay()->toDateString(),
@@ -645,6 +647,67 @@ $events = $jobEvents
             \Log::error("Error fetching events for date {$date}: {$e->getMessage()}", ['exception' => $e]);
             return response()->json(['success' => false, 'message' => 'An error occurred while fetching events.'.$e->getMessage()], 500);
         }
+    }
+
+    public function eventHistory(Request $request) {
+        $month = $request->get('month', date('m'));
+        $year = $request->get('year', date('Y'));
+
+        // 1. Ambil data Job Assignment
+        $jobs = JobAssignment::whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'title' => "Job: " . $item->job_type, // sesuaikan kolom
+                    'start' => $item->created_at,
+                    'type' => 'JR',
+                    'url' => route('v1.job-assignment-form.view', ['id'=>$item->id,'respond'=>'no']), // sesuaikan route
+                    'badge_color' => 'bg-label-success'
+                ];
+            });
+
+        // 2. Ambil data Vehicle Booking
+        $bookings = VehicleBooking::whereMonth('start_at', $month)
+            ->whereYear('start_at', $year)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'title' => "Booking: " . $item->vehicle->name,
+                    'start' => $item->start_at,
+                    'type' => 'VB',
+                    'url' => '#', 
+                    'badge_color' => 'bg-label-info'
+                ];
+            });
+
+        // 3. Ambil data Leave Application
+        $leaves = LeaveApplication::whereMonth('leave_date', $month)
+            ->whereYear('leave_date', $year)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'title' => "Leave: " . $item->employee_name,
+                    'start' => $item->start_date,
+                    'type' => 'LA',
+                    'url' => '#',
+                    'badge_color' => 'bg-label-warning'
+                ];
+            });
+
+        // Gabungkan semua dan urutkan berdasarkan tanggal terbaru
+        $allEvents = $jobs->concat($bookings)->concat($leaves)->sortByDesc('start');
+
+        return view('dashboard.history', [
+            'title' => 'Event History',
+            'breadcrumb' => ['Dashboard', 'Event History'],
+            'events' => $allEvents,
+            'selectedMonth' => $month,
+            'selectedYear' => $year
+        ]);
     }
 
 }

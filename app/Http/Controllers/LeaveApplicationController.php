@@ -334,5 +334,21 @@ class LeaveApplicationController extends Controller
         }
     }
 
+    public function publicHolidayShow($id)
+    {
+        $ph = LeaveApplication::findOrFail($id);
+
+        $countryMap = [
+            'SG' => 'Singapore',
+            'MY' => 'Malaysia',
+        ];
+
+        return response()->json([
+            'leave_date'   => $ph->leave_date->format('d F Y'), // or format if needed
+            'title'        => $ph->title,
+            'country'      => $countryMap[$ph->country_code] ?? $ph->country_code,
+        ]);
+    }
+
 
 }

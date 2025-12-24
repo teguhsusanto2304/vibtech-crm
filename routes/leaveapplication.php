@@ -26,6 +26,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}/destroy','destroy')->name('v1.leave-application.destroy');
             Route::post('/import','import')->name('v1.leave-application.import');
             Route::get('/template-download','downloadTemplate')->name('v1.leave-application.template-download');
+
+            Route::get('/public-holiday/{id}/modal', 'publicHolidayShow')->name('v1.leave-application.public-holiday.modal');
             //->middleware('can:approve-claims');
         });
     });

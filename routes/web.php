@@ -114,6 +114,7 @@ Route::middleware('auth')->group(function () {
 
         // 🔹 Dashboard Routes
         Route::prefix('dashboard')->controller(DashboardController::class)->group(function () {
+            Route::get('/event-history', 'eventHistory')->name('v1.dashboard.event-history');
             Route::get('/', 'index')->name('v1.dashboard');
             Route::get('/events', 'getEvents')->name('v1.dashboard.events');
             Route::get('/eventsbydate/{eventAt}', 'getEventsByDate')->name('v1.dashboard.eventsbydate');
