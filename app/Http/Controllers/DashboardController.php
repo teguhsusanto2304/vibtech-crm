@@ -584,8 +584,8 @@ $events = $jobEvents
             }
 
             // Determine time range for Job Assignment
-            $jobStartTime = $job->start_at ? $job->start_at->format('d M Y') : 'N/A';
-            $jobEndTime = $job->end_at ? $job->end_at->format('d M Y') : 'N/A';
+            $jobStartTime = $job->start_at ? $job->start_at->format('d F Y') : 'N/A';
+            $jobEndTime = $job->end_at ? $job->end_at->format('d F Y') : 'N/A';
             $jobTimeRange = ($job->start_at || $job->end_at) ? "{$jobStartTime} - {$jobEndTime}" : 'Full Day';
 
             $formattedEvents[] = [
@@ -596,6 +596,7 @@ $events = $jobEvents
                 'time' => $jobTimeRange,
                 'type' => 'Job Assignment',
                 'is_vehicle_require' => $job->is_vehicle_require, // Keep this if needed
+                'priority' => 1,
             ];
              }
             $eventID = $job->id;
@@ -613,8 +614,8 @@ $events = $jobEvents
             $randomColor = $colorClasses[array_rand($colorClasses)]; // Get a random color for vehicle badge
 
             // Determine time range for Vehicle Booking
-            $bookingStartTime = $booking->start_at ? Carbon::parse($booking->start_at)->format('d M Y H:i') : 'N/A';
-            $bookingEndTime = $booking->end_at ? Carbon::parse($booking->end_at)->format('d M Y H:i') : 'N/A';
+            $bookingStartTime = $booking->start_at ? Carbon::parse($booking->start_at)->format('d F Y H:i') : 'N/A';
+            $bookingEndTime = $booking->end_at ? Carbon::parse($booking->end_at)->format('d F Y H:i') : 'N/A';
             $bookingTimeRange = ($booking->start_at || $booking->end_at) ? "{$bookingStartTime} - {$bookingEndTime}" : 'Full Day';
                 $formattedEvents[] = [
                     
@@ -625,20 +626,58 @@ $events = $jobEvents
                     'time' => $bookingTimeRange,
                     'type' => 'Vehicle Booking',
                     'is_vehicle_require' => 99, // Keep this if needed
+                    'priority' => 2,
                 ];
             }
             $eventID = $booking->id;
                 
         }
 
+        // --- Fetch Public Holidays (FIRST PRIORITY) ---
+        $publicHolidays = LeaveApplication::whereDate('leave_date', $filterDate)->get();
+
+        foreach ($publicHolidays as $ph) {
+
+            $countryName = match ($ph->country_code) {
+                'SG' => 'Singapore',
+                'MY' => 'Malaysia',
+                default => $ph->country_code,
+            };
+
+            $formattedEvents[] = [
+                'id' => 'ph_' . $ph->id,
+                'real_id' => $ph->id,
+                'title' => "<div class='callout-event'>
+                                <label class='text-danger fw-bold'>Public Holiday</label><br>
+                                {$ph->title}
+                            </div>",
+                'description' => "Country: {$countryName}",
+                'time' => Carbon::parse($ph->leave_date)->format('d F Y'),
+                'type' => 'Public Holiday',
+                'is_vehicle_require' => 0,
+                'priority' => 0, // 👈 highest priority
+            ];
+        }
+
+
         // Sort events by time if possible, or by type
-        usort($formattedEvents, function($a, $b) {
+        /**usort($formattedEvents, function($a, $b) {
             // Simple sorting by time string, assuming H:i format or 'N/A'/'Full Day'
             // You might need more robust sorting if times are complex
             $timeA = $a['time'] === 'N/A' || $a['time'] === 'Full Day' ? '00:00' : substr($a['time'], 0, 5);
             $timeB = $b['time'] === 'N/A' || $b['time'] === 'Full Day' ? '00:00' : substr($b['time'], 0, 5);
             return strcmp($timeA, $timeB);
+        });**/
+        usort($formattedEvents, function ($a, $b) {
+    // 1️⃣ Sort by priority first
+            if ($a['priority'] !== $b['priority']) {
+                return $a['priority'] <=> $b['priority'];
+            }
+
+            // 2️⃣ Then sort by time (optional)
+            return strcmp($a['time'], $b['time']);
         });
+
 
 
             return response()->json(['success' => true, 'events' => $formattedEvents]);
