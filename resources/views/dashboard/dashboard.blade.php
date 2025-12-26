@@ -386,6 +386,50 @@ Object.keys(grouped).forEach(groupName => {
         </div>
     </div>
 </div>
+<div class="container mt-4 mb-4">
+  <form class="d-flex align-items-end gap-3">
+    <!-- Month Select -->
+    <div>
+      <label for="filterMonth" class="form-label">Month</label>
+      <select id="filterMonth" class="form-select bg-white">
+        <option value="">Month</option>
+        @for ($m = 1; $m <= 12; $m++)
+          <option value="{{ $m }}" {{ $m == date('n') ? 'selected' : '' }}>
+            {{ date('F', mktime(0, 0, 0, $m, 1)) }}
+          </option>
+        @endfor
+      </select>
+    </div>
+
+    <!-- Year Select -->
+    <div>
+      <label for="filterYear" class="form-label">Year</label>
+      <select id="filterYear" class="form-select bg-white">
+        <option value="">Year</option>
+        @php
+          $currentYear = date('Y');
+          $nextYear = $currentYear + 1;
+          $minYear = 2025;
+        @endphp
+        @for ($year = $currentYear; $year <= $nextYear; $year++)
+          @if ($year >= $minYear)
+            <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+              {{ $year }}
+            </option>
+          @endif
+        @endfor
+      </select>
+    </div>
+
+    <!-- Clear Button -->
+    <div>
+      <button type="button" id="clearSessionBtn" class="btn btn-outline-warning" disabled>
+        Clear
+      </button>
+    </div>
+  </form>
+</div>
+
         <div class="card app-calendar-wrapper ">
             <div class="row g-0">
                 <!-- Calendar & Modal -->
@@ -654,6 +698,16 @@ Object.keys(grouped).forEach(groupName => {
                                         let eventStatus = arg.event.extendedProps.event_status; // ✅ Fetch event_status
 
                                         if (eventStatus === "JR") {
+                                                const currentDate = S.view.currentStart;
+
+
+                                            const currentYear = currentDate.getFullYear();
+                                            const currentMonth = currentDate.getMonth() + 1;
+
+                                            // Save to localStorage
+                                            localStorage.setItem('calendarYear', currentYear);
+                                            localStorage.setItem('calendarMonth', currentMonth);
+
                                             let eventId = arg.event.id; // Get event ID
                                             let url = `/v1/job-assignment-form/view/${eventId}/yes?fr=main`; // Replace with your target URL
 
@@ -830,24 +884,58 @@ Object.keys(grouped).forEach(groupName => {
                                     //return ["event-dot", "dot-" + e._def.extendedProps.calendar];
                                 },
                                 datesSet: function (info) {
-                                    localStorage.setItem(
-                                        'calendarDefaultDate',
-                                        info.view.currentStart.toISOString()
-                                    );
+                                    let currentYear = info.view.currentStart.getFullYear();
+                                    let currentMonth = info.view.currentStart.getMonth() + 1;
+                                    // Update your dropdowns
+                                    document.getElementById('filterYear').value = currentYear;
+                                    document.getElementById('filterMonth').value = currentMonth;
+
                                     I();
-                                    //highlightCurrentDate();
+                                    highlightCurrentDate();
                                     
                                 },
-                                viewDidMount: function () {
+                                viewDidMount: function (info) {
                                     I();
                                     highlightCurrentDate();
                                 },
                             });
 
                             S.render()
+                            //let savedYear = localStorage.getItem('calendarYear');
+                            //let savedMonth = localStorage.getItem('calendarMonth');
+                            let savedYear = localStorage.getItem('calendarYear');
+                            let savedMonth = localStorage.getItem('calendarMonth');
+
+                            if (savedYear && savedMonth) {
+                                const date = new Date(savedYear, savedMonth - 1, 1);
+                                S.gotoDate(date);
+
+                                document.getElementById('filterYear').value = savedYear;
+                                document.getElementById('filterMonth').value = savedMonth;
+                            }
+
+
+                            
+
+                            document.getElementById('filterMonth').addEventListener('change', applyFilter);
+                            document.getElementById('filterYear').addEventListener('change', applyFilter);
+
+                            function applyFilter() {
+                                const month = document.getElementById('filterMonth').value;
+                                const year = document.getElementById('filterYear').value;
+
+                                if (!month || !year) return;
+
+                                const date = new Date(year, month - 1, 1);
+                                S.gotoDate(date);
+                            }
 
                         }
 
+
+
+
+                        
                         function highlightCurrentDate() {
                             eventDetailsModalInstance = new bootstrap.Modal(document.getElementById('eventDetailsModal'));
                             const today = new Date();

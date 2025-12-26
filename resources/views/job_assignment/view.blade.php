@@ -183,7 +183,20 @@
                                 <h5>Job Created By</h5>
                                 <p>{{ $job->user->name }}</p>
                                 <label class="mb-2">{{ $job->created_at->format('l, d/m/Y h:i A') }}</label>
+                                <script>
+                                    let fromDashboardView = new URLSearchParams(window.location.search).get("fr");
+                                    if (fromDashboardView === "main") {
+                                        @php
+                                            session()->forget('calendarYear');
+                                            session()->forget('calendarMonth');
+                                            session([
+                                                'calendarYear' => $job->start_at->format('Y'),
+                                                'calendarMonth' => $job->start_at->format('m'),
+                                            ]);
 
+                                            @endphp
+                                    }
+                                </script>
                                 <h5>Status</h5>
                                 <div class="header-status">
                                     <x-job-status-widget :job="$job" />
