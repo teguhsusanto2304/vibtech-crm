@@ -424,8 +424,36 @@ Object.keys(grouped).forEach(groupName => {
     <!-- Clear Button -->
     <div>
       <button type="button" id="clearSessionBtn" class="btn btn-outline-warning" disabled>
-        Clear
-      </button>
+  Clear
+</button>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const clearBtn = document.getElementById("clearSessionBtn");
+
+    // Check if localStorage has values
+    const hasCalendarYear = localStorage.getItem("calendarYear") !== null;
+    const hasCalendarMonth = localStorage.getItem("calendarMonth") !== null;
+
+    if (hasCalendarYear || hasCalendarMonth) {
+      clearBtn.removeAttribute("disabled"); // enable button
+    }
+
+    clearBtn.addEventListener("click", function() {
+      // Remove specific keys
+      localStorage.removeItem("calendarYear");
+      localStorage.removeItem("calendarMonth");
+
+      // Disable button again after clearing
+      clearBtn.setAttribute("disabled", "true");
+
+      // Reset dropdowns to current date (optional)
+      const now = new Date();
+      document.getElementById("filterYear").value = now.getFullYear();
+      document.getElementById("filterMonth").value = now.getMonth() + 1;
+    });
+  });
+</script>
     </div>
   </form>
 </div>
