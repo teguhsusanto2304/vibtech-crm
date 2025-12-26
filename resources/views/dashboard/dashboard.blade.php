@@ -864,7 +864,7 @@ Object.keys(grouped).forEach(groupName => {
                                 editable: !0,
                                 dragScroll: !0,
                                 dayMaxEvents: 2,
-                                moreLinkClick: function(info) {
+                                eventLimitClick: function(info) {
                                     // Prevent default behavior (no navigation, no popover)
                                     return false;
                                 },
