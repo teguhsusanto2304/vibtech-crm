@@ -1102,7 +1102,7 @@ Object.keys(grouped).forEach(groupName => {
                                     } else {
                                         eventHtml += `
                     <tr>
-                        <td><a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes"><small>${event.title}</small></a></td>
+                        <td><a  class="dropdown-item" href="/v1/job-assignment-form/view/${event.id}/yes?fr=main"><small>${event.title}</small></a></td>
 
                     </tr>`;
                                     }

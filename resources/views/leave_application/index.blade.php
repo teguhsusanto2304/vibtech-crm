@@ -56,6 +56,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="col-12 col-md-4">
+                        <div class="card text-center">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">Apply Leave</h5>
+                                <a href="https://form.jotform.com/253231764461455" class="btn btn_primary">View</a>
+                            </div>
+                        </div>
+                    </div>
                     
                 </div>
             </div>
