@@ -36,6 +36,8 @@
             <div class="tab-pane fade show active" id="btn-text-alignment-preview" role="tabpanel"
                 aria-labelledby="btn-text-alignment-preview-tab">
                 <div class="row gy-4">
+                    
+                        @can('view-leave-application')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
@@ -48,6 +50,9 @@
                             </div>
                         </div>
                     </div>
+                    @endcan
+                    
+                        @can('view-leave-application')
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
@@ -56,7 +61,7 @@
                             </div>
                         </div>
                     </div>
-
+                    @endcan
                     <div class="col-12 col-md-4">
                         <div class="card text-center">
                             <div class="card-body d-flex flex-column">
