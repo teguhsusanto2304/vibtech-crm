@@ -28,7 +28,7 @@ class DashboardController extends Controller
 {
     // Define the start and end dates for the three months
     $lastMonthStart = now()->subMonth(6)->startOfMonth();
-    $nextMonthEnd = now()->addMonth()->endOfMonth();
+    $nextMonthEnd = now()->addMonth(6)->endOfMonth();
 
     // Use a single query for JobAssignments, filtering by the date range
     $jobAssignments = JobAssignment::join('users', 'users.id', '=', 'job_assignments.user_id')
@@ -523,9 +523,6 @@ $events = $jobEvents
     public function getEventsByDateModal(Request $request)
     {
         $date = $request->query('date'); // Get the date from the query parameter
-
-       
-
         try {
             $eventAt = $request->query('date'); // Get the date from the query parameter (e.g., 'YYYY-MM-DD')
 

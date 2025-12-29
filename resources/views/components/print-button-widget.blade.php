@@ -18,7 +18,7 @@
         // Check if user came from the dashboard
         document.addEventListener("DOMContentLoaded", function () {
             if (fromDashboard === "main") {
-                document.getElementById("backButton").innerText = "Go Back to Dashboard"; // Show button
+                document.getElementById("backButton").innerText = "Go Back to Staff Calendar"; // Show button
             }
         });
     </script>
